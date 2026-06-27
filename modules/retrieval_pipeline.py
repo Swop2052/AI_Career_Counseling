@@ -61,6 +61,8 @@ class RetrievalPipeline:
                         "scores": scores,
                         "total_score": scores["match_score"]
                     })
+                # Sort the list by match score descending so that the highest matches show first
+                scored_llm_careers.sort(key=lambda x: x["total_score"], reverse=True)
                 return self._to_career_matches(persona, scored_llm_careers)
             
             # 2. Fallback to heuristic ranking if LLM fails or returns empty
