@@ -1,0 +1,63 @@
+{
+  "Realistic": [
+    "I like to work on cars",
+    "I like to build things",
+    "I like to take care of animals",
+    "I like putting things together or assembling things",
+    "I like to cook",
+    "I am a practical person",
+    "I like working outdoors"
+  ],
+  "Investigative": [
+    "I like to do puzzles",
+    "I am good at working independently",
+    "I like to do experiments",
+    "I enjoy science",
+    "I enjoy trying to figure out how things work",
+    "I like to analyze things (problems, situations)",
+    "I'm good at math"
+  ],
+  "Artistic": [
+    "I like to read about art and music",
+    "I enjoy creative writing",
+    "I am a creative person",
+    "I like to play instruments or sing",
+    "I like acting in plays",
+    "I like to draw"
+  ],
+  "Social": [
+    "I like to work in teams",
+    "I like to teach or train people",
+    "I like trying to help people solve their problems",
+    "I am interested in healing people",
+    "I enjoy learning about other cultures",
+    "I like helping people"
+  ],
+  "Enterprising": [
+    "I am an ambitious person, I set goals for myself",
+    "I like to try to influence or persuade people",
+    "I like selling things",
+    "I am quick to take on new responsibilities",
+    "I would like to start my own business",
+    "I like to get into discussions about issues",
+    "I like to lead",
+    "I like to give speeches"
+  ],
+  "Conventional": [
+    "I like to organize things (files, desks, offices)",
+    "I like to have clear instructions to follow",
+    "I wouldn't mind working 8 hours per day in an office",
+    "I pay attention to details",
+    "I like to do filing or typing",
+    "I like working with numbers or charts",
+    "I am good at keeping records of my work",
+    "I would like to work in an office"
+  ],
+  "response_scale": {
+    "5": "Exactly Like Me",
+    "4": "Mostly Like Me",
+    "3": "Sometimes Like Me",
+    "2": "Rarely Like Me",
+    "1": "Not Like Me At All"
+  }
+}
