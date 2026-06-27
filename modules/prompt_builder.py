@@ -119,6 +119,10 @@ class PromptBuilder:
             lines.append(f"Budget: {preferences['budget_preference']}")
         if preferences.get("location_preference"):
             lines.append(f"Location: {preferences['location_preference']}")
+        if preferences.get("student_location"):
+            lines.append(f"Student Location: {preferences['student_location']}")
+        if preferences.get("college_range"):
+            lines.append(f"Preferred College Type/Range: {preferences['college_range']}")
         
         return "\n".join(lines)
     

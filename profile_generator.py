@@ -61,6 +61,8 @@ def generate_student_profile(scores, student_info=None):
         "learning_mode": student_info.get('learning_mode', 'offline'),
         "budget_preference": student_info.get('budget', 'moderate'),
         "location_preference": student_info.get('location', 'india'),
+        "student_location": student_info.get('student_location', ''),
+        "college_range": student_info.get('college_range', 'all'),
         
         # RIASEC Profile
         "riasec_code": primary_code + secondary_code + tertiary_code,

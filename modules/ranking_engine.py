@@ -249,8 +249,38 @@ class RankingEngine:
     def _compute_location_match(self, persona: Dict, career: Dict) -> float:
         """Compute location preference match score (0-100)."""
         preferences = persona.get("preferences", {})
-        location = preferences.get("location_preference", "india")
+        student_loc = preferences.get("student_location", "").strip().lower()
         
+        # If student location is provided, compute match based on matching institutes
+        if student_loc:
+            institutes = career.get('where_will_you_study') or career.get('institutes') or {}
+            if isinstance(institutes, dict):
+                gov = institutes.get('government') or institutes.get('government_institutes') or []
+                priv = institutes.get('private') or institutes.get('private_institutes') or []
+                distance = institutes.get('distance_learning') or []
+                
+                # Check for any match in location string
+                matched_count = 0
+                total_count = 0
+                for inst_list in [gov, priv, distance]:
+                    if not isinstance(inst_list, list):
+                        continue
+                    for inst in inst_list:
+                        if isinstance(inst, dict):
+                            loc = inst.get('location', '')
+                            if loc:
+                                total_count += 1
+                                if student_loc in loc.lower():
+                                    matched_count += 1
+                        elif isinstance(inst, str):
+                            total_count += 1
+                            if student_loc in inst.lower():
+                                matched_count += 1
+                
+                if total_count > 0:
+                    return 100.0 if matched_count > 0 else 30.0
+        
+        location = preferences.get("location_preference", "india")
         career_text = extract_text_from_career(career)
         
         location_keywords = {
@@ -261,10 +291,10 @@ class RankingEngine:
         
         keywords = location_keywords.get(location, [])
         if not keywords:
-            return 50
+            return 50.0
         
         matches = sum(1 for keyword in keywords if keyword in career_text)
-        return 100 if matches > 0 else 0
+        return 100.0 if matches > 0 else 0.0
     
     def _compute_preference_bonus(self, persona: Dict, career: Dict) -> float:
         """Compute preference bonus (0-100)."""
@@ -274,6 +304,7 @@ class RankingEngine:
         
         learning_mode = preferences.get("learning_mode", "").lower().strip()
         budget = preferences.get("budget_preference", "").lower().strip()
+        college_range = preferences.get("college_range", "all").lower().strip()
         
         career_text = extract_text_from_career(career)
         
@@ -299,6 +330,21 @@ class RankingEngine:
                 if "scholarship" in career_text or "government" in career_text:
                     score += 1
             elif budget in ["moderate", "no_constraint"]:
+                score += 1
+                
+        # College range preference bonus
+        institutes = career.get('where_will_you_study') or career.get('institutes') or {}
+        if college_range != "all" and isinstance(institutes, dict):
+            gov = institutes.get('government') or institutes.get('government_institutes') or []
+            priv = institutes.get('private') or institutes.get('private_institutes') or []
+            distance = institutes.get('distance_learning') or []
+            
+            checks += 1
+            if college_range == "government" and len(gov) > 0:
+                score += 1
+            elif college_range == "private" and len(priv) > 0:
+                score += 1
+            elif college_range == "distance" and len(distance) > 0:
                 score += 1
         
         return (score / checks) * 100 if checks > 0 else 0

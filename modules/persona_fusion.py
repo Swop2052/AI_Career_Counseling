@@ -122,7 +122,9 @@ class PersonaFusionEngine:
             "learning_mode": info.get("learning_mode", "offline"),
             "budget_preference": info.get("budget", "moderate"),
             "location_preference": info.get("location", "india"),
-            "work_style": info.get("work_style", "hybrid")
+            "work_style": info.get("work_style", "hybrid"),
+            "student_location": info.get("student_location", ""),
+            "college_range": info.get("college_range", "all")
         }
     
     def _parse_list(self, value: Any) -> List[str]:

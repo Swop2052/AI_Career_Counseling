@@ -1980,6 +1980,20 @@
                                 <option value="international">International Career</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="studentLocation">Your State/City</label>
+                            <input type="text" id="studentLocation"
+                                placeholder="e.g., Tamil Nadu, Maharashtra, Delhi">
+                        </div>
+                        <div class="form-group">
+                            <label for="collegeRange">Preferred College Type/Range</label>
+                            <select id="collegeRange">
+                                <option value="all">All Colleges (Govt & Private)</option>
+                                <option value="government">Government Colleges Only</option>
+                                <option value="private">Private Colleges Only</option>
+                                <option value="distance">Distance Learning Only</option>
+                            </select>
+                        </div>
 
                         <button type="submit" class="btn btn-success"
                             style="width:100%;justify-content:center;margin-top:20px">
@@ -2323,6 +2337,8 @@
             const learningMode = document.getElementById('learningMode').value;
             const budgetPreference = document.getElementById('budgetPreference').value;
             const locationPreference = document.getElementById('locationPreference').value;
+            const studentLocation = document.getElementById('studentLocation').value.trim();
+            const collegeRange = document.getElementById('collegeRange').value;
 
             if (!name || !age || !studentClass) {
                 showToast('Please fill in all required fields (Name, Age, Class)');
@@ -2342,7 +2358,9 @@
                 career_aspirations: aspirations || '',
                 learning_mode: learningMode || 'offline',
                 budget: budgetPreference || 'moderate',
-                location: locationPreference || 'india'
+                location: locationPreference || 'india',
+                student_location: studentLocation || '',
+                college_range: collegeRange || 'all'
             };
 
             document.getElementById('profileFormContainer').classList.remove('active');
@@ -2932,10 +2950,44 @@
                     const traits = c.personality_traits || [];
                     const traitText = Array.isArray(traits) && traits.length > 0 ? traits.slice(0, 2).join(', ') : 'N/A';
 
+                    // Compute matching colleges
+                    let matchedCollegesCount = 0;
+                    const studentLocVal = studentInfo.student_location ? studentInfo.student_location.trim().toLowerCase() : '';
+                    if (studentLocVal && c.where_will_you_study) {
+                        const study = c.where_will_you_study;
+                        const gov = study.government_institutes || study.government || [];
+                        const priv = study.private_institutes || study.private || [];
+                        const dist = study.distance_learning || [];
+                        
+                        [gov, priv, dist].forEach(list => {
+                            if (Array.isArray(list)) {
+                                list.forEach(inst => {
+                                    let instLoc = '';
+                                    if (typeof inst === 'string') instLoc = inst.toLowerCase();
+                                    else if (inst && typeof inst === 'object') instLoc = (inst.location || '').toLowerCase();
+                                    
+                                    if (instLoc && instLoc.includes(studentLocVal)) {
+                                        matchedCollegesCount++;
+                                    }
+                                });
+                            }
+                        });
+                    }
+
+                    let badgeHtml = '';
+                    if (studentLocVal) {
+                        if (matchedCollegesCount > 0) {
+                            badgeHtml = `<span class="tag tag-cyan" style="font-size: 0.72rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 3px; background: rgba(0, 200, 83, 0.1); border-color: rgba(0, 200, 83, 0.3); color: #00e676; border-radius: 4px; font-weight: 600;">📍 ${matchedCollegesCount} in ${studentInfo.student_location}</span>`;
+                        } else {
+                            badgeHtml = `<span class="tag" style="font-size: 0.72rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 3px; color: var(--faint); border-color: transparent; border-radius: 4px;">📍 None in ${studentInfo.student_location}</span>`;
+                        }
+                    }
+
                     html += `
                         <div class="career-card" onclick="viewFullCareerDetail('${career.name.replace(/'/g, "\\'")}')">
                             <div class="top">
                                 <span class="rank">${emoji} #${index + 1}</span>
+                                ${badgeHtml}
                                 <span class="match">${career.score} pts</span>
                             </div>
                             <h4>${career.name}</h4>
@@ -3115,17 +3167,42 @@
             const whereStudy = career.where_will_you_study || career.institutes || {};
             const govInst = whereStudy.government_institutes || whereStudy.government || [];
             const privInst = whereStudy.private_institutes || whereStudy.private || [];
+            const distInst = whereStudy.distance_learning || [];
 
-            const formatInst = (list) => {
+            const formatInst = (list, typeName) => {
                 if (!Array.isArray(list) || list.length === 0) return '<li>No institutes listed</li>';
-                return list.map(i => {
-                    const name = typeof i === 'string' ? i : (i.name || '');
-                    const loc = typeof i === 'string' ? '' : (i.location ? ` (${i.location})` : '');
-                    return `<li>${name}${loc}</li>`;
+                
+                const studentLocVal = studentInfo.student_location ? studentInfo.student_location.trim().toLowerCase() : '';
+                const prefRange = studentInfo.college_range || 'all';
+                
+                if (prefRange !== 'all' && prefRange !== typeName) {
+                    return '<li>Filtered out based on your college type preferences</li>';
+                }
+
+                const processed = list.map(i => {
+                    let name = 'Unknown Institute';
+                    let location = '';
+                    if (typeof i === 'string') {
+                        name = i;
+                    } else if (typeof i === 'object' && i !== null) {
+                        name = i.name || 'Unknown Institute';
+                        location = i.location ? i.location : '';
+                    }
+                    const isLocal = studentLocVal && location.toLowerCase().includes(studentLocVal);
+                    return { name, location, isLocal };
+                });
+
+                processed.sort((a, b) => (b.isLocal ? 1 : 0) - (a.isLocal ? 1 : 0));
+
+                return processed.map(item => {
+                    const localMarker = item.isLocal ? ' 📍 [Near You]' : '';
+                    const loc = item.location ? ` (${item.location})` : '';
+                    return `<li style="${item.isLocal ? 'background-color: #f0fdf4; border-left: 3px solid #16a34a; padding-left: 8px;' : ''}"><strong>${item.name}</strong>${loc}${localMarker}</li>`;
                 }).join('');
             };
-            const govHtml = formatInst(govInst);
-            const privHtml = formatInst(privInst);
+            const govHtml = formatInst(govInst, 'government');
+            const privHtml = formatInst(privInst, 'private');
+            const distHtml = formatInst(distInst, 'distance');
 
             // Format Work Details
             const whereWork = career.where_will_you_work || {};
@@ -3361,6 +3438,12 @@
                             <ul>${privHtml}</ul>
                         </div>
                     </div>
+                    ${distInst.length > 0 ? `
+                    <div style="margin-top: 16px;">
+                        <h3>Distance Learning</h3>
+                        <ul>${distHtml}</ul>
+                    </div>
+                    ` : ''}
                     
                     <h2>Expected Growth Path</h2>
                     <div style="margin-top: 12px;">${growthHtml}</div>
@@ -3548,31 +3631,103 @@
             const govInst = whereStudy.government_institutes || whereStudy.government || [];
             const privInst = whereStudy.private_institutes || whereStudy.private || [];
             const distInst = whereStudy.distance_learning || [];
+            const hasStudyData = hasArray(govInst) || hasArray(privInst) || hasArray(distInst);
 
-            const formatInstituteList = (institutes, icon) => {
-                if (!Array.isArray(institutes) || institutes.length === 0) {
-                    return '<div style="color:var(--faint); font-size:0.86rem; padding:4px 0;">No institutes listed</div>';
-                }
-                return institutes.map(i => {
-                    let name = 'Unknown Institute';
-                    let location = '';
-                    if (typeof i === 'string') {
-                        name = i;
-                    } else if (typeof i === 'object' && i !== null) {
-                        name = i.name || 'Unknown Institute';
-                        location = i.location ? ` (${i.location})` : '';
+            // Dynamic Personalized Study Section Renderer
+            const renderStudySection = (filterActive) => {
+                const studentLocVal = studentInfo.student_location ? studentInfo.student_location.trim().toLowerCase() : '';
+                const prefRange = studentInfo.college_range || 'all';
+
+                // Helper to process institute list and match local state/city
+                const processList = (rawList) => {
+                    if (!rawList) return [];
+                    const listArr = Array.isArray(rawList) ? rawList : [rawList];
+                    
+                    const mapped = listArr.map(inst => {
+                        let name = 'Unknown Institute';
+                        let location = '';
+                        if (typeof inst === 'string') {
+                            name = inst;
+                        } else if (inst && typeof inst === 'object') {
+                            name = inst.name || 'Unknown Institute';
+                            location = inst.location || '';
+                        }
+                        
+                        const isLocal = studentLocVal && location.toLowerCase().includes(studentLocVal);
+                        return { name, location, isLocal, original: inst };
+                    });
+
+                    // Reorder local first
+                    mapped.sort((a, b) => (b.isLocal ? 1 : 0) - (a.isLocal ? 1 : 0));
+                    return mapped;
+                };
+
+                const govProcessed = processList(govInst);
+                const privProcessed = processList(privInst);
+                const distProcessed = processList(distInst);
+
+                // Helper to render HTML
+                const renderList = (processed, icon, typeName) => {
+                    if (filterActive && prefRange !== 'all' && prefRange !== typeName) {
+                        return '';
                     }
-                    return `<div class="institute-item" style="font-size:0.86rem; color:var(--muted); margin-bottom:6px; display:flex; align-items:start; gap:6px;">
-                        <span style="color:var(--cyan);">${icon}</span>
-                        <span><strong>${name}</strong>${location}</span>
-                    </div>`;
-                }).join('');
+
+                    let listToRender = processed;
+                    if (filterActive && studentLocVal) {
+                        const localOnly = processed.filter(p => p.isLocal);
+                        if (localOnly.length > 0) {
+                            listToRender = localOnly;
+                        }
+                    }
+
+                    if (listToRender.length === 0) {
+                        return '<div style="color:var(--faint); font-size:0.86rem; padding:4px 0;">No matching colleges found</div>';
+                    }
+
+                    return listToRender.map(item => {
+                        const localBadge = item.isLocal ? `<span class="tag tag-cyan" style="background:rgba(0, 200, 83, 0.12); border-color:rgba(0, 200, 83, 0.35); color:#00e676; margin-left:6px; font-size:0.7rem; padding:1px 5px; border-radius:4px; font-weight:700;">📍 Near You</span>` : '';
+                        const locText = item.location ? ` (${item.location})` : '';
+                        return `<div class="institute-item" style="font-size:0.86rem; color:var(--muted); margin-bottom:8px; display:flex; align-items:start; gap:6px; background: ${item.isLocal ? 'rgba(0, 200, 83, 0.03)' : 'transparent'}; border: ${item.isLocal ? '1px solid rgba(0, 200, 83, 0.2)' : 'none'}; padding: ${item.isLocal ? '6px 10px' : '0'}; border-radius: 8px;">
+                            <span style="color:var(--cyan);">${icon}</span>
+                            <span><strong>${item.name}</strong>${locText} ${localBadge}</span>
+                        </div>`;
+                    }).join('');
+                };
+
+                const govListHtml = renderList(govProcessed, '🏛️', 'government');
+                const privListHtml = renderList(privProcessed, '🏢', 'private');
+                const distListHtml = renderList(distProcessed, '💻', 'distance');
+
+                const showGov = !filterActive || prefRange === 'all' || prefRange === 'government';
+                const showPriv = !filterActive || prefRange === 'all' || prefRange === 'private';
+                const showDist = !filterActive || prefRange === 'all' || prefRange === 'distance';
+
+                return `
+                    <div class="grid-3" id="modalInstitutesGrid">
+                        ${showGov ? `
+                        <div>
+                            <h5 style="color:var(--amber);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏛️ Government ${prefRange === 'government' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            ${govListHtml}
+                        </div>
+                        ` : ''}
+                        ${showPriv ? `
+                        <div>
+                            <h5 style="color:var(--coral);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏢 Private ${prefRange === 'private' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            ${privListHtml}
+                        </div>
+                        ` : ''}
+                        ${showDist ? `
+                        <div>
+                            <h5 style="color:var(--violet-2);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">💻 Distance Learning ${prefRange === 'distance' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            ${distListHtml}
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
             };
 
-            const govHtml = formatInstituteList(govInst, '🏛️');
-            const privHtml = formatInstituteList(privInst, '🏢');
-            const distHtml = formatInstituteList(distInst, '💻');
-            const hasStudyData = hasArray(govInst) || hasArray(privInst) || hasArray(distInst);
+            // Expose the renderer globally for the toggle checkbox to invoke
+            window._renderModalStudySection = renderStudySection;
 
             // Where Will You Work
             const whereWork = career.where_will_you_work || {};
@@ -3730,27 +3885,28 @@
                     <div style="margin-bottom:16px">${loanHtml}</div>
                 ` : '';
 
+            // Preferences Toggle Bar if student has location or specific range set
+            const prefFilterBar = studentInfo.student_location || (studentInfo.college_range && studentInfo.college_range !== 'all') ? `
+                <div style="background:rgba(255,255,255,0.015); border:1px solid var(--stroke); border-radius:12px; padding:12px 18px; margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.1rem;">🎯</span>
+                        <div>
+                            <span style="color:var(--cyan); font-size:0.85rem; font-weight:600; display:block;">Personalized College Filter</span>
+                            <span style="color:var(--muted); font-size:0.78rem;">Location: <strong>${studentInfo.student_location || 'All India'}</strong> · Range: <strong>${studentInfo.college_range === 'government' ? 'Government Only' : studentInfo.college_range === 'private' ? 'Private Only' : studentInfo.college_range === 'distance' ? 'Distance Only' : 'All Colleges'}</strong></span>
+                        </div>
+                    </div>
+                    <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem; color:var(--ink); font-weight:600; user-select:none;">
+                        <input type="checkbox" id="modalPrefFilter" checked style="cursor:pointer; width:15px; height:15px; accent-color:var(--violet);" onchange="const container = document.getElementById('modalInstitutesContainer'); if(container) { container.innerHTML = window._renderModalStudySection(this.checked); }">
+                        Filter strictly by my preferences
+                    </label>
+                </div>
+            ` : '';
+
             const studySection = hasStudyData ? `
                     <h4 class="section-title">🏛️ Where Will You Study?</h4>
-                    <div class="grid-3">
-                    ${hasArray(govInst) ? `
-                    <div>
-                        <h5 style="color:var(--amber);margin-bottom:4px;font-size:0.85rem">🏛️ Government Institutes</h5>
-                        ${govHtml}
-                    </div>
-                    ` : ''}
-                    ${hasArray(privInst) ? `
-                    <div>
-                        <h5 style="color:var(--coral);margin-bottom:4px;font-size:0.85rem">🏢 Private Institutes</h5>
-                        ${privHtml}
-                    </div>
-                    ` : ''}
-                    ${hasArray(distInst) ? `
-                    <div>
-                        <h5 style="color:var(--violet-2);margin-bottom:4px;font-size:0.85rem">💻 Distance Learning</h5>
-                        ${distHtml}
-                    </div>
-                    ` : ''}
+                    ${prefFilterBar}
+                    <div id="modalInstitutesContainer" style="margin-bottom: 16px;">
+                        ${renderStudySection(true)}
                     </div>
                 ` : '';
 
