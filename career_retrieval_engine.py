@@ -319,8 +319,8 @@ def retrieve_careers(profile, careers, top_n=15):
     results = []
     min_score_threshold = 15
     
-    print(f"\n🔍 Retrieving careers with psychometric scoring...")
-    print(f"📊 Processing {len(careers)} careers...")
+    print(f"\n[SEARCH] Retrieving careers with psychometric scoring...")
+    print(f"[INFO] Processing {len(careers)} careers...")
     
     for career in careers:
         career_name = career.get('career_name', '')
@@ -348,15 +348,15 @@ def retrieve_careers(profile, careers, top_n=15):
                     'career_data': career
                 })
         except Exception as e:
-            print(f"⚠️ Error processing {career_name}: {e}")
+            print(f"[WARNING] Error processing {career_name}: {e}")
             continue
     
     results.sort(key=lambda x: x['match_score'], reverse=True)
     
-    print(f"\n✅ Found {len(results)} matching careers")
+    print(f"\n[SUCCESS] Found {len(results)} matching careers")
     
     if results:
-        print("\n📊 Top Matches:")
+        print("\n[INFO] Top Matches:")
         for i, r in enumerate(results[:5], 1):
             print(f"  {i}. {r['career_name']}: {r['match_score']}%")
     

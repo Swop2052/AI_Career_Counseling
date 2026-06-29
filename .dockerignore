@@ -1,0 +1,12 @@
+# .dockerignore
+myenv/
+venv/
+__pycache__/
+*.db
+*.db-journal
+data/
+.env
+Dockerfile
+docker-compose.yml
+.git
+.gitignore

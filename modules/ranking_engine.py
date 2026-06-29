@@ -27,7 +27,7 @@ class RankingEngine:
         # Validate weights sum to 1
         total = sum(self.weights.values())
         if abs(total - 1.0) > 0.01:
-            print(f"⚠️ Warning: Weights sum to {total}, normalizing...")
+            print(f"[WARNING] Warning: Weights sum to {total}, normalizing...")
             for key in self.weights:
                 self.weights[key] = self.weights[key] / total
     

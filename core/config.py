@@ -47,6 +47,8 @@ class Config:
     base_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     career_db_path: str = os.path.join(base_dir, "Data.json")
     riasec_questions_path: str = os.path.join(base_dir, "riasec_questions.json")
+    db_path: str = os.path.join(base_dir, "data", "career_guide.db")
+    db_retention_hours: int = int(os.getenv("DB_RETENTION_HOURS", 24))
     
     # Conversation
     max_chat_history: int = 12

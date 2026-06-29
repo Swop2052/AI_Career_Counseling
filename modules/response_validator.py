@@ -64,7 +64,7 @@ class ResponseValidator:
                 invalid_mentions.append(mention)
         
         if invalid_mentions:
-            print(f"⚠️ LLM mentioned invalid careers: {invalid_mentions}")
+            print(f"[WARNING] LLM mentioned invalid careers: {invalid_mentions}")
             return self._sanitize_response(
                 response, invalid_mentions, valid_careers, student_name
             )
@@ -108,7 +108,7 @@ class ResponseValidator:
                 # Replace with closest match
                 pattern = re.compile(re.escape(invalid), re.IGNORECASE)
                 sanitized = pattern.sub(replacement, sanitized)
-                print(f"🔄 Replaced '{invalid}' with '{replacement}'")
+                print(f"[INFO] Replaced '{invalid}' with '{replacement}'")
             else:
                 # Remove the invalid mention
                 sanitized = re.sub(
@@ -119,7 +119,7 @@ class ResponseValidator:
                     rf'(?m)^\s*(?:\d+\.|[-*])\s*{re.escape(invalid)}\s*$', '',
                     sanitized, flags=re.IGNORECASE
                 )
-                print(f"⚠️ Removed invalid career: {invalid}")
+                print(f"[WARNING] Removed invalid career: {invalid}")
         
         # Add a note if careers were filtered
         if invalid_mentions:
@@ -191,7 +191,7 @@ class ResponseValidator:
 3. **Check the expected income** and growth opportunities
 4. **Ask me specific questions** about any career you're interested in
 
-I'm here to help you make an informed decision about your future! 🚀"""
+I'm here to help you make an informed decision about your future! [STARTUP]"""
         
         return response
     
@@ -206,7 +206,7 @@ I'm here to help you make an informed decision about your future! 🚀"""
 3. **Explore the careers** that do appear in your results
 4. **Ask me questions** about any career you're interested in
 
-If you're not sure where to start, try asking me about careers related to your favorite subjects or hobbies! 🚀
+If you're not sure where to start, try asking me about careers related to your favorite subjects or hobbies! [STARTUP]
 """
 
 

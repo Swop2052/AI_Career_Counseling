@@ -51,7 +51,7 @@ class RetrievalPipeline:
             llm_selected_careers = self._retrieve_via_llm(persona, career_database)
             
             if llm_selected_careers:
-                print(f"🔮 LLM successfully retrieved {len(llm_selected_careers)} matching careers!")
+                print(f"[INFO] LLM successfully retrieved {len(llm_selected_careers)} matching careers!")
                 # Compute scores for the selected careers
                 scored_llm_careers = []
                 for career in llm_selected_careers:
@@ -66,14 +66,14 @@ class RetrievalPipeline:
                 return self._to_career_matches(persona, scored_llm_careers)
             
             # 2. Fallback to heuristic ranking if LLM fails or returns empty
-            print("⚠️ LLM retrieval returned empty or failed. Falling back to heuristic ranking...")
+            print("[WARNING] LLM retrieval returned empty or failed. Falling back to heuristic ranking...")
             ranked_careers = self._rerank_careers(persona, career_database)
             final_careers = self._filter_and_select(ranked_careers, self.final_count)
             return self._to_career_matches(persona, final_careers)
             
         except Exception as e:
             try:
-                print(f"⚠️ Retrieval exception: {e}. Attempting heuristic fallback...")
+                print(f"[WARNING] Retrieval exception: {e}. Attempting heuristic fallback...")
                 ranked_careers = self._rerank_careers(persona, career_database)
                 final_careers = self._filter_and_select(ranked_careers, self.final_count)
                 return self._to_career_matches(persona, final_careers)
@@ -162,11 +162,11 @@ class RetrievalPipeline:
                 if len(final_list) > 0:
                     return final_list[:self.final_count]
             except Exception as parse_err:
-                print(f"⚠️ Failed to parse LLM career retrieval response: {parse_err}")
+                print(f"[WARNING] Failed to parse LLM career retrieval response: {parse_err}")
                 print(f"Raw Response: {response_text}")
                 
         except Exception as llm_err:
-            print(f"❌ LLM career retrieval invocation failed: {llm_err}")
+            print(f"[ERROR] LLM career retrieval invocation failed: {llm_err}")
             
         return []
 

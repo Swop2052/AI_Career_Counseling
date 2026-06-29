@@ -58,16 +58,16 @@ def load_career_database():
         with open(config.career_db_path, "r", encoding="utf-8-sig") as file:
             data = json.load(file)
         careers = data.get("careers", [])
-        print(f"✅ Loaded {len(careers)} careers from {config.career_db_path}")
+        print(f"[SUCCESS] Loaded {len(careers)} careers from {config.career_db_path}")
         return careers
     except FileNotFoundError:
-        print(f"❌ File not found: {config.career_db_path}")
+        print(f"[ERROR] File not found: {config.career_db_path}")
         return []
     except json.JSONDecodeError as e:
-        print(f"❌ JSON Error in {config.career_db_path}: {e}")
+        print(f"[ERROR] JSON Error in {config.career_db_path}: {e}")
         return []
     except Exception as e:
-        print(f"❌ Career Database Error: {e}")
+        print(f"[ERROR] Career Database Error: {e}")
         return []
 
 
@@ -76,16 +76,16 @@ def load_riasec_questions():
     try:
         with open(config.riasec_questions_path, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
-        print(f"✅ Loaded RIASEC questions from {config.riasec_questions_path}")
+        print(f"[SUCCESS] Loaded RIASEC questions from {config.riasec_questions_path}")
         return data
     except FileNotFoundError:
-        print(f"❌ File not found: {config.riasec_questions_path}")
+        print(f"[ERROR] File not found: {config.riasec_questions_path}")
         return {}
     except json.JSONDecodeError as e:
-        print(f"❌ JSON Error in {config.riasec_questions_path}: {e}")
+        print(f"[ERROR] JSON Error in {config.riasec_questions_path}: {e}")
         return {}
     except Exception as e:
-        print(f"❌ RIASEC Questions Error: {e}")
+        print(f"[ERROR] RIASEC Questions Error: {e}")
         return {}
 
 
@@ -112,7 +112,7 @@ def prepare_questions():
                 "category": category
             })
     
-    print(f"✅ Prepared {len(questions)} questions")
+    print(f"[SUCCESS] Prepared {len(questions)} questions")
     return questions
 
 
@@ -126,22 +126,17 @@ def get_session_id():
     """Get or create a session ID."""
     if 'session_id' not in session:
         session['session_id'] = conversation_memory.generate_session_id()
+    # Strip any large legacy keys to prevent session cookie size warnings
+    for key in list(session.keys()):
+        if key not in ['session_id', 'has_taken_test']:
+            session.pop(key, None)
     return session['session_id']
 
 
 def get_or_create_conversation():
     """Get or create a conversation for the current session."""
     session_id = get_session_id()
-    conv = conversation_memory.get_session(session_id)
-    
-    if 'persona' in session and conv.persona is None:
-        conv.persona = session['persona']
-        conversation_memory.set_persona(session_id, session['persona'])
-    
-    if 'career_matches' in session:
-        conv.career_matches = session['career_matches']
-    
-    return conv
+    return conversation_memory.get_session(session_id)
 
 # ============================================================
 # NORMALIZE CAREER RECORD
@@ -291,7 +286,14 @@ def normalize_career_record(career):
 
 @app.route('/')
 def index():
-    """Render the main page."""
+    """Render the main page and clear previous session to start clean."""
+    try:
+        if 'session_id' in session:
+            conversation_memory.clear_session(session['session_id'])
+        session.clear()
+        conversation_memory.cleanup_old_sessions()
+    except Exception as e:
+        print(f"[WARNING] Error cleaning up database on index load: {e}")
     return render_template('index.html')
 
 
@@ -305,7 +307,7 @@ def get_questions():
             'response_scale': QUESTIONS_DATA.get('response_scale', {})
         })
     except Exception as e:
-        print(f"❌ Error in get_questions: {e}")
+        print(f"[ERROR] Error in get_questions: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -322,7 +324,7 @@ def submit_answers():
         answers = data.get('answers', [])
         student_info = data.get('student_info', {})
         
-        print(f"📝 Processing {len(answers)} answers for {student_info.get('name', 'Student')}")
+        print(f"[INFO] Processing {len(answers)} answers for {student_info.get('name', 'Student')}")
         
         scores = {"R": 0, "I": 0, "A": 0, "S": 0, "E": 0, "C": 0}
         category_map = {
@@ -339,7 +341,7 @@ def submit_answers():
             if category in category_map:
                 scores[category_map[category]] += answer.get('value', 0)
         
-        print(f"📊 RIASEC Scores: {scores}")
+        print(f"[INFO] RIASEC Scores: {scores}")
         
         profile = generate_student_profile(scores, student_info)
         display_profile(profile)
@@ -348,12 +350,12 @@ def submit_answers():
         persona_dict = persona.to_dict() if hasattr(persona, 'to_dict') else persona
         
         session.permanent = True
-        session['profile'] = profile
-        session['persona'] = persona_dict
-        session['scores'] = scores
         session['has_taken_test'] = True
         
-        print("🔄 Running career retrieval pipeline...")
+        session_id = get_session_id()
+        conversation_memory.set_persona(session_id, persona_dict)
+        
+        print("[INFO] Running career retrieval pipeline...")
         career_matches = retrieval_pipeline.retrieve(persona_dict, CAREER_DB)
         
         top_careers = []
@@ -371,12 +373,7 @@ def submit_answers():
                 'improvement_areas': match.improvement_areas[:2]
             })
         
-        # Store career matches in session
-        session['matched_careers'] = [m.career_data for m in career_matches]
-        session['career_matches'] = [m.to_dict() for m in career_matches]
-        
-        # Store in conversation memory
-        session_id = get_session_id()
+        # Store in conversation memory (database)
         conversation_memory.set_career_matches(session_id, [m.to_dict() for m in career_matches])
         
         response_data = {
@@ -386,12 +383,12 @@ def submit_answers():
         }
         
         elapsed_time = time.time() - start_time
-        print(f"✅ Returning {len(top_careers)} top careers (took {elapsed_time:.2f}s)")
+        print(f"[SUCCESS] Returning {len(top_careers)} top careers (took {elapsed_time:.2f}s)")
         
         return jsonify(response_data)
         
     except Exception as e:
-        print(f"❌ Error in submit_answers: {e}")
+        print(f"[ERROR] Error in submit_answers: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -411,7 +408,7 @@ def career_detail():
         return jsonify({'error': 'Career not found'}), 404
         
     except Exception as e:
-        print(f"❌ Error in career_detail: {e}")
+        print(f"[ERROR] Error in career_detail: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -432,8 +429,8 @@ def chat():
         conv = get_or_create_conversation()
         session_id = get_session_id()
         
-        # Get persona from session or create default
-        persona = session.get('persona')
+        # Get persona from SQLite database memory or create default
+        persona = conversation_memory.get_persona(session_id)
         if not persona:
             persona = {
                 'student_info': {'name': 'Student'},
@@ -443,18 +440,22 @@ def chat():
                 'preferences': {}
             }
         
+        # Check SQLite database for career matches
+        career_matches = conversation_memory.get_career_matches(session_id)
+        has_taken_test = session.get('has_taken_test', False) or (persona is not None and persona.get('riasec_profile') != {})
+        
         # Build context for intent classification
         context = {
             'last_intent': conversation_memory.get_last_intent(session_id),
-            'requires_retrieval': bool(session.get('has_taken_test', False)),
-            'is_career_related': bool(session.get('career_matches', [])),
-            'should_use_career_data': bool(session.get('career_matches', []))
+            'requires_retrieval': bool(has_taken_test),
+            'is_career_related': bool(career_matches),
+            'should_use_career_data': bool(career_matches)
         }
         
         # Classify intent
         classification = intent_classifier.classify(message, context)
         
-        print(f"🧠 Intent: {classification.intent} (confidence: {classification.confidence:.2f})")
+        print(f"[INFO] Intent: {classification.intent} (confidence: {classification.confidence:.2f})")
         print(f"   Career related: {classification.is_career_related}")
         print(f"   Requires retrieval: {classification.requires_retrieval}")
         print(f"   Should use career data: {classification.should_use_career_data}")
@@ -467,11 +468,8 @@ def chat():
         should_use_career_data = classification.should_use_career_data
         
         if classification.requires_retrieval or should_use_career_data:
-            # Try to get career matches from session or memory
+            # Try to get career matches from database memory
             stored_matches = conversation_memory.get_career_matches(session_id)
-            
-            if not stored_matches and session.get('career_matches'):
-                stored_matches = session.get('career_matches', [])
             
             if stored_matches:
                 for match_data in stored_matches[:6]:
@@ -497,27 +495,6 @@ def chat():
                     else:
                         # Already a CareerMatch object
                         career_matches_data.append(match_data)
-        
-        # If no career matches but user has taken test, get from session
-        if not career_matches_data and session.get('has_taken_test') and session.get('matched_careers'):
-            for career in session.get('matched_careers', [])[:6]:
-                career_matches_data.append(CareerMatch(
-                    career_name=career.get('career_name', ''),
-                    career_data=career,
-                    match_score=50,
-                    profile_match=50,
-                    riasec_match=50,
-                    subject_match=50,
-                    interest_match=50,
-                    goal_match=50,
-                    skill_match=50,
-                    location_match=50,
-                    confidence=0.5,
-                    reason="This career shows potential based on your profile.",
-                    strengths=["Relevant personality traits"],
-                    improvement_areas=["Further explore this career"],
-                    score_breakdown={}
-                ))
         
         # Get conversation history
         history = conversation_memory.get_history_for_prompt(session_id, limit=config.max_history_for_prompt)
@@ -549,12 +526,12 @@ def chat():
         )
         
         elapsed_time = time.time() - start_time
-        print(f"💬 Chat response generated in {elapsed_time:.2f}s")
+        print(f"[CHAT] Chat response generated in {elapsed_time:.2f}s")
         
         return jsonify({'response': validated_response})
         
     except Exception as e:
-        print(f"❌ Error in chat: {e}")
+        print(f"[ERROR] Error in chat: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
@@ -570,7 +547,7 @@ def all_careers():
             'careers': [normalize_career_record(career) for career in CAREER_DB]
         })
     except Exception as e:
-        print(f"❌ Error in all_careers: {e}")
+        print(f"[ERROR] Error in all_careers: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -583,7 +560,7 @@ def clear_session():
         session.clear()
         return jsonify({'status': 'success'})
     except Exception as e:
-        print(f"❌ Error in clear_session: {e}")
+        print(f"[ERROR] Error in clear_session: {e}")
         return jsonify({'error': str(e)}), 500
 
 
@@ -596,7 +573,7 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     """Handle 500 errors."""
-    print(f"❌ Internal server error: {error}")
+    print(f"[ERROR] Internal server error: {error}")
     return jsonify({'error': 'Internal server error'}), 500
 
 
@@ -606,13 +583,13 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("\n" + "=" * 60)
-    print("🚀 AI CAREER GUIDE SERVER STARTING... (Production Ready)")
+    print("[STARTUP] AI CAREER GUIDE SERVER STARTING... (Production Ready)")
     print("=" * 60)
-    print(f"📚 Loaded {len(CAREER_DB)} careers")
-    print(f"❓ Loaded {len(QUESTIONS)} questions")
-    print(f"🧠 Nova Engine: {'Ready' if nova._client else 'Fallback Mode'}")
-    print(f"📊 Ranking Weights: {retrieval_pipeline._to_career_matches.__code__.co_filename if hasattr(retrieval_pipeline, '_to_career_matches') else 'Configured'}")
-    print("🌐 Server running at http://localhost:5000")
+    print(f"[INFO] Loaded {len(CAREER_DB)} careers")
+    print(f"[INFO] Loaded {len(QUESTIONS)} questions")
+    print(f"[INFO] Nova Engine: {'Ready' if nova._client else 'Fallback Mode'}")
+    print(f"[INFO] Ranking Weights: {retrieval_pipeline._to_career_matches.__code__.co_filename if hasattr(retrieval_pipeline, '_to_career_matches') else 'Configured'}")
+    print("[INFO] Server running at http://localhost:5000")
     print("=" * 60 + "\n")
     
     app.run(

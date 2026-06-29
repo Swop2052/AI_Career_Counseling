@@ -31,9 +31,9 @@ try:
                 kwargs["proxy"] = proxies["http://"]
         original_async_client_init(self, *args, **kwargs)
     httpx.AsyncClient.__init__ = custom_async_client_init
-    print("✅ Successfully applied httpx client proxies monkeypatch")
+    print("[SUCCESS] Successfully applied httpx client proxies monkeypatch")
 except Exception as e:
-    print(f"⚠️ httpx monkeypatch not applied or not needed: {e}")
+    print(f"[INFO] httpx monkeypatch not applied or not needed: {e}")
 
 
 class NovaEngine:
@@ -55,17 +55,17 @@ class NovaEngine:
     def _initialize_client(self):
         """Initialize the Anthropic client."""
         if not self.api_key:
-            print("⚠️ WARNING: ANTHROPIC_API_KEY not found in .env file!")
+            print("[WARNING] WARNING: ANTHROPIC_API_KEY not found in .env file!")
             return
         
         try:
             import anthropic
             self._client = anthropic.Anthropic(api_key=self.api_key)
-            print("✅ VERA LLM Engine initialized with Anthropic")
+            print("[SUCCESS] VERA LLM Engine initialized with Anthropic")
         except ImportError:
-            print("⚠️ WARNING: anthropic package not installed!")
+            print("[WARNING] WARNING: anthropic package not installed!")
         except Exception as e:
-            print(f"⚠️ WARNING: Failed to initialize Anthropic client: {e}")
+            print(f"[WARNING] WARNING: Failed to initialize Anthropic client: {e}")
 
     def generate_response(
         self,
@@ -107,11 +107,11 @@ class NovaEngine:
                     params["top_p"] = self.top_p
 
                 response = self._client.messages.create(**params)
-                print("✨ Response generated successfully via Anthropic Client!")
+                print("[SUCCESS] Response generated successfully via Anthropic Client!")
                 return response.content[0].text
                 
             except Exception as e:
-                print(f"❌ Anthropic LLM Engine Error: {e}")
+                print(f"[ERROR] Anthropic LLM Engine Error: {e}")
         
         # Fallback if Anthropic fails or is unconfigured
         return self._get_fallback_response(prompt)
@@ -138,7 +138,7 @@ STRICT RULES:
 STYLE:
 - Be warm, friendly, and encouraging
 - Use the student's name when possible
-- Use emojis occasionally for a friendly tone (😊, 🚀, 🎯)
+- Use emojis occasionally for a friendly tone (😊, [STARTUP], 🎯)
 - Provide specific, actionable advice
 - Keep responses conversational and helpful
 
@@ -176,13 +176,13 @@ Remember: You are a helpful career companion. If you don't know something, say s
         
         # Greeting response
         if intent == "greeting":
-            return f"""👋 Hi! I'm VERA, your AI Career Companion. 🚀
+            return f"""👋 Hi! I'm VERA, your AI Career Companion. [STARTUP]
 
 I’m here to help you explore career options, understand your strengths, discover required skills, and plan your next steps.
 
 Here's how I can help you:
 - 🎯 Discover careers that match your personality
-- 📚 Get detailed information about any career
+- [INFO] Get detailed information about any career
 - 💰 Learn about salaries and growth opportunities
 - 🎓 Find out about educational pathways
 - 💡 Get personalized advice based on your profile
@@ -200,10 +200,10 @@ I've found several career matches for you. To get the most helpful information, 
 - 📋 What the career involves
 - 🎓 Educational pathway required
 - 💰 Expected salary range
-- 📝 Entrance exams (if any)
+- [INFO] Entrance exams (if any)
 - 📈 Growth opportunities
 
-Which career would you like to learn more about? 🚀"""
+Which career would you like to learn more about? [STARTUP]"""
             else:
                 return f"""💭 Thanks for your question, {name}!
 
@@ -216,16 +216,16 @@ Please take the Career Test by clicking the "Start Career Test" button on the pa
             return f"""💭 Great question about your profile, {name}!
 
 Based on the information you've provided, I can help you understand:
-- 🧠 Your RIASEC personality type
+- [INFO] Your RIASEC personality type
 - 💪 Your key strengths and traits
 - 🎯 Careers that align with your profile
-- 📚 Subjects and skills that match you
+- [INFO] Subjects and skills that match you
 
 Your profile gives us valuable insights into what makes you unique. Would you like to explore specific aspects of your profile or see career recommendations? 😊"""
         
         # Off-topic
         if intent == "off_topic":
-            return f"""💭 I specialize in career guidance and helping students like you find the right path forward! 🚀
+            return f"""💭 I specialize in career guidance and helping students like you find the right path forward! [STARTUP]
 
 While I'd love to chat about many topics, I'm best at helping with:
 - Career exploration and recommendations
@@ -246,7 +246,7 @@ What would you like to know about your career journey? I'm here to help! 😊"""
 - **"How much does [career] pay?"** - Check salary information
 - **"What exams do I need for [career]?"** - Learn about entrance exams
 
-Just type your question and I'll help you out! 🚀"""
+Just type your question and I'll help you out! [STARTUP]"""
 
 
 # Singleton instance

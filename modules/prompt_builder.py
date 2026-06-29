@@ -300,7 +300,7 @@ class PromptBuilder:
         lines.append("1. Have a natural, conversational, and empathetic tone")
         lines.append("2. Use the student's name when possible")
         lines.append("3. Provide specific, actionable advice")
-        lines.append("4. Use emojis occasionally for a friendly tone (😊, 🚀, 🎯)")
+        lines.append("4. Use emojis occasionally for a friendly tone (😊, [STARTUP], 🎯)")
         lines.append("5. Keep responses concise and easy to understand")
         lines.append("6. Ask clarifying questions when needed")
         lines.append("7. NEVER hallucinate salaries, colleges, exams, or facts")

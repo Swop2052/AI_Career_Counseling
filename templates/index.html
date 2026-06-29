@@ -1982,8 +1982,7 @@
                         </div>
                         <div class="form-group">
                             <label for="studentLocation">Your State/City</label>
-                            <input type="text" id="studentLocation"
-                                placeholder="e.g., Tamil Nadu, Maharashtra, Delhi">
+                            <input type="text" id="studentLocation" placeholder="e.g., Tamil Nadu, Maharashtra, Delhi">
                         </div>
                         <div class="form-group">
                             <label for="collegeRange">Preferred College Type/Range</label>
@@ -2392,6 +2391,17 @@
         // QUIZ FUNCTIONS
         // ============================================================
         function startQuiz() {
+            // Call backend to clear previous session so we start completely fresh
+            try {
+                fetch('/api/clear-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                }).catch(err => console.error('Error clearing session:', err));
+            } catch (e) {
+                console.error(e);
+            }
+
             document.getElementById('quiz-section').scrollIntoView({ behavior: 'smooth' });
             document.getElementById('profileFormContainer').classList.add('active');
             document.getElementById('quizContainer').classList.remove('active');
@@ -2958,14 +2968,14 @@
                         const gov = study.government_institutes || study.government || [];
                         const priv = study.private_institutes || study.private || [];
                         const dist = study.distance_learning || [];
-                        
+
                         [gov, priv, dist].forEach(list => {
                             if (Array.isArray(list)) {
                                 list.forEach(inst => {
                                     let instLoc = '';
                                     if (typeof inst === 'string') instLoc = inst.toLowerCase();
                                     else if (inst && typeof inst === 'object') instLoc = (inst.location || '').toLowerCase();
-                                    
+
                                     if (instLoc && instLoc.includes(studentLocVal)) {
                                         matchedCollegesCount++;
                                     }
@@ -3171,10 +3181,10 @@
 
             const formatInst = (list, typeName) => {
                 if (!Array.isArray(list) || list.length === 0) return '<li>No institutes listed</li>';
-                
+
                 const studentLocVal = studentInfo.student_location ? studentInfo.student_location.trim().toLowerCase() : '';
                 const prefRange = studentInfo.college_range || 'all';
-                
+
                 if (prefRange !== 'all' && prefRange !== typeName) {
                     return '<li>Filtered out based on your college type preferences</li>';
                 }
@@ -3642,7 +3652,7 @@
                 const processList = (rawList) => {
                     if (!rawList) return [];
                     const listArr = Array.isArray(rawList) ? rawList : [rawList];
-                    
+
                     const mapped = listArr.map(inst => {
                         let name = 'Unknown Institute';
                         let location = '';
@@ -3652,7 +3662,7 @@
                             name = inst.name || 'Unknown Institute';
                             location = inst.location || '';
                         }
-                        
+
                         const isLocal = studentLocVal && location.toLowerCase().includes(studentLocVal);
                         return { name, location, isLocal, original: inst };
                     });
