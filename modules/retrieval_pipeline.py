@@ -47,26 +47,24 @@ class RetrievalPipeline:
             return []
         
         try:
-            # 1. Attempt LLM-based career selection
-            llm_selected_careers = self._retrieve_via_llm(persona, career_database)
+            # 1. Attempt Vector Store-based semantic retrieval if enabled
+            from modules.vector_store import vector_store
             
-            if llm_selected_careers:
-                print(f"[INFO] LLM successfully retrieved {len(llm_selected_careers)} matching careers!")
-                # Compute scores for the selected careers
-                scored_llm_careers = []
-                for career in llm_selected_careers:
-                    scores = ranking_engine.compute_scores(persona, career)
-                    scored_llm_careers.append({
-                        "career": career,
-                        "scores": scores,
-                        "total_score": scores["match_score"]
-                    })
-                # Sort the list by match score descending so that the highest matches show first
-                scored_llm_careers.sort(key=lambda x: x["total_score"], reverse=True)
-                return self._to_career_matches(persona, scored_llm_careers)
-            
-            # 2. Fallback to heuristic ranking if LLM fails or returns empty
-            print("[WARNING] LLM retrieval returned empty or failed. Falling back to heuristic ranking...")
+            if vector_store.enabled:
+                print("[INFO] Performing local vector semantic career search (all-MiniLM-L6-v2)...")
+                query_str = self._build_vector_query(persona)
+                # Fetch candidate results (e.g. 20) and let our ranking engine narrow it down to top matches
+                vector_selected_careers = vector_store.search_careers(query_str, n_results=20)
+                
+                if vector_selected_careers:
+                    print(f"[SUCCESS] Vector store successfully retrieved {len(vector_selected_careers)} candidates.")
+                    # Score and rerank the candidates
+                    ranked_candidates = self._rerank_careers(persona, vector_selected_careers)
+                    final_careers = self._filter_and_select(ranked_candidates, self.final_count)
+                    return self._to_career_matches(persona, final_careers)
+                    
+            # 2. Fallback: Heuristic ranking over the entire database (Instantaneous: ~10-20ms)
+            print("[INFO] Performing high-speed heuristic career ranking...")
             ranked_careers = self._rerank_careers(persona, career_database)
             final_careers = self._filter_and_select(ranked_careers, self.final_count)
             return self._to_career_matches(persona, final_careers)
@@ -79,6 +77,34 @@ class RetrievalPipeline:
                 return self._to_career_matches(persona, final_careers)
             except Exception as inner_e:
                 raise RetrievalError(f"Retrieval pipeline failed: {str(inner_e)}")
+
+    def _build_vector_query(self, persona: Dict) -> str:
+        """Build a rich search query from the student's persona."""
+        academic = persona.get("academic_profile", {})
+        interests = persona.get("interests", {})
+        riasec = persona.get("riasec_profile", {})
+        
+        # Combine favorite subjects, strengths, interests, hobbies, and personality traits
+        subjects = ", ".join(academic.get("subjects", []))
+        strengths = ", ".join(academic.get("strengths", []))
+        hobbies = ", ".join(interests.get("hobbies", []))
+        interest_list = ", ".join(interests.get("interests", []))
+        traits = ", ".join(riasec.get("traits", []))
+        riasec_code = riasec.get("code", "")
+        
+        query_parts = []
+        if subjects:
+            query_parts.append(f"subjects: {subjects}")
+        if strengths:
+            query_parts.append(f"strengths: {strengths}")
+        if hobbies or interest_list:
+            query_parts.append(f"interests: {interest_list} {hobbies}")
+        if traits:
+            query_parts.append(f"personality traits: {traits}")
+        if riasec_code:
+            query_parts.append(f"RIASEC: {riasec_code}")
+            
+        return " | ".join(query_parts)
 
     def _retrieve_via_llm(self, persona: Dict, career_database: List[Dict]) -> List[Dict]:
         """Use Anthropic LLM (Claude) to retrieve the top 6 careers matching the student persona."""

@@ -19,7 +19,8 @@ class ResponseValidator:
         self,
         response: str,
         career_matches: List[CareerMatch],
-        student_name: str = "Student"
+        student_name: str = "Student",
+        all_valid_careers: Optional[List[str]] = None
     ) -> str:
         """
         Validate and sanitize the LLM response.
@@ -28,6 +29,7 @@ class ResponseValidator:
             response: The LLM response to validate
             career_matches: List of valid career matches
             student_name: The student's name
+            all_valid_careers: List of all valid careers in the database
             
         Returns:
             Validated response
@@ -35,13 +37,12 @@ class ResponseValidator:
         if not response:
             return self._generate_fallback_response(student_name, career_matches)
         
-        if not career_matches:
-            # If there are no career matches, we don't perform strict career-filtering
-            # to allow general chat, greetings, and queries before taking the test.
-            return response
-        
-        # Get valid career names
+        # Get valid career names (merge student's matches + all database careers if available)
         valid_careers = [match.career_name for match in career_matches]
+        if all_valid_careers:
+            # Combine them, keeping student matches first for closest match fallback
+            valid_careers.extend([c for c in all_valid_careers if c not in valid_careers])
+            
         valid_careers_lower = [c.lower() for c in valid_careers]
         valid_careers_set = set(valid_careers_lower)
         
@@ -53,7 +54,7 @@ class ResponseValidator:
         for mention in mentioned:
             mention_lower = mention.lower()
             
-            # Check if mention matches any valid career
+            # Check if mention matches any valid career in database
             is_valid = False
             for valid in valid_careers_lower:
                 if mention_lower == valid or mention_lower in valid or valid in mention_lower:
@@ -98,9 +99,10 @@ class ResponseValidator:
         valid_careers: List[str],
         student_name: str
     ) -> str:
-        """Sanitize response by replacing or removing invalid mentions."""
+        """Sanitize response by replacing close matches or preserving general text."""
         sanitized = response
         
+        has_real_invalid = False
         for invalid in invalid_mentions:
             replacement = self._find_closest_match(invalid, valid_careers)
             
@@ -109,20 +111,14 @@ class ResponseValidator:
                 pattern = re.compile(re.escape(invalid), re.IGNORECASE)
                 sanitized = pattern.sub(replacement, sanitized)
                 print(f"[INFO] Replaced '{invalid}' with '{replacement}'")
+                has_real_invalid = True
             else:
-                # Remove the invalid mention
-                sanitized = re.sub(
-                    rf'\*\*\s*{re.escape(invalid)}\s*\*\*', '', sanitized,
-                    flags=re.IGNORECASE
-                )
-                sanitized = re.sub(
-                    rf'(?m)^\s*(?:\d+\.|[-*])\s*{re.escape(invalid)}\s*$', '',
-                    sanitized, flags=re.IGNORECASE
-                )
-                print(f"[WARNING] Removed invalid career: {invalid}")
+                # If there's no high-similarity career match, we assume it's general bold text or guidance.
+                # Do NOT replace or delete it! Just leave it in the response.
+                print(f"[INFO] Preserving general bold/list mention: '{invalid}'")
         
-        # Add a note if careers were filtered
-        if invalid_mentions:
+        # Add a note ONLY if actual invalid career mentions were replaced
+        if has_real_invalid:
             sanitized += (
                 f"\n\nℹ️ Based on your profile, I'm focusing on careers that match "
                 f"your specific personality traits. Your top matched careers are "
@@ -132,15 +128,27 @@ class ResponseValidator:
         return sanitized
     
     def _find_closest_match(self, invalid_name: str, valid_careers: List[str]) -> Optional[str]:
-        """Find the closest valid career name match."""
+        """Find the closest valid career name match using strong word overlap thresholds."""
         if not valid_careers:
             return None
         
-        invalid_lower = invalid_name.lower()
-        invalid_words = set(invalid_lower.split())
+        invalid_lower = invalid_name.lower().strip()
         
+        # If it's a general instruction placeholder or standard action phrase, ignore it
+        ignore_words = {
+            'career', 'job', 'tell', 'me', 'about', 'skills', 'need', 'pay', 'pay?', 'exams', 
+            'what', 'match', 'how', 'choose', 'right', 'counselor', 'journey', 'check', 'salary', 
+            'information', 'details', 'guidance', 'study', 'become', 'learn', 'required'
+        }
+        
+        # Remove punctuation for better word extraction
+        cleaned_invalid = re.sub(r'[^\w\s]', '', invalid_lower)
+        invalid_words = {w for w in cleaned_invalid.split() if w not in ignore_words and len(w) > 3}
+        if not invalid_words:
+            return None
+            
         best_match = None
-        best_score = 0
+        best_score = 0.0
         
         for valid in valid_careers:
             valid_lower = valid.lower()
@@ -149,27 +157,35 @@ class ResponseValidator:
             if invalid_lower == valid_lower:
                 return valid
             
-            # Check for substring match
-            if invalid_lower in valid_lower or valid_lower in invalid_lower:
+            # Check for substring match (only if invalid name is reasonably long to prevent false substring hits on short words)
+            if len(invalid_lower) > 5 and (invalid_lower in valid_lower or valid_lower in invalid_lower):
                 return valid
             
             # Word overlap
-            valid_words = set(valid_lower.split())
+            cleaned_valid = re.sub(r'[^\w\s]', '', valid_lower)
+            valid_words = set(cleaned_valid.split())
             common = invalid_words.intersection(valid_words)
-            score = len(common)
             
-            # Check for partial word matches
-            for iw in invalid_words:
-                for vw in valid_words:
-                    if len(iw) > 3 and len(vw) > 3:
-                        if iw in vw or vw in iw:
-                            score += 1
+            # Filter common words
+            filtered_common = {w for w in common if w not in ignore_words and len(w) > 3}
+            score = float(len(filtered_common))
+            
+            # Partial word checks (only for words of length > 3 to avoid matching initials like 's', 'v', etc.)
+            remaining_invalid = {w for w in invalid_words - filtered_common if len(w) > 3}
+            remaining_valid = {w for w in valid_words - filtered_common if len(w) > 3}
+            for iw in remaining_invalid:
+                for vw in remaining_valid:
+                    if iw in vw or vw in iw:
+                        score += 0.5
             
             if score > best_score:
                 best_score = score
                 best_match = valid
         
-        return best_match if best_score >= 1 else None
+        # Only suggest a replacement if the keyword matching score is significant (e.g. >= 1.5)
+        # This prevents converting general bold phrases like "**Mathematics**" or "**Physics**" to careers,
+        # but allows correcting slightly misspelled inputs like "**Sofware Developer**" -> "Software Developer".
+        return best_match if best_score >= 1.5 else None
     
     def _generate_fallback_response(self, student_name: str, career_matches: List[CareerMatch]) -> str:
         """Generate a fallback response."""

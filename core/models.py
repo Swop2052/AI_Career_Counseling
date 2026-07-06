@@ -47,6 +47,9 @@ class Conversation:
     last_intent: Optional[str] = None
     persona: Optional[Dict] = None
     career_matches: List[Dict] = field(default_factory=list)
+    riasec_answers: List[Dict] = field(default_factory=list)
+    riasec_scores: Dict[str, int] = field(default_factory=dict)
+    overall_session: Optional[Dict] = None
     
     def add_message(self, role: str, content: str, intent: Optional[str] = None) -> Message:
         msg = Message(role=role, content=content, intent=intent)

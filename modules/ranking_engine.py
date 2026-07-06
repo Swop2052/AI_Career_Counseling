@@ -42,7 +42,7 @@ class RankingEngine:
         
         # Compute individual scores (0-100)
         profile_score = self._compute_profile_match(persona, career_text)
-        riasec_score = self._compute_riasec_match(persona, career_text)
+        riasec_score = self._compute_riasec_match(persona, career)
         subject_score = self._compute_subject_match(persona, career_text)
         interest_score = self._compute_interest_match(persona, career_text)
         goal_score = self._compute_goal_match(persona, career_text)
@@ -146,7 +146,7 @@ class RankingEngine:
         
         return sum(scores) if scores else 0
     
-    def _compute_riasec_match(self, persona: Dict, career_text: str) -> float:
+    def _compute_riasec_match(self, persona: Dict, career: Any) -> float:
         """Compute RIASEC match score (0-100)."""
         riasec_profile = persona.get("riasec_profile", {})
         code = riasec_profile.get("code", "")
@@ -171,13 +171,29 @@ class RankingEngine:
         if total_weight == 0:
             return 0
         
+        career_tags = []
+        career_text = ""
+        if isinstance(career, dict):
+            career_tags = career.get("riasec_tags", [])
+            career_text = extract_text_from_career(career)
+        else:
+            career_text = str(career)
+            
         matched_weight = 0
-        for code_char, weight in code_weights.items():
-            keywords = RIASEC_KEYWORDS.get(code_char, [])
-            for keyword in keywords:
-                if keyword in career_text:
+        
+        # If explicit tags exist in Data.json, score deterministically
+        if career_tags:
+            for code_char, weight in code_weights.items():
+                if code_char in career_tags:
                     matched_weight += weight
-                    break
+        else:
+            # Fallback to scanning description keyword matches
+            for code_char, weight in code_weights.items():
+                keywords = RIASEC_KEYWORDS.get(code_char, [])
+                for keyword in keywords:
+                    if keyword in career_text:
+                        matched_weight += weight
+                        break
         
         return (matched_weight / total_weight) * 100
     

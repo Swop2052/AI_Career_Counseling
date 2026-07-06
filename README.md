@@ -1,4 +1,4 @@
-# 🚀 AI Career Guide
+# 🚀 SkillSense
 
 ### Your Personal AI-Powered Career Counselor
 
@@ -6,7 +6,7 @@
 
 ## 🌟 What is This Project?
 
-The **AI Career Guide** is a smart web application that helps students discover the right career path based on their personality, interests, and academic strengths. It combines a fun personality test with an AI chatbot that provides personalized career recommendations.
+The **SkillSense** is a smart web application that helps students discover the right career path based on their personality, interests, and academic strengths. It combines a fun personality test with an AI chatbot that provides personalized career recommendations.
 
 **Think of it as having a career counselor in your pocket, available 24/7.**
 
@@ -255,12 +255,12 @@ For each question, tell us how much it sounds like you:
 - View your top 6 career matches
 - Click any career for full details
 
-### Step 6: Chat with Nova
-Ask Nova anything about your career matches or any career-related question!
+### Step 6: Chat with VERA
+Ask VERA anything about your career matches or any career-related question!
 
 ---
 
-## 💡 What Can You Ask Nova?
+## 💡 What Can You Ask VERA?
 
 | Question Type | Example |
 |---------------|---------|
@@ -282,7 +282,7 @@ Ask Nova anything about your career matches or any career-related question!
 | **RIASEC Test** | 42 questions to find your personality type |
 | **Smart Matching** | Scores each career based on your unique profile |
 | **Explainable Results** | Tells you WHY each career matches you |
-| **AI Chat** | 24/7 career counselor - Nova |
+| **AI Chat** | 24/7 career counselor - VERA |
 | **Career Details** | Everything you need to know about any career |
 | **Educational Guidance** | Schools, colleges, exams, and fees |
 | **Financial Info** | Scholarships, loans, and income |
@@ -297,7 +297,7 @@ Ask Nova anything about your career matches or any career-related question!
 Not generic advice – every recommendation is based on YOUR profile
 
 ### 🧠 AI-Powered
-Nova understands your questions and gives human-like, helpful answers
+VERA understands your questions and gives human-like, helpful answers
 
 ### 📚 Comprehensive
 Covers education, skills, salaries, colleges, exams, and growth
@@ -336,11 +336,11 @@ A: The system is based on the well-established RIASEC framework and uses AI to p
 ### Q: Can I retake the test?
 A: Yes! You can start over anytime by clicking "Start Career Test" again.
 
-### Q: Is Nova a real person?
-A: Nova is an AI-powered chatbot. It's like ChatGPT but specially trained for career guidance.
+### Q: Is VERA a real person?
+A: VERA is an AI-powered chatbot. It's like ChatGPT but specially trained for career guidance.
 
-### Q: Does Nova make up information?
-A: No. Nova only uses information from the career database (Data.json). If something isn't in the database, Nova will tell you honestly.
+### Q: Does VERA make up information?
+A: No. VERA only uses information from the career database (Data.json). If something isn't in the database, VERA will tell you honestly.
 
 ### Q: Can I use this on my phone?
 A: Yes! The website works on phones, tablets, and computers.
@@ -386,7 +386,7 @@ This project is created for educational and career guidance purposes.
 
 If you have questions or need help:
 - Check the FAQ section above
-- Ask Nova in the chat
+- Ask VERA in the chat
 - Contact your teacher or counselor
 
 ---
@@ -394,6 +394,40 @@ If you have questions or need help:
 ## 🌐 Live Demo
 
 The application runs on `http://localhost:5000` when you start the server.
+
+---
+
+## 🐳 Docker & Production Deployment
+
+The project is fully containerized and configured for quick deployment using Docker and Docker Compose.
+
+### Environment Setup
+Create a `.env` file in the root directory and add your keys:
+```env
+ANTHROPIC_API_KEY=your-api-key-here
+FLASK_SECRET_KEY=your-secure-secret-key
+```
+
+### Option A: Using Docker Compose (Recommended)
+This maps directory volumes so your student database (`career_guide.db`) is kept safe even if the container is updated.
+1. **Build and Run the Containers**:
+   ```bash
+   docker compose up --build -d
+   ```
+2. **Stop the Application**:
+   ```bash
+   docker compose down
+   ```
+
+### Option B: Using Standalone Docker
+1. **Build the Image**:
+   ```bash
+   docker build -t skillsense .
+   ```
+2. **Run the Container**:
+   ```bash
+   docker run -p 5000:5000 --env-file .env skillsense
+   ```
 
 ---
 

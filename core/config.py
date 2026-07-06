@@ -32,6 +32,7 @@ class Config:
     weight_location_match: float = 0.05
     
     # Retrieval
+    use_llm_retrieval: bool = os.getenv("USE_LLM_RETRIEVAL", "true").lower() == "true"
     top_careers_per_pipeline: int = 6
     final_career_count: int = 6
     min_confidence_threshold: float = 15.0
@@ -47,7 +48,8 @@ class Config:
     base_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     career_db_path: str = os.path.join(base_dir, "Data.json")
     riasec_questions_path: str = os.path.join(base_dir, "riasec_questions.json")
-    db_path: str = os.path.join(base_dir, "data", "career_guide.db")
+
+    db_path: str = os.getenv("DB_PATH", os.path.join(base_dir, "data", "career_guide.db"))
     db_retention_hours: int = int(os.getenv("DB_RETENTION_HOURS", 24))
     
     # Conversation

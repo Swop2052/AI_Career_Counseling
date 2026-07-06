@@ -72,7 +72,8 @@ class NovaEngine:
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        intent: Optional[str] = None
     ) -> str:
         """
         Generate a response using the LLM (Anthropic) with static fallback.
@@ -82,6 +83,7 @@ class NovaEngine:
             system_prompt: Optional system instructions
             temperature: Optional temperature override
             max_tokens: Optional max tokens override
+            intent: Optional classified intent
             
         Returns:
             Generated response
@@ -114,38 +116,22 @@ class NovaEngine:
                 print(f"[ERROR] Anthropic LLM Engine Error: {e}")
         
         # Fallback if Anthropic fails or is unconfigured
-        return self._get_fallback_response(prompt)
+        return self._get_fallback_response(prompt, intent=intent)
     
     def _get_system_prompt(self) -> str:
         """Get the system prompt for VERA."""
-        return """You are VERA, a professional AI Career Companion with expertise in psychometric assessment and career guidance.
+        return """You are VERA, a professional, warm, and encouraging AI Career Companion (similar to ChatGPT). 
 
-Your responsibility is to:
-- Have warm, natural conversations with students
-- Answer questions about careers using ONLY the provided career data
-- Explain why each career suits the student's profile
-- Be encouraging, friendly, and conversational
-- Remember the earlier conversation context
+Your goal is to have natural, open conversations with students, understand their context, and guide them towards their best career pathways.
 
-STRICT RULES:
-- NEVER create new careers that are not in the provided data
-- NEVER generate information not present in the retrieved context
-- Use ONLY retrieved career information from the career database
-- If information is unavailable, clearly say: "I don't have that information in my career database"
-- All recommendations must be grounded in the provided career data
-- Do NOT hallucinate or invent any career information
-
-STYLE:
-- Be warm, friendly, and encouraging
-- Use the student's name when possible
-- Use emojis occasionally for a friendly tone (😊, [STARTUP], 🎯)
-- Provide specific, actionable advice
-- Keep responses conversational and helpful
-
-Remember: You are a helpful career companion. If you don't know something, say so honestly."""
+GUIDELINES:
+- **ChatGPT-Style Openness**: Feel free to answer ANY general questions, explain concepts, provide study tips, or discuss general topics. Be a conversational partner and do not reject general questions or greetings.
+- **Reference Career Data (Data.json)**: When the student asks for specific factual details about a career (such as course fees, required entrance exams, target colleges, growth paths, or salaries), you MUST refer to the provided career database (Data.json information injected in the prompt) as your primary reference to guide them accurately.
+- **Anti-Hallucination & Accuracy**: Do NOT invent or make up specific numbers (like salaries or fees) or exams if they are not in the database. If specific factual metrics for a career are missing from the provided data, say honestly: "I don't have those specific figures in my career database, but generally..." and use your broad general knowledge to guide them without misleading.
+- **Conversational Tone**: Use emojis, address the student by name when available, be encouraging, and keep the interaction engaging and supportive. Help them explore their matches!"""
     
-    def _get_fallback_response(self, prompt: str) -> str:
-        """Generate a fallback response when the LLM is unavailable."""
+    def _get_fallback_response(self, prompt: str, intent: Optional[str] = None) -> str:
+        """Generate a smart, content-aware fallback response from the SQLite database."""
         # Extract student name
         name = "Student"
         if "Name:" in prompt:
@@ -162,48 +148,117 @@ Remember: You are a helpful career companion. If you don't know something, say s
             if len(parts) > 1:
                 user_message = parts[1].strip().split("\n")[0].strip()
         
+        # Check if the user is introducing themselves in fallback mode
+        user_msg_lower = user_message.lower().strip()
+        intro_match = re.search(r"\bmy name is\s+([a-zA-Z\s]+)", user_msg_lower)
+        if not intro_match:
+            intro_match = re.search(r"\bi am\s+([a-zA-Z\s]+)", user_msg_lower)
+            
+        if intro_match:
+            extracted_name = intro_match.group(1).strip().title()
+            first_name = extracted_name.split()[0]
+            matched_careers = []
+            try:
+                from modules.conversation_memory import conversation_memory
+                all_careers = conversation_memory.get_all_careers()
+                matched_careers = [c.get("career_name") for c in all_careers[:3]]
+            except Exception:
+                pass
+            return f"""👋 Nice to meet you, {first_name}! I'm VERA, your AI Career Companion. [STARTUP]
+
+I'm running in local fallback mode because I couldn't reach the Claude API, but I can still help you with your career journey!
+
+Try asking me:
+- **"What are my career matches?"**
+- **"Tell me about [career name]"** (e.g. *"Tell me about {matched_careers[0] if matched_careers else 'Software Developer'}*" or any of your matched careers)
+- **"Which colleges should I target?"**"""
+        
         # Extract intent
-        intent = "general_chat"
-        if "Intent:" in prompt:
-            lines = prompt.split("\n")
-            for line in lines:
-                if line.strip().startswith("Intent:"):
-                    intent = line.split("Intent:")[1].strip()
-                    break
+        if intent:
+            intent_str = intent.value if hasattr(intent, "value") else str(intent)
+        else:
+            intent_str = "general_chat"
+        intent_str = intent_str.lower().strip()
+        if "." in intent_str:
+            intent_str = intent_str.split(".")[-1]
+            
+        if intent_str in ["none", "general_chat"]:
+            if "Intent:" in prompt:
+                lines = prompt.split("\n")
+                for line in lines:
+                    if line.strip().startswith("Intent:"):
+                        intent_str = line.split("Intent:")[1].strip().lower()
+                        break
         
         # Check if there are career matches
         has_careers = "AVAILABLE CAREERS" in prompt and "|" in prompt
         
+        # Search SQLite database to see if user is asking about a specific career
+        from modules.conversation_memory import conversation_memory
+        
+        # Load all valid careers from SQLite to check for matching mentions
+        all_careers = []
+        try:
+            all_careers = conversation_memory.get_all_careers()
+        except Exception:
+            pass
+            
+        mentioned_career = None
+        user_msg_lower = user_message.lower()
+        
+        for car in all_careers:
+            car_name = car.get("career_name", "")
+            if car_name and car_name.lower() in user_msg_lower:
+                # Prioritize longer matches to handle sub-strings (e.g. "Software Developer" vs "Developer")
+                if not mentioned_career or len(car_name) > len(mentioned_career.get("career_name", "")):
+                    mentioned_career = car
+
+        # If a specific career is mentioned, serve its direct facts
+        if mentioned_career:
+            return self._format_career_details_fallback(mentioned_career, user_message)
+
+        # Extract student matched careers from prompt context if available
+        matched_careers = []
+        if has_careers:
+            try:
+                lines = prompt.split("\n")
+                for line in lines:
+                    if "|" in line and ("match" in line.lower() or "%" in line):
+                        parts = line.split("|")
+                        c_name = parts[0].split(".", 1)[-1].strip()
+                        matched_careers.append(c_name)
+            except Exception:
+                pass
+
+        if not matched_careers and all_careers:
+            matched_careers = [c.get("career_name") for c in all_careers[:5]]
+
         # Greeting response
-        if intent == "greeting":
-            return f"""👋 Hi! I'm VERA, your AI Career Companion. [STARTUP]
+        if intent_str == "greeting":
+            return f"""👋 Hi {name}! I'm VERA, your AI Career Companion.
 
 I’m here to help you explore career options, understand your strengths, discover required skills, and plan your next steps.
 
 Here's how I can help you:
-- 🎯 Discover careers that match your personality
-- [INFO] Get detailed information about any career
+- 🎯 Discover careers that match your personality (Try asking: *"What careers match me?"*)
+- 📋 Get detailed information about any career (Try asking: *"Tell me about {matched_careers[0] if matched_careers else 'Software Developer'}*" or any other field)
 - 💰 Learn about salaries and growth opportunities
-- 🎓 Find out about educational pathways
+- 🎓 Find out about educational pathways and targeting colleges
 - 💡 Get personalized advice based on your profile
 
-What would you like to know about today? Just ask me anything! 😊"""
+What would you like to explore today? Just ask me anything! 😊"""
         
         # Career-related response
-        if intent in ["career_recommendation", "career_comparison", "job_information", "salary_query"]:
-            if has_careers:
-                return f"""💭 Thanks for your question, {name}!
-
-Based on your profile and the available career data, here's what I can tell you:
-
-I've found several career matches for you. To get the most helpful information, please ask about a specific career you're interested in, and I'll provide details about:
-- 📋 What the career involves
-- 🎓 Educational pathway required
-- 💰 Expected salary range
-- [INFO] Entrance exams (if any)
-- 📈 Growth opportunities
-
-Which career would you like to learn more about? [STARTUP]"""
+        if intent_str in ["career_recommendation", "career_comparison", "job_information", "salary_query"] or "match" in user_msg_lower:
+            if matched_careers:
+                response = f"""🎯 **Here are your top career recommendations, {name}:**\n\n"""
+                for c_name in matched_careers[:5]:
+                    c_data = next((c for c in all_careers if c.get("career_name", "").lower() == c_name.lower()), None)
+                    if c_data:
+                        desc = c_data.get("description", "Explore details, path, and institutes.")
+                        response += f"- **{c_name}**: {desc[:120]}...\n"
+                response += f"\n💡 Ask me: *\"Tell me about {matched_careers[0] if matched_careers else 'any of these'}*\" to see their details, required entrance exams, and pathways!"
+                return response
             else:
                 return f"""💭 Thanks for your question, {name}!
 
@@ -212,20 +267,20 @@ I notice you haven't taken the RIASEC assessment yet. To give you personalized c
 Please take the Career Test by clicking the "Start Career Test" button on the page. It only takes a few minutes and will help me find the best career matches for you! 🎯"""
         
         # Profile question
-        if intent == "profile_question":
+        if intent_str == "profile_question":
             return f"""💭 Great question about your profile, {name}!
 
 Based on the information you've provided, I can help you understand:
-- [INFO] Your RIASEC personality type
+- 📊 Your RIASEC personality type
 - 💪 Your key strengths and traits
 - 🎯 Careers that align with your profile
-- [INFO] Subjects and skills that match you
+- 🛠️ Subjects and skills that match you
 
 Your profile gives us valuable insights into what makes you unique. Would you like to explore specific aspects of your profile or see career recommendations? 😊"""
         
         # Off-topic
-        if intent == "off_topic":
-            return f"""💭 I specialize in career guidance and helping students like you find the right path forward! [STARTUP]
+        if intent_str == "off_topic":
+            return f"""💭 I specialize in career guidance and helping students like you find the right path forward!
 
 While I'd love to chat about many topics, I'm best at helping with:
 - Career exploration and recommendations
@@ -235,18 +290,175 @@ While I'd love to chat about many topics, I'm best at helping with:
 - College and entrance exam guidance
 
 What would you like to know about your career journey? I'm here to help! 😊"""
+
+        # College guidance
+        if intent_str == "college_guidance" or "college" in user_msg_lower or "university" in user_msg_lower or "institute" in user_msg_lower:
+            response = f"""🎓 **Target Colleges & Institutes for your matched careers:**\n\n"""
+            found_any = False
+            for c_name in matched_careers[:3]:
+                c_data = next((c for c in all_careers if c.get("career_name", "").lower() == c_name.lower()), None)
+                if c_data:
+                    inst = c_data.get("institutes", []) or c_data.get("study_options", {}).get("government_institutes", [])
+                    if inst:
+                        response += f"🏫 **{c_name}**:\n"
+                        for i in inst[:3]:
+                            name_inst = i.get("name") if isinstance(i, dict) else i
+                            loc_inst = i.get("location", "") if isinstance(i, dict) else ""
+                            loc_str = f" ({loc_inst})" if loc_inst else ""
+                            response += f"  - {name_inst}{loc_str}\n"
+                        response += "\n"
+                        found_any = True
+            if found_any:
+                return response
+            else:
+                return f"""💭 I don't have specific college list details for those matches, but standard options include premier government and private engineering/scientific universities."""
+
+        # Skill guidance
+        if intent_str == "skill_guidance" or "skill" in user_msg_lower or "learn" in user_msg_lower:
+            response = f"""💡 **Required Skills & Traits for your matched careers:**\n\n"""
+            found_any = False
+            for c_name in matched_careers[:3]:
+                c_data = next((c for c in all_careers if c.get("career_name", "").lower() == c_name.lower()), None)
+                if c_data:
+                    traits = c_data.get("personality_traits", [])
+                    if traits:
+                        response += f"🛠️ **{c_name}**:\n"
+                        response += f"  - **Traits/Skills**: {', '.join(traits[:5])}\n\n"
+                        found_any = True
+            if found_any:
+                return response
+            else:
+                return f"""💭 I don't have skill lists for those matches, but typical requirements focus on analytical, programming, and subject-specific problem solving."""
         
         # General fallback
-        return f"""💭 Hi {name}! I'm here to help you with your career journey.
+        return f"""💭 Hi {name}! I'm VERA, your Career Companion.
 
-### What you can ask me:
-- **"Tell me about [career name]"** - Get detailed info about a specific career
-- **"What careers match me?"** - I'll explain your top matches
-- **"What skills do I need for [career]?"** - Learn about required skills
-- **"How much does [career] pay?"** - Check salary information
-- **"What exams do I need for [career]?"** - Learn about entrance exams
+I couldn't contact the Claude API (running in fallback mode), but I can still answer specific questions about careers using our SQLite database!
 
-Just type your question and I'll help you out! [STARTUP]"""
+Try asking me:
+- **"Tell me about [career name]"** (e.g., *"Tell me about {matched_careers[0] if matched_careers else 'Software Developer'}*" or any of your matched careers)
+- **"What skills do I need for [career]?"**
+- **"What are my career matches?"**
+- **"Which colleges should I target?"**"""
+
+    def _format_career_details_fallback(self, career: Dict[str, Any], query: str) -> str:
+        """Format specific SQLite career details into a readable fallback answer."""
+        name = career.get("career_name", "")
+        desc = career.get("description", "No description available.")
+        
+        # Educational Pathway
+        pathways = career.get("educational_pathway", []) or career.get("educational_pathways", [])
+        path_str = ""
+        if pathways:
+            if isinstance(pathways, list):
+                for p in pathways:
+                    if isinstance(p, dict):
+                        # Extract the step/detail text
+                        detail = p.get("details", "") or p.get("step", "")
+                        if not detail and "steps" in p:
+                            steps = p.get("steps", [])
+                            detail = " ➔ ".join(steps) if isinstance(steps, list) else str(steps)
+                        
+                        # Extract option/path index
+                        opt_idx = p.get("option") or p.get("path") or p.get("step_no", "")
+                        opt_prefix = f"Pathway {opt_idx}" if opt_idx else "Step"
+                        
+                        if detail:
+                            path_str += f"- **{opt_prefix}**: {detail}\n"
+                        elif p.get("note"):
+                            path_str += f"- *Note*: {p.get('note')}\n"
+                    else:
+                        path_str += f"- {p}\n"
+            else:
+                path_str = f"- {pathways}\n"
+        else:
+            path_str = "- Completed 10+2 standard followed by a professional degree or diploma in this field."
+
+        # Income
+        income = career.get("expected_income", {})
+        salary_str = "Not specified"
+        if income:
+            if isinstance(income, dict):
+                min_sal = income.get("minimum_monthly_salary") or income.get("monthly_salary_inr", {}).get("minimum")
+                max_sal = income.get("maximum_monthly_salary") or income.get("monthly_salary_inr", {}).get("maximum")
+                note_sal = income.get("note", "")
+                if min_sal and max_sal:
+                    salary_str = f"{min_sal} - {max_sal} per month"
+                elif note_sal:
+                    salary_str = note_sal
+                else:
+                    salary_str = "INR 30,000 - 80,000 per month (approx)"
+            else:
+                salary_str = str(income)
+
+        # Entrance Exams
+        exams = career.get("entrance_exams", [])
+        exams_str = ", ".join(exams) if exams else "None specified (or standard merit-based admission)"
+
+        # Colleges
+        colleges = career.get("institutes", []) or career.get("study_options", {}).get("government_institutes", [])
+        colleges_list = []
+        if colleges:
+            for c in colleges[:4]:
+                c_name = c.get("name") if isinstance(c, dict) else c
+                c_loc = c.get("location", "") if isinstance(c, dict) else ""
+                colleges_list.append(f"{c_name} ({c_loc})" if c_loc else c_name)
+        colleges_str = "\n".join(f"- {c}" for c in colleges_list) if colleges_list else "- Premier Universities & Regional Institutes"
+
+        # Growth Path
+        growth = career.get("growth_path", [])
+        growth_str = " ➔ ".join(growth[:4]) if growth else "Entry Level ➔ Senior Specialist ➔ Lead Manager"
+
+        query_lower = query.lower()
+        
+        if "exam" in query_lower:
+            return f"""🎓 **Entrance Exams for {name}:**
+            
+Standard admission/entrance criteria:
+- **Exams**: {exams_str}
+
+Would you like to know about the study options or required course fees? 😊"""
+
+        if "college" in query_lower or "university" in query_lower or "study" in query_lower:
+            return f"""🏫 **Recommended Study Options for {name}:**
+            
+Here are the top colleges and institutes offering training or degree programs:
+{colleges_str}
+
+Would you like to know about the entrance exams or course fees? 😊"""
+
+        if "salary" in query_lower or "pay" in query_lower or "income" in query_lower:
+            return f"""💰 **Salary & Compensation for {name}:**
+            
+- **Expected Income**: {salary_str}
+- **Growth Path**: {growth_str}"""
+
+        if "skill" in query_lower or "trait" in query_lower:
+            traits = career.get("personality_traits", [])
+            traits_str = "\n".join(f"- {t}" for t in traits) if traits else "- Analytical thinking\n- Subject matter expertise"
+            return f"""🛠️ **Key Skills & Personality Traits for {name}:**
+            
+To succeed in this career, having these traits is highly recommended:
+{traits_str}"""
+
+        # General description response
+        return f"""🎯 **Career Profile: {name}**
+
+{desc}
+
+📚 **Educational Pathway**:
+{path_str}
+💰 **Expected Salary**:
+- {salary_str}
+
+🏫 **Top Colleges**:
+{colleges_str}
+
+📈 **Career Growth**:
+- {growth_str}
+
+📝 **Entrance Exams**:
+- {exams_str}"""
 
 
 # Singleton instance

@@ -4,13 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Career Guide — Career Guidance Chatbot</title>
+    <title>SkillSense — Career Guidance Chatbot</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* ============================================================
-           AI CAREER GUIDE — Design System
+           SkillSense — Design System
            ============================================================ */
         :root {
             --violet: #6D4AFF;
@@ -241,7 +241,20 @@
 
         .nav-cta {
             font-size: 0.88rem;
-            padding: 11px 20px;
+            padding: 9px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: none;
+            transition: all 0.25s ease;
+        }
+
+        .nav-cta:hover {
+            background: rgba(255, 255, 255, 0.16);
+            transform: translateY(-2px);
+            box-shadow: none;
         }
 
         .hero {
@@ -1777,13 +1790,32 @@
     <!-- ============================== NAV ============================== -->
     <nav class="nav" id="nav">
         <div class="nav-in">
-            <div class="brand"><span class="orb">🚀</span> AI Career Guide</div>
+            <div class="brand"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
             <div class="nav-links">
                 <a onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</a>
                 <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take Test</a>
                 <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI Counselor</a>
             </div>
-            <button class="btn btn-primary nav-cta" onclick="startQuiz()">Start Career Test</button>
+            <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
+                <button class="btn nav-cta" onclick="startQuiz()">Start Career Test</button>
+                <select id="langSelect" onchange="switchLanguage(this.value)" style="
+                    background: rgba(255, 255, 255, 0.08);
+                    color: #fff;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    font-family: inherit;
+                    font-size: 0.9rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    outline: none;
+                    transition: all 0.25s ease;
+                ">
+                    <option value="en" style="background:#13111C; color:#fff;">English</option>
+                    <option value="hi" style="background:#13111C; color:#fff;">हिंदी (Hindi)</option>
+                    <option value="mr" style="background:#13111C; color:#fff;">मराठी (Marathi)</option>
+                </select>
+            </div>
         </div>
     </nav>
 
@@ -1808,7 +1840,7 @@
                         <div class="l">Personality Dimensions</div>
                     </div>
                     <div class="hstat">
-                        <div class="n">120+</div>
+                        <div class="n">500+</div>
                         <div class="l">Career Paths</div>
                     </div>
                     <div class="hstat">
@@ -1981,7 +2013,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="studentLocation">Your State/City</label>
+                            <label for="studentLocation">Preferred Study Location</label>
                             <input type="text" id="studentLocation" placeholder="e.g., Tamil Nadu, Maharashtra, Delhi">
                         </div>
                         <div class="form-group">
@@ -2158,6 +2190,11 @@
                         onkeydown="if(event.key==='Enter')sendChat()">
                     <button id="chatSend" onclick="sendChat()">➤</button>
                 </div>
+                <div id="chatDisclaimer"
+                    style="font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px; opacity: 0.8; line-height: 1.3;">
+                    Disclaimer: VERA is an AI assistant. Guidance is for informational purposes only. Consult
+                    professional counselors for critical career decisions.
+                </div>
             </div>
         </div>
     </section>
@@ -2167,7 +2204,7 @@
         <div class="wrap">
             <div class="foot-grid">
                 <div class="foot-col foot-about">
-                    <div class="brand"><span class="orb">🚀</span> AI Career Guide</div>
+                    <div class="brand"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
                     <p>An intelligent career guidance platform helping students discover their strengths, explore
                         opportunities, and build a roadmap for their future.</p>
                 </div>
@@ -2189,8 +2226,8 @@
                 </div>
             </div>
             <div class="foot-bottom">
-                <span>© 2026 AI Career Guide. Built for curious students.</span>
-                <span>Made with AI · for the next generation</span>
+                <span>© 2026 SkillSense. Built for curious students.</span>
+                <span></span>
             </div>
         </div>
     </footer>
@@ -2306,6 +2343,829 @@
         let studentInfo = {};
         let riasecScores = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
 
+        // Language settings
+        let currentLanguage = 'en';
+        let rawResultsData = null;
+        const careerTranslationCache = {};
+
+        // Static translations dictionary
+        const uiTranslations = {
+            en: {
+                "brand-title": "🚀 SkillSense",
+                "nav-how": "How it works",
+                "nav-test": "Take Test",
+                "nav-counselor": "AI Counselor",
+                "nav-start": "Start Career Test",
+                "hero-eyebrow": "PERSONALITY · AI INSIGHTS · CAREER ROADMAPS",
+                "hero-title": "Find a career path<br><span class=\"12\">that matches who you are.</span>",
+                "hero-sub": "An intelligent career companion that understands your interests, strengths, and goals to create a personalized roadmap for your future.",
+                "hero-start": "Start Career Test →",
+                "hero-chat": "Chat with AI",
+                "num-1": "6",
+                "num-2": "500+",
+                "num-3": "24/7",
+                "step-num-1": "01",
+                "step-num-2": "02",
+                "step-num-3": "03",
+                "step-num-4": "04",
+                "stat-1": "Personality Dimensions",
+                "stat-2": "Career Paths",
+                "stat-3": "AI Guidance",
+                "sec-journey-eyebrow": "The journey",
+                "sec-journey-title": "Four steps to your <span class=\"grad\">career match</span>",
+                "step-1-title": "Build your profile",
+                "step-1-desc": "Tell us your name, age, class, interests and hobbies — your AI assistant guides you through.",
+                "step-2-title": "Play the career test",
+                "step-2-desc": "Quick cards, XP, coins and streaks. It feels like a game, not an exam.",
+                "step-3-title": "AI reads your strengths",
+                "step-3-desc": "Your answers become a personalized personality and interest profile in seconds.",
+                "step-4-title": "Get your roadmap",
+                "step-4-desc": "Matched careers, colleges, scholarships and a step-by-step path forward.",
+                "sec-quiz-eyebrow": "CAREER DISCOVERY ASSESSMENT",
+                "sec-quiz-title": "Discover the path <span class=\"grad\">that fits you.</span>",
+                "sec-quiz-lead": "Tell us about yourself and answer a few questions to understand your interests, strengths, and career preferences.",
+                "form-heading": "Tell us about yourself",
+                "label-name": "Full Name *",
+                "placeholder-name": "Enter your full name",
+                "label-age": "Age *",
+                "placeholder-age": "Enter your age",
+                "label-class": "Class/Year *",
+                "option-select-class": "Select your class",
+                "label-stream": "Education Stream/Field",
+                "placeholder-stream": "e.g., Science, Commerce, Arts, Engineering",
+                "heading-learning-profile": "📚 Your Learning Profile",
+                "label-subjects": "Subjects you enjoy learning",
+                "placeholder-subjects": "e.g., Mathematics, Physics, English, Biology, History",
+                "label-weak-subjects": "Subjects You Find Challenging",
+                "placeholder-weak-subjects": "e.g., Chemistry, Statistics, Economics",
+                "heading-outside-academics": "🎯 What inspires you outside academics?",
+                "label-interests": "Your Interests",
+                "placeholder-interests": "e.g., Technology, Research, Art, Sports, Social Work",
+                "label-hobbies": "Your Hobbies",
+                "placeholder-hobbies": "e.g., Reading, Gaming, Painting, Coding, Gardening",
+                "label-strengths": "Your natural strengths",
+                "placeholder-strengths": "e.g., Problem-solving, Communication, Leadership, Creativity",
+                "label-aspirations": "Career Aspirations (if any)",
+                "placeholder-aspirations": "e.g., Engineer, Doctor, Scientist, Entrepreneur",
+                "heading-preferences": "💼 Career Preferences",
+                "label-learning-mode": "Preferred Learning Mode",
+                "label-budget": "Budget Preference",
+                "label-location": "Location Preference",
+                "label-student-location": "Preferred Study Location",
+                "placeholder-student-location": "e.g., Tamil Nadu, Maharashtra, Delhi",
+                "label-college-range": "Preferred College Type/Range",
+                "option-college-1": "1st Year College",
+                "option-college-2": "2nd Year College",
+                "option-college-3": "3rd Year College",
+                "option-college-4": "4th Year College",
+                "option-graduate": "Graduate",
+                "option-post-graduate": "Post Graduate",
+                "option-learning-offline": "Offline (Classroom/Lab)",
+                "option-learning-distance": "Distance/Online Learning",
+                "option-learning-hybrid": "Hybrid (Mix)",
+                "option-budget-moderate": "Moderate Budget",
+                "option-budget-sensitive": "Budget Sensitive",
+                "option-budget-no-constraint": "No Budget Constraint",
+                "option-location-india": "India Wide",
+                "option-location-local": "Local Opportunities",
+                "option-location-international": "International Career",
+                "option-range-all": "All Colleges (Govt & Private)",
+                "option-range-govt": "Government Colleges Only",
+                "option-range-private": "Private Colleges Only",
+                "option-range-distance": "Distance Learning Only",
+                "btn-submit-profile": "Continue to Career Test →",
+                "scale-not-me": "Not me",
+                "scale-little": "A little",
+                "scale-maybe": "Maybe",
+                "scale-yes": "Yes",
+                "scale-so-me": "So me!",
+                "btn-back": "← Back",
+                "btn-next": "Next →",
+                "sec-counselor-eyebrow": "Nova AI Counselor",
+                "sec-counselor-title": "Have questions? <span class=\"grad\">Ask VERA.</span>",
+                "sec-counselor-sub": "Ask anything about your matches, course fees, colleges, entrance exams, or alternate paths.",
+                "placeholder-chat": "Ask Nova about your career matches, colleges, entrance exams...",
+                "btn-send": "Send",
+                "chat-disclaimer": "Disclaimer: VERA is an AI assistant. Guidance is for informational purposes only. Consult professional counselors for critical career decisions.",
+                "modal-close": "Close"
+            },
+            hi: {
+                "brand-title": "🚀 SkillSense",
+                "nav-how": "यह कैसे काम करता है",
+                "nav-test": "टेस्ट लें",
+                "nav-counselor": "एआई काउंसलर",
+                "nav-start": "करियर टेस्ट शुरू करें",
+                "hero-eyebrow": "व्यक्तित्व · एआई अंतर्दृष्टि · करियर रोडमैप",
+                "hero-title": "एक ऐसा करियर पथ खोजें<br><span class=\"12\">जो आपके व्यक्तित्व से मेल खाता हो।</span>",
+                "hero-sub": "एक बुद्धिमान करियर साथी जो आपके भविष्य के लिए एक व्यक्तिगत रोडमैप बनाने के लिए आपके हितों, शक्तियों और लक्ष्यों को समझता है।",
+                "hero-start": "करियर टेस्ट शुरू करें →",
+                "hero-chat": "एआई से चैट करें",
+                "num-1": "६",
+                "num-2": "५००+",
+                "num-3": "२४/७",
+                "step-num-1": "०१",
+                "step-num-2": "०२",
+                "step-num-3": "०३",
+                "step-num-4": "०४",
+                "stat-1": "व्यक्तित्व आयाम",
+                "stat-2": "करियर विकल्प",
+                "stat-3": "एआई मार्गदर्शन",
+                "sec-journey-eyebrow": "सफ़र",
+                "sec-journey-title": "आपके <span class=\"grad\">करियर मैच</span> के चार चरण",
+                "step-1-title": "अपनी प्रोफाइल बनाएं",
+                "step-1-desc": "हमें अपना नाम, उम्र, कक्षा, रुचियां और शौक बताएं - आपका एआई सहायक आपका मार्गदर्शन करेगा।",
+                "step-2-title": "करियर टेस्ट खेलें",
+                "step-2-desc": "त्वरित कार्ड, अनुभव अंक (XP) और दैनिक सिलसिले। यह एक खेल जैसा लगता है, परीक्षा नहीं।",
+                "step-3-title": "एआई आपकी ताकत पढ़ता है",
+                "step-3-desc": "आपके उत्तर सेकंडों में एक व्यक्तिगत व्यक्तित्व और रुचि प्रोफ़ाइल बन जाते हैं।",
+                "step-4-title": "अपना रोडमैप प्राप्त करें",
+                "step-4-desc": "मेले खाने वाले करियर, कॉलेज, छात्रवृत्तियां और आगे बढ़ने का एक चरण-दर-चरण मार्ग।",
+                "sec-quiz-eyebrow": "करियर खोज मूल्यांकन",
+                "sec-quiz-title": "वह मार्ग खोजें <span class=\"grad\">जो आपके अनुकूल हो।</span>",
+                "sec-quiz-lead": "अपने बारे में बताएं और अपनी रुचियों, शक्तियों और करियर प्राथमिकताओं को समझने के लिए कुछ प्रश्नों के उत्तर दें।",
+                "form-heading": "अपने बारे में बताएं",
+                "label-name": "पूरा नाम *",
+                "placeholder-name": "अपना पूरा नाम दर्ज करें",
+                "label-age": "उम्र *",
+                "placeholder-age": "अपनी उम्र दर्ज करें",
+                "label-class": "कक्षा/वर्ष *",
+                "option-select-class": "अपनी कक्षा चुनें",
+                "label-stream": "शिक्षा स्ट्रीम/क्षेत्र",
+                "placeholder-stream": "जैसे, विज्ञान, वाणिज्य, कला, इंजीनियरिंग",
+                "heading-learning-profile": "📚 आपका सीखने का प्रोफ़ाइल",
+                "label-subjects": "वे विषय जिन्हें पढ़ने में आपको मज़ा आता है",
+                "placeholder-subjects": "जैसे, गणित, भौतिकी, अंग्रेजी, जीव विज्ञान, इतिहास",
+                "label-weak-subjects": "वे विषय जो आपको कठिन लगते हैं",
+                "placeholder-weak-subjects": "जैसे, रसायन विज्ञान, सांख्यिकी, अर्थशास्त्र",
+                "heading-outside-academics": "🎯 पढ़ाई के अलावा आपको क्या प्रेरित करता है?",
+                "label-interests": "आपकी रुचियां",
+                "placeholder-interests": "जैसे, प्रौद्योगिकी, अनुसंधान, कला, खेल, सामाजिक कार्य",
+                "label-hobbies": "आपके शौक",
+                "placeholder-hobbies": "जैसे, पढ़ना, गेमिंग, पेंटिंग, कोडिंग, बागवानी",
+                "label-strengths": "आपकी स्वाभाविक ताकतें",
+                "placeholder-strengths": "जैसे, समस्या-समाधान, संचार, नेतृत्व, रचनात्मकता",
+                "label-aspirations": "करियर आकांक्षाएं (यदि कोई हो)",
+                "placeholder-aspirations": "जैसे, इंजीनियर, डॉक्टर, वैज्ञानिक, उद्यमी",
+                "heading-preferences": "💼 करियर प्राथमिकताएं",
+                "label-learning-mode": "पसंदीदा सीखने का तरीका",
+                "label-budget": "बजट प्राथमिकता",
+                "label-location": "स्थान प्राथमिकता",
+                "label-student-location": "पसंदीदा अभ्यास स्थान",
+                "placeholder-student-location": "जैसे, महाराष्ट्र, दिल्ली, उत्तर प्रदेश",
+                "label-college-range": "पसंदीदा कॉलेज प्रकार/श्रेणी",
+                "option-college-1": "प्रथम वर्ष कॉलेज",
+                "option-college-2": "द्वितीय वर्ष कॉलेज",
+                "option-college-3": "तृतीय वर्ष कॉलेज",
+                "option-college-4": "चतुर्थ वर्ष कॉलेज",
+                "option-graduate": "स्नातक (Graduate)",
+                "option-post-graduate": "स्नातकोत्तर (Post Graduate)",
+                "option-learning-offline": "ऑफलाइन (क्लासरूम/लैब)",
+                "option-learning-distance": "डिस्टेंस/ऑनलाइन लर्निंग",
+                "option-learning-hybrid": "हाइब्रिड (मिश्रित)",
+                "option-budget-moderate": "मध्यम बजट",
+                "option-budget-sensitive": "बजट संवेदनशील (कम बजट)",
+                "option-budget-no-constraint": "कोई बजट सीमा नहीं",
+                "option-location-india": "पूरे भारत में",
+                "option-location-local": "स्थानीय अवसर",
+                "option-location-international": "अंतर्राष्ट्रीय करिअर",
+                "option-range-all": "सभी कॉलेज (सरकारी और निजी)",
+                "option-range-govt": "केवल सरकारी कॉलेज",
+                "option-range-private": "केवल निजी कॉलेज",
+                "option-range-distance": "केवल डिस्टेंस लर्निंग",
+                "btn-submit-profile": "करियर टेस्ट के लिए आगे बढ़ें →",
+                "scale-not-me": "मैं नहीं",
+                "scale-little": "थोड़ा",
+                "scale-maybe": "शायद",
+                "scale-yes": "हाँ",
+                "scale-so-me": "बिल्कुल मैं!",
+                "btn-back": "← पीछे",
+                "btn-next": "आगे →",
+                "sec-counselor-eyebrow": "नोवा एआई काउंसलर",
+                "sec-counselor-title": "कोई सवाल है? <span class=\"grad\"> वेरा से पूछें।</span>",
+                "sec-counselor-sub": "अपने करियर मैच, कॉलेज फीस, प्रवेश परीक्षाओं या वैकल्पिक मार्गों के बारे में कुछ भी पूछें।",
+                "placeholder-chat": "अपने करियर मैच, कॉलेज, प्रवेश परीक्षाओं के बारे में नोवा से पूछें...",
+                "btn-send": "भेजें",
+                "chat-disclaimer": "अस्वीकरण: VERA एक एआई सहायक है। यह मार्गदर्शन केवल सूचनात्मक उद्देश्यों के लिए है। अंतिम निर्णयों के लिए पेशेवर सलाहकारों से संपर्क करें।",
+                "modal-close": "बंद करें"
+            },
+            mr: {
+                "brand-title": "🚀 SkillSense",
+                "nav-how": "कसे कार्य करते",
+                "nav-test": "चाचणी घ्या",
+                "nav-counselor": "एआय समुपदेशक",
+                "nav-start": "करिअर चाचणी सुरू करा",
+                "hero-eyebrow": "व्यक्तिमत्त्व · एआय अंतर्दृष्टी · करिअर रोडमॅप",
+                "hero-title": "तुमच्या व्यक्तिमत्त्वाशी जुळणारा<br><span class=\"12\">करिअरचा मार्ग शोधा.</span>",
+                "hero-sub": "एक बुद्धिमान करिअर सोबती जो तुमच्या भविष्यासाठी वैयक्तिकृत रोडमॅप तयार करण्यासाठी तुमचे स्वारस्य, सामर्थ्य आणि उद्दिष्टे समजून घेतो.",
+                "hero-start": "करिअर चाचणी सुरू करा →",
+                "hero-chat": "एआय सोबत चॅट करा",
+                "num-1": "६",
+                "num-2": "५००+",
+                "num-3": "२४/७",
+                "step-num-1": "०१",
+                "step-num-2": "०२",
+                "step-num-3": "०३",
+                "step-num-4": "०४",
+                "stat-1": "व्यक्तिमत्त्व परिमाणे",
+                "stat-2": "करिअरचे पर्याय",
+                "stat-3": "एआय मार्गदर्शन",
+                "sec-journey-eyebrow": "प्रवास",
+                "sec-journey-title": "तुमच्या <span class=\"grad\">करिअर जुळणी</span>चे चार टप्पे",
+                "step-1-title": "तुमची प्रोफाइल बनवा",
+                "step-1-desc": "आम्हाला तुमचे नाव, वय, इयत्ता, आवडी आणि छंद सांगा - तुमचा एआय सहाय्यक तुम्हाला मार्गदर्शन करेल.",
+                "step-2-title": "करिअर चाचणी खेळा",
+                "step-2-desc": "झटपट कार्डे, अनुभव गुण (XP) आणि दैनंदिन सातत्य. हे एका खेळासारखे वाटते, परीक्षेसारखे नाही.",
+                "step-3-title": "एआय तुमचे सामर्थ्य वाचते",
+                "step-3-desc": "तुमची उत्तरे काही सेकंदात वैयक्तिकृत व्यक्तिमत्त्व आणि आवडीचे प्रोफाइल बनतात.",
+                "step-4-title": "तुमचा रोडमॅप मिळवा",
+                "step-4-desc": "जुळणारे करिअर, कॉलेजेस, शिष्यवृत्ती आणि पुढे जाण्याचा टप्प्याटप्प्याने मार्ग.",
+                "sec-quiz-eyebrow": "करिअर शोध मूल्यमापन",
+                "sec-quiz-title": "तुमच्यासाठी <span class=\"grad\">योग्य मार्ग शोधा.</span>",
+                "sec-quiz-lead": "तुमच्याबद्दल सांगा आणि तुमची आवड, सामर्थ्य आणि करिअरच्या पसंती समजून घेण्यासाठी काही प्रश्नांची उत्तरे द्या.",
+                "form-heading": "तुमच्याबद्दल सांगा",
+                "label-name": "पूर्ण नाव *",
+                "placeholder-name": "तुमचे पूर्ण नाव प्रविष्ट करा",
+                "label-age": "वय *",
+                "placeholder-age": "तुमचे वय प्रविष्ट करा",
+                "label-class": "इयत्ता/वर्ष *",
+                "option-select-class": "तुमची इयत्ता निवडा",
+                "label-stream": "शिक्षण शाखा/क्षेत्र",
+                "placeholder-stream": "उदा. विज्ञान, वाणिज्य, कला, अभियांत्रिकी",
+                "heading-learning-profile": "📚 तुमचे शिकण्याचे प्रोफाइल",
+                "label-subjects": "तुम्हाला शिकायला आवडणारे विषय",
+                "placeholder-subjects": "उदा. गणित, भौतिकशास्त्र, इंग्रजी, जीवशास्त्र, इतिहास",
+                "label-weak-subjects": "तुम्हाला कठीण वाटणारे विषय",
+                "placeholder-weak-subjects": "उदा. रसायनशास्त्र, सांख्यिकी, अर्थशास्त्र",
+                "heading-outside-academics": "🎯 अभ्यासाबाहेर तुम्हाला कशाने प्रेरणा मिळते?",
+                "label-interests": "तुमच्या आवडी",
+                "placeholder-interests": "उदा. तंत्रज्ञान, संशोधन, कला, क्रीडा, समाजसेवा",
+                "label-hobbies": "तुमचे छंद",
+                "placeholder-hobbies": "उदा. वाचन, गेमिंग, चित्रकला, कोडिंग, बागकाम",
+                "label-strengths": "तुमची नैसर्गिक ताकद",
+                "placeholder-strengths": "उदा. समस्या निवारण, संवाद, नेतृत्व, सर्जनशीलता",
+                "label-aspirations": "करिअरची महत्त्वाकांक्षा (असल्यास)",
+                "placeholder-aspirations": "उदा. अभियंता, डॉक्टर, वैज्ञानिक, उद्योजक",
+                "heading-preferences": "💼 करिअर आवडी-निवडी",
+                "label-learning-mode": "पसंतीची शिकण्याची पद्धत",
+                "label-budget": "बजेट पसंती",
+                "label-location": "स्थान पसंती",
+                "label-student-location": "पसंतीचे अभ्यास स्थान",
+                "placeholder-student-location": "उदा. महाराष्ट्र, दिल्ली, कर्नाटक",
+                "label-college-range": "पसंतीचा कॉलेज प्रकार/श्रेणी",
+                "option-college-1": "प्रथम वर्ष कॉलेज",
+                "option-college-2": "द्वितीय वर्ष कॉलेज",
+                "option-college-3": "तृतीय वर्ष कॉलेज",
+                "option-college-4": "चतुर्थ वर्ष कॉलेज",
+                "option-graduate": "पदवीधर (Graduate)",
+                "option-post-graduate": "पदव्युत्तर (Post Graduate)",
+                "option-learning-offline": "ऑफलाइन (क्लासरूम/लॅब)",
+                "option-learning-distance": "डिस्टन्स/ऑनलाइन लर्निंग",
+                "option-learning-hybrid": "हायब्रिड (मिश्रित)",
+                "option-budget-moderate": "मध्यम बजेट",
+                "option-budget-sensitive": "बजेट संवेदनशील (कमी बजेट)",
+                "option-budget-no-constraint": "बजेटची मर्यादा नाही",
+                "option-location-india": "पूर्ण भारतात",
+                "option-location-local": "स्थानिक संधी",
+                "option-location-international": "आंतरराष्ट्रीय करिअर",
+                "option-range-all": "सर्व कॉलेजेस (शासकीय आणि खाजगी)",
+                "option-range-govt": "फक्त शासकीय कॉलेजेस",
+                "option-range-private": "फक्त खाजगी कॉलेजेस",
+                "option-range-distance": "फक्त डिस्टन्स लर्निंग",
+                "btn-submit-profile": "करिअर चाचणीकडे जा →",
+                "scale-not-me": "माझ्यासारखे नाही",
+                "scale-little": "थोडं",
+                "scale-maybe": "कदाचित",
+                "scale-yes": "होय",
+                "scale-so-me": "अगदी मीच!",
+                "btn-back": "← मागे",
+                "btn-next": "पुढे →",
+                "sec-counselor-eyebrow": "वेरा एआय समुपदेशक",
+                "sec-counselor-title": "काही प्रश्न आहेत? <span class=\"grad\">वेराला विचारा.</span>",
+                "sec-counselor-sub": "तुमचे करिअर सामने, कॉलेज फी, प्रवेश परीक्षा किंवा पर्यायी मार्गांबद्दल काहीही विचारा.",
+                "placeholder-chat": "तुमच्या करिअरचे सामने, कॉलेजेस, प्रवेश परीक्षांबद्दल नोव्हाला विचारा...",
+                "btn-send": "पाठवा",
+                "chat-disclaimer": "अस्वीकरण: VERA हे एआय सहाय्यक आहे. हे मार्गदर्शन केवळ माहितीच्या उद्देशाने आहे. अंतिम करिअर निर्णयांसाठी व्यावसायिक सल्लागारांचा सल्ला घ्या.",
+                "modal-close": "बंद करा"
+            }
+        };
+
+        const riasecQuestionsTranslations = {
+            hi: {
+                1: "मुझे कारों पर काम करना पसंद है",
+                2: "मुझे चीजें बनाना पसंद है",
+                3: "मुझे जानवरों की देखभाल करना पसंद है",
+                4: "मुझे चीजों को आपस में जोड़ना या इकट्ठा करना पसंद है",
+                5: "मुझे खाना बनाना पसंद है",
+                6: "मैं एक व्यावहारिक व्यक्ति हूँ",
+                7: "मुझे बाहर (खुले में) काम करना पसंद है",
+                8: "मुझे पहेलियां सुलझाना पसंद है",
+                9: "मैं स्वतंत्र रूप से काम करने में अच्छा हूँ",
+                10: "मुझे प्रयोग करना पसंद है",
+                11: "मुझे विज्ञान में आनंद आता है",
+                12: "मुझे यह समझने में मज़ा आता है कि चीजें कैसे काम करती हैं",
+                13: "मुझे चीजों (समस्याओं, स्थितियों) का विश्लेषण करना पसंद है",
+                14: "मैं गणित में अच्छा हूँ",
+                15: "मुझे कला और संगीत के बारे में पढ़ना पसंद है",
+                16: "मुझे रचनात्मक लेखन का आनंद मिलता है",
+                17: "मैं एक रचनात्मक व्यक्ति हूँ",
+                18: "मुझे वाद्ययंत्र बजाना या गाना पसंद है",
+                19: "मुझे नाटकों में अभिनय करना पसंद है",
+                20: "मुझे चित्र बनाना पसंद है",
+                21: "मुझे टीमों में काम करना पसंद है",
+                22: "मुझे लोगों को पढ़ाना या प्रशिक्षित करना पसंद है",
+                23: "मुझे लोगों की समस्याओं को हल करने में मदद करना पसंद है",
+                24: "मुझे लोगों को स्वस्थ करने/इलाज करने में रुचि है",
+                25: "मुझे अन्य संस्कृतियों के बारे में जानने में मज़ा आता है",
+                26: "मुझे लोगों की मदद करना पसंद है",
+                27: "मैं एक महत्वाकांक्षी व्यक्ति हूँ, मैं अपने लिए लक्ष्य निर्धारित करता हूँ",
+                28: "मुझे लोगों को प्रभावित करने या मनाने की कोशिश करना पसंद है",
+                29: "मुझे चीजें बेचना पसंद है",
+                30: "मैं नई जिम्मेदारियां लेने में तत्पर रहता हूँ",
+                31: "मैं अपना खुद का व्यवसाय शुरू करना चाहूंगा",
+                32: "मुझे मुद्दों पर चर्चा करना पसंद है",
+                33: "मुझे नेतृत्व करना पसंद है",
+                34: "मुझे भाषण देना पसंद है",
+                35: "मुझे चीजों (फाइलों, डेस्क, कार्यालयों) को व्यवस्थित करना पसंद है",
+                36: "मुझे पालन करने के लिए स्पष्ट निर्देश पसंद हैं",
+                37: "मुझे एक कार्यालय में प्रतिदिन 8 घंटे काम करने में कोई आपत्ति नहीं होगी",
+                38: "मैं बारीकियों पर ध्यान देता हूँ",
+                39: "मुझे फाइलिंग या टाइपिंग करना पसंद है",
+                40: "मुझे संख्याओं या चार्ट के साथ काम करना पसंद है",
+                41: "मैं अपने काम का रिकॉर्ड रखने में अच्छा हूँ",
+                42: "मैं एक कार्यालय में काम करना चाहूंगा"
+            },
+            mr: {
+                1: "मला गाड्यांवर काम करायला आवडते",
+                2: "मला गोष्टी बनवायला आवडतात",
+                3: "मला प्राण्यांची काळजी घ्यायला आवडते",
+                4: "मला गोष्टी एकत्र जोडायला किंवा जोडणी करायला आवडते",
+                5: "मला स्वयंपाक करायला आवडतो",
+                6: "मी एक व्यावहारिक व्यक्ती आहे",
+                7: "मला बाहेर (मोकळ्या जागेत) काम करायला आवडते",
+                8: "मला कोडी सोडवायला आवडतात",
+                9: "मी स्वतंत्रपणे काम करण्यात चांगला आहे",
+                10: "मला प्रयोग करायला आवडतात",
+                11: "मला विज्ञानात रस वाटतो",
+                12: "गोष्टी कशा चालतात हे शोधण्यात मला आनंद मिळतो",
+                13: "मला गोष्टींचे (समस्या, परिस्थिती) विश्लेषण करायला आवडते",
+                14: "मी गणितात चांगला आहे",
+                15: "मला कला आणि संगीताबद्दल वाचायला आवडते",
+                16: "मला सर्जनशील लिखाणाचा आनंद मिळतो",
+                17: "मी एक सर्जनशील व्यक्ती आहे",
+                18: "मला वाद्ये वाजवायला किंवा गाणे गायला आवडते",
+                19: "मला नाटकांमध्ये अभिनय करायला आवडते",
+                20: "मला चित्रे काढायला आवडतात",
+                21: "मला संघात (टीममध्ये) काम करायला आवडते",
+                22: "मला लोकांना शिकवायला किंवा प्रशिक्षित करायला आवडते",
+                23: "मला लोकांच्या समस्या सोडवण्यास मदत करायला आवडते",
+                24: "मला लोकांना बरे करण्यात/त्यांच्यावर उपचार करण्यात रस आहे",
+                25: "मला इतर संस्कृतींबद्दल जाणून घ्यायला आवडते",
+                26: "मला लोकांना मदत करायला आवडते",
+                27: "मी एक महत्त्वाकांक्षी व्यक्ती आहे, मी स्वतःसाठी उद्दिष्टे ठरवतो",
+                28: "मला लोकांना प्रभावित किंवा पटवून देण्याचा प्रयत्न करायला आवडते",
+                29: "मला गोष्टी विकायला आवडते",
+                30: "मी नवीन जबाबदाऱ्या घेण्यास तत्पर असतो",
+                31: "मला स्वतःचा व्यवसाय सुरू करायला आवडेल",
+                32: "मला मुद्द्यांवर चर्चा करायला आवडते",
+                33: "मला नेतृत्व करायला आवडते",
+                34: "मला भाषणे द्यायला आवडते",
+                35: "मला गोष्टी (फाईल्स, डेस्क, कार्यालये) व्यवस्थित करायला आवडते",
+                36: "मला पाळण्यासाठी स्पष्ट सूचना आवडतात",
+                37: "मला कार्यालयात दररोज ८ तास काम करायला काही हरकत नाही",
+                38: "मी बारीक तपशीलांवर लक्ष देतो",
+                39: "मला फाइलिंग किंवा टायपिंग करायला आवडते",
+                40: "मला संख्या किंवा चार्ट सोबत काम करायला आवडते",
+                41: "मी माझ्या कामाची नोंद ठेवण्यात चांगला आहे",
+                42: "मला कार्यालयात काम करायला आवडेल"
+            }
+        };
+
+        // Free Translation Helper using Google Translate public endpoint
+        async function translateText(text, targetLang) {
+            if (!text || targetLang === 'en') return text;
+            try {
+                const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURIComponent(text)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data[0]) {
+                    return data[0].map(x => x[0]).join('');
+                }
+                return text;
+            } catch (e) {
+                console.error('Translation error:', e);
+                return text;
+            }
+        }
+
+        // Get all translatable strings recursively in depth-first order
+        function getTranslatableStrings(obj, collected = []) {
+            if (typeof obj === 'string') {
+                if (obj.trim().length > 3 || /[a-zA-Z]/.test(obj)) {
+                    collected.push(obj);
+                }
+            } else if (Array.isArray(obj)) {
+                obj.forEach(item => getTranslatableStrings(item, collected));
+            } else if (obj && typeof obj === 'object') {
+                const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName', 'government_institutes', 'private_institutes', 'distance_learning', 'entrance_exams', 'personality_traits', 'related_careers'];
+                for (const key in obj) {
+                    if (Object.prototype.hasOwnProperty.call(obj, key) && !skipKeys.includes(key)) {
+                        getTranslatableStrings(obj[key], collected);
+                    }
+                }
+            }
+            return collected;
+        }
+
+        // Apply translated strings using the translation map
+        function applyTranslatedStrings(obj, translationMap) {
+            if (typeof obj === 'string') {
+                if (obj.trim().length > 3 || /[a-zA-Z]/.test(obj)) {
+                    const val = translationMap.get(obj);
+                    return val !== undefined ? val : obj;
+                }
+                return obj;
+            } else if (Array.isArray(obj)) {
+                for (let i = 0; i < obj.length; i++) {
+                    obj[i] = applyTranslatedStrings(obj[i], translationMap);
+                }
+                return obj;
+            } else if (obj && typeof obj === 'object') {
+                const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName', 'government_institutes', 'private_institutes', 'distance_learning', 'entrance_exams', 'personality_traits', 'related_careers'];
+                for (const key in obj) {
+                    if (Object.prototype.hasOwnProperty.call(obj, key) && !skipKeys.includes(key)) {
+                        obj[key] = applyTranslatedStrings(obj[key], translationMap);
+                    }
+                }
+                return obj;
+            }
+            return obj;
+        }
+
+        // Production-ready dynamic batch translator (translates entire object using plain-text delimiters to guarantee 100% clean translations without HTML leaks)
+        async function translateObject(obj, targetLang) {
+            if (targetLang === 'en' || !obj) return obj;
+
+            // Deep copy to avoid mutating cache
+            const copy = JSON.parse(JSON.stringify(obj));
+
+            // Collect strings
+            const strings = [];
+            getTranslatableStrings(copy, strings);
+            if (strings.length === 0) return copy;
+
+            // Deduplicate strings to prevent Google Translate from mangling tags on duplicate terms
+            const uniqueStrings = [...new Set(strings)];
+
+            try {
+                // Process in parallel chunks of 15 strings each to ensure URL safety and avoid sequential delays
+                const chunkSize = 15;
+                const translatedList = new Array(uniqueStrings.length);
+                const promises = [];
+
+                for (let i = 0; i < uniqueStrings.length; i += chunkSize) {
+                    promises.push((async (offset) => {
+                        const chunkStrings = uniqueStrings.slice(offset, offset + chunkSize);
+                        // Clean any carriage returns or existing delimiters from the text to be safe
+                        const cleanedStrings = chunkStrings.map(str => str.replace(/\|\|\|/g, '').replace(/\n/g, ' '));
+                        const combinedText = cleanedStrings.join(' ||| ');
+                        const translatedText = await translateText(combinedText, targetLang);
+
+                        // Split by the non-translatable delimiter with regex spacing support
+                        const splitParts = translatedText.split(/\s*\|\|\|\s*/);
+
+                        // If split matches chunk size, map them 1-to-1
+                        if (splitParts.length === chunkStrings.length) {
+                            for (let j = 0; j < chunkStrings.length; j++) {
+                                translatedList[offset + j] = splitParts[j].trim();
+                            }
+                        } else {
+                            // Fallback to translating sequentially if Google Translate merged or dropped separators
+                            console.warn(`Delimiter count mismatch in chunk (expected ${chunkStrings.length}, got ${splitParts.length}). Falling back to sequential.`);
+                            for (let j = 0; j < chunkStrings.length; j++) {
+                                const idx = offset + j;
+                                translatedList[idx] = await translateText(chunkStrings[j], targetLang);
+                            }
+                        }
+                    })(i));
+                }
+
+                await Promise.all(promises);
+
+                // Build a translation lookup map matching the original English to its translated string
+                const translationMap = new Map();
+                for (let i = 0; i < uniqueStrings.length; i++) {
+                    translationMap.set(uniqueStrings[i], translatedList[i] || uniqueStrings[i]);
+                }
+
+                applyTranslatedStrings(copy, translationMap);
+                return copy;
+            } catch (e) {
+                console.error('Batch translation failed, falling back to sequential:', e);
+                return await translateObjectSequential(obj, targetLang);
+            }
+        }
+
+        // Fallback sequential translator
+        async function translateObjectSequential(obj, targetLang) {
+            if (targetLang === 'en' || !obj) return obj;
+            if (typeof obj === 'string') {
+                if (obj.trim().length <= 3 && !/[a-zA-Z]/.test(obj)) return obj;
+                return await translateText(obj, targetLang);
+            }
+            if (Array.isArray(obj)) {
+                const translatedArray = [];
+                for (const item of obj) {
+                    translatedArray.push(await translateObjectSequential(item, targetLang));
+                }
+                return translatedArray;
+            }
+            if (typeof obj === 'object') {
+                const translatedObj = {};
+                for (const key in obj) {
+                    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                        const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName', 'government_institutes', 'private_institutes', 'distance_learning', 'entrance_exams', 'personality_traits', 'related_careers'];
+                        if (skipKeys.includes(key)) {
+                            translatedObj[key] = obj[key];
+                        } else {
+                            translatedObj[key] = await translateObjectSequential(obj[key], targetLang);
+                        }
+                    }
+                }
+                return translatedObj;
+            }
+            return obj;
+        }
+
+        // Helper to strip heavy, unused details (colleges list, pathway steps) before translating matched results
+        function stripHeavyDetails(data) {
+            if (!data) return data;
+            const copy = JSON.parse(JSON.stringify(data));
+            if (copy.top_careers && Array.isArray(copy.top_careers)) {
+                copy.top_careers.forEach(career => {
+                    // Keep track of the original English name for database retrieval
+                    career.originalName = career.name;
+                    if (career.data && typeof career.data === 'object') {
+                        const heavyKeys = ['where_will_you_study', 'educational_pathway', 'entrance_exams', 'scholarships', 'success_stories', 'future_scope', 'growth_opportunities', 'growth_path_detail'];
+                        heavyKeys.forEach(key => {
+                            delete career.data[key];
+                        });
+                    }
+                });
+            }
+            return copy;
+        }
+
+        async function switchLanguage(lang) {
+            currentLanguage = lang;
+
+            // Show dynamic feedback loader
+            showToast(lang === 'hi' ? 'भाषा बदली जा रही है...' : lang === 'mr' ? 'भाषा बदलली जात आहे...' : 'Switching language...');
+
+            translateStaticUI(lang);
+
+            // Refresh quiz questions if loaded
+            if (questions.length > 0) {
+                showQuestion(currentQuestion);
+            }
+
+            // Re-translate and re-display dashboard results if they exist
+            if (rawResultsData) {
+                const lightData = stripHeavyDetails(rawResultsData);
+                const translatedData = await translateObject(lightData, lang);
+                displayResults(translatedData);
+
+                // Prefetch and pre-translate full career details in background for 0ms loading time on clicks in the new language!
+                prefetchCareerDetails(rawResultsData.top_careers, lang);
+            }
+
+            showToast(lang === 'hi' ? 'भाषा सफलतापूर्वक बदली गई!' : lang === 'mr' ? 'भाषा यशस्वीरित्या बदलली गेली!' : 'Language updated!');
+        }
+
+        function translateStaticUI(lang) {
+            const dict = uiTranslations[lang] || uiTranslations['en'];
+
+            // Navbar brand & links
+            const brandEl = document.querySelector('.brand');
+            if (brandEl) {
+                brandEl.innerHTML = `<img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense`;
+            }
+            const navLinks = document.querySelectorAll('.nav-links a');
+            if (navLinks.length >= 3) {
+                navLinks[0].textContent = dict['nav-how'];
+                navLinks[1].textContent = dict['nav-test'];
+                navLinks[2].textContent = dict['nav-counselor'];
+            }
+            const navCta = document.querySelector('.nav-cta');
+            if (navCta) navCta.textContent = dict['nav-start'];
+
+            // Hero section
+            const heroEyebrow = document.querySelector('.hero-copy .eyebrow');
+            if (heroEyebrow) heroEyebrow.textContent = dict['hero-eyebrow'];
+
+            const heroTitle = document.querySelector('.hero-copy h1');
+            if (heroTitle) heroTitle.innerHTML = dict['hero-title'];
+
+            const heroSub = document.querySelector('.hero-copy p.sub');
+            if (heroSub) heroSub.textContent = dict['hero-sub'];
+
+            const heroStartBtn = document.querySelector('.hero-cta .btn-primary');
+            if (heroStartBtn) heroStartBtn.innerHTML = dict['hero-start'];
+
+            const heroChatBtn = document.querySelector('.hero-cta .btn-ghost');
+            if (heroChatBtn) heroChatBtn.textContent = dict['hero-chat'];
+
+            const stats = document.querySelectorAll('.hero-stats .hstat .l');
+            if (stats.length >= 3) {
+                stats[0].textContent = dict['stat-1'];
+                stats[1].textContent = dict['stat-2'];
+                stats[2].textContent = dict['stat-3'];
+            }
+
+            const statsNums = document.querySelectorAll('.hero-stats .hstat .n');
+            if (statsNums.length >= 3 && dict['num-1']) {
+                statsNums[0].textContent = dict['num-1'];
+                statsNums[1].textContent = dict['num-2'];
+                statsNums[2].textContent = dict['num-3'];
+            }
+
+            // How Section
+            const howEyebrow = document.querySelector('#how .sec-head .eyebrow');
+            if (howEyebrow) howEyebrow.textContent = dict['sec-journey-eyebrow'];
+
+            const howTitle = document.querySelector('#how .sec-head h2');
+            if (howTitle) howTitle.innerHTML = dict['sec-journey-title'];
+
+            const stepsList = document.querySelectorAll('#how .steps .step');
+            if (stepsList.length >= 4) {
+                stepsList[0].querySelector('h4').textContent = dict['step-1-title'];
+                stepsList[0].querySelector('p').textContent = dict['step-1-desc'];
+                stepsList[0].querySelector('.num').textContent = dict['step-num-1'] || "01";
+
+                stepsList[1].querySelector('h4').textContent = dict['step-2-title'];
+                stepsList[1].querySelector('p').textContent = dict['step-2-desc'];
+                stepsList[1].querySelector('.num').textContent = dict['step-num-2'] || "02";
+
+                stepsList[2].querySelector('h4').textContent = dict['step-3-title'];
+                stepsList[2].querySelector('p').textContent = dict['step-3-desc'];
+                stepsList[2].querySelector('.num').textContent = dict['step-num-3'] || "03";
+
+                stepsList[3].querySelector('h4').textContent = dict['step-4-title'];
+                stepsList[3].querySelector('p').textContent = dict['step-4-desc'];
+                stepsList[3].querySelector('.num').textContent = dict['step-num-4'] || "04";
+            }
+
+            // Quiz header
+            const quizEyebrow = document.querySelector('#quiz-section .sec-head .eyebrow');
+            if (quizEyebrow) quizEyebrow.textContent = dict['sec-quiz-eyebrow'];
+
+            const quizTitle = document.querySelector('#quiz-section .sec-head h2');
+            if (quizTitle) quizTitle.innerHTML = dict['sec-quiz-title'];
+
+            const quizLead = document.querySelector('#quiz-section .sec-head p.lead');
+            if (quizLead) quizLead.textContent = dict['sec-quiz-lead'];
+
+            // Profile Form Inputs
+            const formHeading = document.querySelector('#profileFormContainer h3');
+            if (formHeading) formHeading.textContent = dict['form-heading'];
+
+            const labels = document.querySelectorAll('#profileForm label');
+            labels.forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr === 'studentName') label.textContent = dict['label-name'];
+                else if (forAttr === 'studentAge') label.textContent = dict['label-age'];
+                else if (forAttr === 'studentClass') label.textContent = dict['label-class'];
+                else if (forAttr === 'studentEducation') label.textContent = dict['label-stream'];
+                else if (forAttr === 'studentSubjects') label.textContent = dict['label-subjects'];
+                else if (forAttr === 'studentWeakSubjects') label.textContent = dict['label-weak-subjects'];
+                else if (forAttr === 'studentInterests') label.textContent = dict['label-interests'];
+                else if (forAttr === 'studentHobbies') label.textContent = dict['label-hobbies'];
+                else if (forAttr === 'studentStrengths') label.textContent = dict['label-strengths'];
+                else if (forAttr === 'studentAspirations') label.textContent = dict['label-aspirations'];
+                else if (forAttr === 'learningMode') label.textContent = dict['label-learning-mode'];
+                else if (forAttr === 'budgetPreference') label.textContent = dict['label-budget'];
+                else if (forAttr === 'locationPreference') label.textContent = dict['label-location'];
+                else if (forAttr === 'studentLocation') label.textContent = dict['label-student-location'];
+                else if (forAttr === 'collegeRange') label.textContent = dict['label-college-range'];
+            });
+
+            // Translate select dropdown options
+            const classSelect = document.getElementById('studentClass');
+            if (classSelect && dict['option-select-class']) {
+                for (let opt of classSelect.options) {
+                    if (opt.value === "") opt.textContent = dict['option-select-class'];
+                    else if (opt.value === "1st Year College") opt.textContent = dict['option-college-1'];
+                    else if (opt.value === "2nd Year College") opt.textContent = dict['option-college-2'];
+                    else if (opt.value === "3rd Year College") opt.textContent = dict['option-college-3'];
+                    else if (opt.value === "4th Year College") opt.textContent = dict['option-college-4'];
+                    else if (opt.value === "Graduate") opt.textContent = dict['option-graduate'];
+                    else if (opt.value === "Post Graduate") opt.textContent = dict['option-post-graduate'];
+                }
+            }
+
+            const learningSelect = document.getElementById('learningMode');
+            if (learningSelect && dict['option-learning-offline']) {
+                for (let opt of learningSelect.options) {
+                    if (opt.value === "offline") opt.textContent = dict['option-learning-offline'];
+                    else if (opt.value === "distance") opt.textContent = dict['option-learning-distance'];
+                    else if (opt.value === "hybrid") opt.textContent = dict['option-learning-hybrid'];
+                }
+            }
+
+            const budgetSelect = document.getElementById('budgetPreference');
+            if (budgetSelect && dict['option-budget-moderate']) {
+                for (let opt of budgetSelect.options) {
+                    if (opt.value === "moderate") opt.textContent = dict['option-budget-moderate'];
+                    else if (opt.value === "budget_sensitive") opt.textContent = dict['option-budget-sensitive'];
+                    else if (opt.value === "no_constraint") opt.textContent = dict['option-budget-no-constraint'];
+                }
+            }
+
+            const locationSelect = document.getElementById('locationPreference');
+            if (locationSelect && dict['option-location-india']) {
+                for (let opt of locationSelect.options) {
+                    if (opt.value === "india") opt.textContent = dict['option-location-india'];
+                    else if (opt.value === "local") opt.textContent = dict['option-location-local'];
+                    else if (opt.value === "international") opt.textContent = dict['option-location-international'];
+                }
+            }
+
+            const collegeSelect = document.getElementById('collegeRange');
+            if (collegeSelect && dict['option-range-all']) {
+                for (let opt of collegeSelect.options) {
+                    if (opt.value === "all") opt.textContent = dict['option-range-all'];
+                    else if (opt.value === "government") opt.textContent = dict['option-range-govt'];
+                    else if (opt.value === "private") opt.textContent = dict['option-range-private'];
+                    else if (opt.value === "distance") opt.textContent = dict['option-range-distance'];
+                }
+            }
+
+            // Placeholders
+            const studentName = document.getElementById('studentName');
+            if (studentName) studentName.placeholder = dict['placeholder-name'];
+            const studentAge = document.getElementById('studentAge');
+            if (studentAge) studentAge.placeholder = dict['placeholder-age'];
+            const studentEducation = document.getElementById('studentEducation');
+            if (studentEducation) studentEducation.placeholder = dict['placeholder-stream'];
+            const studentSubjects = document.getElementById('studentSubjects');
+            if (studentSubjects) studentSubjects.placeholder = dict['placeholder-subjects'];
+            const studentWeakSubjects = document.getElementById('studentWeakSubjects');
+            if (studentWeakSubjects) studentWeakSubjects.placeholder = dict['placeholder-weak-subjects'];
+            const studentInterests = document.getElementById('studentInterests');
+            if (studentInterests) studentInterests.placeholder = dict['placeholder-interests'];
+            const studentHobbies = document.getElementById('studentHobbies');
+            if (studentHobbies) studentHobbies.placeholder = dict['placeholder-hobbies'];
+            const studentStrengths = document.getElementById('studentStrengths');
+            if (studentStrengths) studentStrengths.placeholder = dict['placeholder-strengths'];
+            const studentAspirations = document.getElementById('studentAspirations');
+            if (studentAspirations) studentAspirations.placeholder = dict['placeholder-aspirations'];
+            const studentLocation = document.getElementById('studentLocation');
+            if (studentLocation) studentLocation.placeholder = dict['placeholder-student-location'];
+
+            const selectClass = document.getElementById('studentClass');
+            if (selectClass && selectClass.options[0]) selectClass.options[0].textContent = dict['option-select-class'];
+
+            const subheaders = document.querySelectorAll('#profileForm h4');
+            if (subheaders.length >= 3) {
+                subheaders[0].textContent = dict['heading-learning-profile'];
+                subheaders[1].textContent = dict['heading-outside-academics'];
+                subheaders[2].textContent = dict['heading-preferences'];
+            }
+
+            const submitBtn = document.querySelector('#profileForm button[type="submit"]');
+            if (submitBtn) submitBtn.innerHTML = dict['btn-submit-profile'];
+
+            // Quiz Scale Ratings
+            const scaleBtnsText = document.querySelectorAll('#scaleButtons button .t');
+            if (scaleBtnsText.length >= 5) {
+                scaleBtnsText[0].textContent = dict['scale-not-me'];
+                scaleBtnsText[1].textContent = dict['scale-little'];
+                scaleBtnsText[2].textContent = dict['scale-maybe'];
+                scaleBtnsText[3].textContent = dict['scale-yes'];
+                scaleBtnsText[4].textContent = dict['scale-so-me'];
+            }
+
+            const backBtn = document.getElementById('backBtn');
+            if (backBtn) backBtn.textContent = dict['btn-back'];
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn && nextBtn.textContent.includes('Next')) {
+                nextBtn.textContent = dict['btn-next'];
+            }
+
+            // Counselor Section
+            const counselorEyebrow = document.querySelector('#counselor .sec-head .eyebrow');
+            if (counselorEyebrow) counselorEyebrow.textContent = dict['sec-counselor-eyebrow'];
+            const counselorTitle = document.querySelector('#counselor .sec-head h2');
+            if (counselorTitle) counselorTitle.innerHTML = dict['sec-counselor-title'];
+            const counselorSub = document.querySelector('#counselor .sec-head p.sub');
+            if (counselorSub) counselorSub.textContent = dict['sec-counselor-sub'];
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) chatInput.placeholder = dict['placeholder-chat'];
+            const chatSend = document.getElementById('chatSend');
+            if (chatSend) chatSend.textContent = dict['btn-send'];
+            const chatDisclaimer = document.getElementById('chatDisclaimer');
+            if (chatDisclaimer) chatDisclaimer.textContent = dict['chat-disclaimer'];
+        }
+
         // ============================================================
         // INIT
         // ============================================================
@@ -2416,14 +3276,25 @@
         function showQuestion(index) {
             if (index >= questions.length) { submitQuiz(); return; }
             const q = questions[index];
-            document.getElementById('qCount').textContent = `Question ${index + 1} of ${questions.length}`;
+            if (currentLanguage === 'hi') {
+                document.getElementById('qCount').textContent = `प्रश्न ${index + 1} / ${questions.length}`;
+            } else if (currentLanguage === 'mr') {
+                document.getElementById('qCount').textContent = `प्रश्न ${index + 1} / ${questions.length}`;
+            } else {
+                document.getElementById('qCount').textContent = `Question ${index + 1} of ${questions.length}`;
+            }
             updateQuizProgress();
             const icons = ['🔧', '🔬', '🎨', '🤝', '📈', '🗂️'];
             const categories = ['Realistic', 'Investigative', 'Artistic', 'Social', 'Enterprising', 'Conventional'];
             const idx = categories.indexOf(q.category);
             document.getElementById('qIcon').textContent = idx >= 0 ? icons[idx] : '💡';
             document.getElementById('qTypeLabel').textContent = q.category;
-            document.getElementById('qText').textContent = q.question;
+
+            let questionText = q.question;
+            if (currentLanguage !== 'en' && riasecQuestionsTranslations[currentLanguage]) {
+                questionText = riasecQuestionsTranslations[currentLanguage][q.id] || q.question;
+            }
+            document.getElementById('qText').textContent = questionText;
             const selectedValue = answers[index] ? answers[index].value : null;
             updateScaleSelection(selectedValue);
             updateNavigationButtons();
@@ -2541,15 +3412,27 @@
                     throw new Error('Invalid server response: top_careers missing');
                 }
 
+                rawResultsData = data;
                 userProfile = data.profile;
                 topCareers = data.top_careers;
                 // Store scores from response
                 if (data.scores) {
                     riasecScores = data.scores;
                 }
-                displayResults(data);
-                setTimeout(() => {
-                    addChatMessage('bot', `🎉 Great job ${studentInfo.name || 'Student'}! I've analyzed your answers and found ${Math.min((data.top_careers || []).length, 6)} career matches for you. Ask me about any of them!`);
+
+                const lightData = stripHeavyDetails(data);
+                const translatedData = await translateObject(lightData, currentLanguage);
+                displayResults(translatedData);
+
+                // Prefetch and pre-translate full career details in background for 0ms loading time on clicks!
+                prefetchCareerDetails(data.top_careers, currentLanguage);
+
+                setTimeout(async () => {
+                    let botMsg = `🎉 Great job ${studentInfo.name || 'Student'}! I've analyzed your answers and found ${Math.min((data.top_careers || []).length, 6)} career matches for you. Ask me about any of them!`;
+                    if (currentLanguage !== 'en') {
+                        botMsg = await translateText(botMsg, currentLanguage);
+                    }
+                    addChatMessage('bot', botMsg);
                 }, 500);
             } catch (error) {
                 console.error('Error submitting answers:', error);
@@ -2992,11 +3875,10 @@
                     }
 
                     html += `
-                        <div class="career-card" onclick="viewFullCareerDetail('${career.name.replace(/'/g, "\\'")}')">
+                        <div class="career-card" onclick="viewFullCareerDetail('${(career.originalName || career.name).replace(/'/g, "\\'")}')">
                             <div class="top">
                                 <span class="rank">${emoji} #${index + 1}</span>
                                 ${badgeHtml}
-                                <span class="match">${career.score}%</span>
                             </div>
                             <h4>${career.name}</h4>
                             <p class="career-desc">${c.description || 'No description available'}</p>
@@ -3037,9 +3919,6 @@
                             
                             <div class="card-footer" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                                 <span>Click for full details →</span>
-                                <button class="download-card-btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--stroke-bright); border-radius: 6px; padding: 4px 8px; font-size: 0.8rem; color: var(--cyan); display: flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.2s;" onclick="event.stopPropagation(); downloadCareerReport('${career.name.replace(/'/g, "\\'")}')">
-                                    📥 Save PDF
-                                </button>
                             </div>
                         </div>
                     `;
@@ -3063,12 +3942,86 @@
                 return;
             }
 
+            // PDF Headings Localization
+            const pdfLabels = {
+                en: {
+                    subtitle: "Interactive Career Guide & Pathway Report",
+                    overview: "Career Overview",
+                    personality: "Personality Alignment",
+                    pathway: "Educational Pathway",
+                    exams: "Entrance Exams",
+                    fees: "Approximate Course Fees",
+                    income: "Expected Monthly Income",
+                    financial: "Financial Assistance",
+                    scholarships: "Scholarships",
+                    loans: "Educational Loans",
+                    study: "Where Will You Study?",
+                    gov: "Government Institutes",
+                    priv: "Private Institutes",
+                    dist: "Distance Learning",
+                    growth: "Expected Growth Path",
+                    work: "Where You Will Work",
+                    nearYou: "Near You",
+                    filtered: "Filtered out based on your college type preferences",
+                    noInstitutes: "No institutes listed",
+                    notAvailable: "Information not available",
+                    none: "None listed"
+                },
+                hi: {
+                    subtitle: "इंटरएक्टिव करियर गाइड और पाथवे रिपोर्ट",
+                    overview: "करियर विवरण",
+                    personality: "व्यक्तित्व संरेखण",
+                    pathway: "शैक्षणिक मार्ग (पाथवे)",
+                    exams: "प्रवेश परीक्षाएं",
+                    fees: "अनुमानित कोर्स शुल्क",
+                    income: "अपेक्षित मासिक आय",
+                    financial: "वित्तीय सहायता",
+                    scholarships: "छात्रवृत्तियां",
+                    loans: "शैक्षणिक ऋण",
+                    study: "आप कहाँ अध्ययन करेंगे?",
+                    gov: "सरकारी संस्थान",
+                    priv: "निजी संस्थान",
+                    dist: "दूरी शिक्षा (डिस्टेंस लर्निंग)",
+                    growth: "अपेक्षित विकास पथ",
+                    work: "आप कहाँ काम करेंगे",
+                    nearYou: "आपके पास",
+                    filtered: "आपके कॉलेज प्रकार की प्राथमिकताओं के आधार पर फ़िल्टर किया गया",
+                    noInstitutes: "कोई संस्थान सूचीबद्ध नहीं है",
+                    notAvailable: "जानकारी उपलब्ध नहीं है",
+                    none: "कोई सूचीबद्ध नहीं है"
+                },
+                mr: {
+                    subtitle: "इंटरएक्टिव करिअर मार्गदर्शक आणि पाथवे अहवाल",
+                    overview: "करिअर विहंगावलोकन",
+                    personality: "व्यक्तिमत्व संरेखन",
+                    pathway: "शैक्षणिक मार्ग (पाथवे)",
+                    exams: "प्रवेश परीक्षा",
+                    fees: "अंदाजे कोर्स शुल्क",
+                    income: "अपेक्षित मासिक उत्पन्न",
+                    financial: "वित्तीय सहाय्य",
+                    scholarships: "शिष्यवृत्ती",
+                    loans: "शैक्षणिक कर्ज",
+                    study: "तुम्ही कुठे अभ्यास कराल?",
+                    gov: "शासकीय संस्था",
+                    priv: "खाजगी संस्था",
+                    dist: "दूरस्थ शिक्षण (डिस्टन्स लर्निंग)",
+                    growth: "अपेक्षित वाढीचा मार्ग",
+                    work: "तुम्ही कुठे काम कराल",
+                    nearYou: "तुमच्या जवळ",
+                    filtered: "तुमच्या कॉलेज प्रकारच्या आवडीनुसार फिल्टर केले गेले",
+                    noInstitutes: "कोणतीही संस्था सूचीबद्ध नाही",
+                    notAvailable: "माहिती उपलब्ध नाही",
+                    none: "कोणतीही सूचीबद्ध नाही"
+                }
+            };
+            const labels = pdfLabels[currentLanguage] || pdfLabels['en'];
+
             const emoji = career.emoji || '💼';
             const careerName = career.career_name || 'Career Guide';
-            const description = career.description || 'No description available.';
+            const description = career.description || labels.notAvailable;
 
             // Format Personality Traits
-            const traitsHtml = (career.personality_traits || []).map(t => `<span class="tag">${t}</span>`).join('') || 'None listed';
+            const traitsHtml = (career.personality_traits || []).map(t => `<span class="tag">${t}</span>`).join('') || labels.none;
 
             // Format Educational Pathway
             let pathwayHtml = '';
@@ -3085,7 +4038,7 @@
                     let extra = '';
                     if (step.entrance_exams && Array.isArray(step.entrance_exams)) {
                         const examsList = step.entrance_exams.map(e => typeof e === 'string' ? e : (e.name || ''));
-                        extra = `<div class="step-extra"><strong>Entrance Exams:</strong> ${examsList.join(', ')}</div>`;
+                        extra = `<div class="step-extra"><strong>${labels.exams}:</strong> ${examsList.join(', ')}</div>`;
                     }
                     return `<div class="step-row">
                         <span class="step-num">${idx + 1}</span>
@@ -3096,17 +4049,17 @@
                     </div>`;
                 }).join('');
             } else {
-                pathwayHtml = '<p>Information not available</p>';
+                pathwayHtml = `<p>${labels.notAvailable}</p>`;
             }
 
             // Format Entrance Exams
             const examsHtml = (career.entrance_exams || []).map(e => {
                 const name = typeof e === 'string' ? e : (e.name || '');
                 return `<span class="tag tag-cyan">${name}</span>`;
-            }).join('') || '<span class="tag">None listed</span>';
+            }).join('') || `<span class="tag">${labels.none}</span>`;
 
             // Format Course Fees
-            let feesHtml = 'Information not available';
+            let feesHtml = labels.notAvailable;
             if (career.course_fee) {
                 if (typeof career.course_fee === 'string') {
                     feesHtml = career.course_fee;
@@ -3126,7 +4079,7 @@
             }
 
             // Format Expected Income
-            let salaryHtml = 'Information not available';
+            let salaryHtml = labels.notAvailable;
             if (career.expected_income) {
                 if (typeof career.expected_income === 'string') {
                     salaryHtml = career.expected_income;
@@ -3146,7 +4099,7 @@
 
             // Format Scholarships & Loans
             const formatFin = (items, prefix) => {
-                if (!Array.isArray(items) || items.length === 0) return '<li>Information not available</li>';
+                if (!Array.isArray(items) || items.length === 0) return `<li>${labels.notAvailable}</li>`;
                 return items.map(item => {
                     if (typeof item === 'string') return `<li>${item}</li>`;
                     const name = item.name || item.title || `${prefix} Scheme`;
@@ -3162,14 +4115,43 @@
             const scholarshipsHtml = formatFin(career.scholarships, 'Scholarship');
             const loansHtml = formatFin(career.loans, 'Loan');
 
-            // Format Growth Path
+            // Format Growth Path (Normalized for multi-path structures)
+            const getGrowthPaths = (gList) => {
+                if (!Array.isArray(gList) || gList.length === 0) return [];
+                if (gList.every(item => typeof item === 'string' || typeof item === 'number')) {
+                    return [gList];
+                }
+                const pathsList = [];
+                gList.forEach(item => {
+                    if (Array.isArray(item)) {
+                        pathsList.push(item);
+                    } else if (item && typeof item === 'object') {
+                        if (Array.isArray(item.path)) {
+                            pathsList.push(item.path);
+                        } else {
+                            const val = item.step || item.title || item.name || item.role || item.designation;
+                            if (val) pathsList.push([val]);
+                        }
+                    }
+                });
+                return pathsList.length > 0 ? pathsList : [gList.map(x => String(x))];
+            };
+
             const growthList = career.expected_growth_path || career.growth_path || [];
-            const growthHtml = growthList.length > 0 ?
-                `<div class="growth-timeline">${growthList.map((g, i) => `
-                    <div class="growth-node">${g}</div>
-                    ${i < growthList.length - 1 ? '<span class="growth-arrow">➔</span>' : ''}
-                `).join('')}</div>` :
-                'Information not available';
+            const normalizedPaths = getGrowthPaths(growthList);
+            let growthHtml = '';
+
+            if (normalizedPaths.length > 0) {
+                growthHtml = normalizedPaths.map((path, pathIdx) => `
+                    ${normalizedPaths.length > 1 ? `<div style="color:#0891b2; font-size:0.8rem; font-weight:bold; margin-top:8px; margin-bottom:4px;">Option ${pathIdx + 1}</div>` : ''}
+                    <div class="growth-timeline">${path.map((g, i) => `
+                        <div class="growth-node">${g}</div>
+                        ${i < path.length - 1 ? '<span class="growth-arrow">➔</span>' : ''}
+                    `).join('')}</div>
+                `).join('');
+            } else {
+                growthHtml = labels.notAvailable;
+            }
 
             // Format Institutes
             const whereStudy = career.where_will_you_study || career.institutes || {};
@@ -3178,13 +4160,13 @@
             const distInst = whereStudy.distance_learning || [];
 
             const formatInst = (list, typeName) => {
-                if (!Array.isArray(list) || list.length === 0) return '<li>No institutes listed</li>';
+                if (!Array.isArray(list) || list.length === 0) return `<li>${labels.noInstitutes}</li>`;
 
                 const studentLocVal = studentInfo.student_location ? studentInfo.student_location.trim().toLowerCase() : '';
                 const prefRange = studentInfo.college_range || 'all';
 
                 if (prefRange !== 'all' && prefRange !== typeName) {
-                    return '<li>Filtered out based on your college type preferences</li>';
+                    return `<li>${labels.filtered}</li>`;
                 }
 
                 const processed = list.map(i => {
@@ -3203,7 +4185,7 @@
                 processed.sort((a, b) => (b.isLocal ? 1 : 0) - (a.isLocal ? 1 : 0));
 
                 return processed.map(item => {
-                    const localMarker = item.isLocal ? ' 📍 [Near You]' : '';
+                    const localMarker = item.isLocal ? ` 📍 [${labels.nearYou}]` : '';
                     const loc = item.location ? ` (${item.location})` : '';
                     return `<li style="${item.isLocal ? 'background-color: #f0fdf4; border-left: 3px solid #16a34a; padding-left: 8px;' : ''}"><strong>${item.name}</strong>${loc}${localMarker}</li>`;
                 }).join('');
@@ -3215,9 +4197,9 @@
             // Format Work Details
             const whereWork = career.where_will_you_work || {};
             const places = whereWork.places_of_work || career.places_of_work || [];
-            const placesHtml = places.map(p => `<span class="tag">${p}</span>`).join('') || 'Information not available';
+            const placesHtml = places.map(p => `<span class="tag">${p}</span>`).join('') || labels.notAvailable;
 
-            let workEnvHtml = 'Information not available';
+            let workEnvHtml = labels.notAvailable;
             const workEnv = whereWork.work_environment || career.work_environment;
             if (workEnv) {
                 if (typeof workEnv === 'string') workEnvHtml = workEnv;
@@ -3238,9 +4220,10 @@
                 if (story.quote) {
                     quoteHtml = '<blockquote style="font-style:italic; border-left:3px solid #7e22ce; padding-left:12px; margin:12px 0; color:#555;">"' + story.quote + '"</blockquote>';
                 }
+                const storyTitle = currentLanguage === 'hi' ? '🌟 क्षेत्र से उदाहरण' : currentLanguage === 'mr' ? '🌟 क्षेत्रातील उदाहरण' : '🌟 Example From The Field';
                 storyHtml = `
                     <div class="story-card">
-                        <h3>🌟 Example From The Field</h3>
+                        <h3>${storyTitle}</h3>
                         <p style="font-size:1.1rem; font-weight:bold; margin-bottom:4px; color:#5b21b6;">` + (story.name || '') + `</p>
                         <p style="color:#666; margin-top:0;">` + (story.profession || story.designation || careerName) + `</p>
                         ` + quoteHtml + `
@@ -3396,67 +4379,67 @@
                         <div style="font-size: 2.8rem; line-height: 1;">${emoji}</div>
                         <div class="header-text">
                             <h1>${careerName}</h1>
-                            <p>Interactive Career Guide & Pathway Report</p>
+                            <p>${labels.subtitle}</p>
                         </div>
                     </div>
                     
-                    <h2>Career Overview</h2>
+                    <h2>${labels.overview}</h2>
                     <p>${description}</p>
                     
-                    <h2>Personality Alignment</h2>
+                    <h2>${labels.personality}</h2>
                     <div>${traitsHtml}</div>
                     
-                    <h2>Educational Pathway</h2>
+                    <h2>${labels.pathway}</h2>
                     <div style="margin-top: 12px;">${pathwayHtml}</div>
                     
-                    <h2>Entrance Exams</h2>
+                    <h2>${labels.exams}</h2>
                     <div style="margin-top: 8px;">${examsHtml}</div>
                     
                     <div class="grid-2" style="margin-top: 16px;">
                         <div>
-                            <h2>Approximate Course Fees</h2>
+                            <h2>${labels.fees}</h2>
                             <p style="font-size: 1.05rem; font-weight: 600; color: #111827;">${feesHtml}</p>
                         </div>
                         <div>
-                            <h2>Expected Monthly Income</h2>
+                            <h2>${labels.income}</h2>
                             <p style="font-size: 1.05rem; font-weight: 600; color: #111827;">${salaryHtml}</p>
                         </div>
                     </div>
                     
-                    <h2>Financial Assistance</h2>
+                    <h2>${labels.financial}</h2>
                     <div class="grid-2">
                         <div>
-                            <h3>Scholarships</h3>
+                            <h3>${labels.scholarships}</h3>
                             <ul>${scholarshipsHtml}</ul>
                         </div>
                         <div>
-                            <h3>Educational Loans</h3>
+                            <h3>${labels.loans}</h3>
                             <ul>${loansHtml}</ul>
                         </div>
                     </div>
                     
-                    <h2>Where Will You Study?</h2>
+                    <h2>${labels.study}</h2>
                     <div class="grid-2">
                         <div>
-                            <h3>Government Institutes</h3>
+                            <h3>${labels.gov}</h3>
                             <ul>${govHtml}</ul>
                         </div>
                         <div>
-                            <h3>Private Institutes</h3>
+                            <h3>${labels.priv}</h3>
                             <ul>${privHtml}</ul>
                         </div>
                     </div>
                     ${distInst.length > 0 ? `
                     <div style="margin-top: 16px;">
-                        <h3>Distance Learning</h3>
+                        <h3>${labels.dist}</h3>
                         <ul>${distHtml}</ul>
                     </div>
                     ` : ''}
                     
-                    <h2>Expected Growth Path</h2>
+                    <h2>${labels.growth}</h2>
                     <div style="margin-top: 12px;">${growthHtml}</div>
                     
-                    <h2>Where You Will Work</h2>
+                    <h2>${labels.work}</h2>
                     <div>${placesHtml}</div>
                     <p style="margin-top: 10px; font-style: italic;">${workEnvHtml}</p>
                     
@@ -3496,10 +4479,63 @@
         }
 
         // ============================================================
+        // PREFETCH AND PRE-TRANSLATE CAREER DETAILS (BACKGROUND SPEEDUP)
+        // ============================================================
+        async function prefetchCareerDetails(topCareersList, lang) {
+            if (!Array.isArray(topCareersList) || topCareersList.length === 0 || lang === 'en') return;
+
+            console.log(`[PREFETCH] Starting background prefetch for ${topCareersList.length} careers in '${lang}'...`);
+
+            // Loop through each career to fetch and translate in background
+            for (const careerMatch of topCareersList) {
+                const careerName = careerMatch.originalName || careerMatch.name;
+                const cacheKey = lang + '_' + careerName;
+
+                // Skip if already cached
+                if (careerTranslationCache[cacheKey]) {
+                    continue;
+                }
+
+                // Asynchronously fetch and translate (without blocking the loop or UI)
+                (async () => {
+                    try {
+                        const response = await fetch('/api/career-detail', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            credentials: 'include',
+                            body: JSON.stringify({ career_name: careerName })
+                        });
+                        const data = await response.json();
+                        if (data.career) {
+                            const translatedCareer = await translateObject(data.career, lang);
+                            careerTranslationCache[cacheKey] = translatedCareer;
+                            console.log(`[PREFETCH] Successfully pre-translated and cached: ${careerName} (${lang})`);
+                        }
+                    } catch (e) {
+                        console.warn(`[PREFETCH] Error prefetching ${careerName}:`, e);
+                    }
+                })();
+
+                // Add a small 200ms delay between fetches to keep network traffic smooth
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+        }
+
+        // ============================================================
         // VIEW FULL CAREER DETAIL
         // ============================================================
         async function viewFullCareerDetail(careerName) {
-            showToast(`Loading details for ${careerName}...`);
+            const cacheKey = currentLanguage + '_' + careerName;
+            if (currentLanguage !== 'en' && careerTranslationCache[cacheKey]) {
+                showCareerDetailModal(careerTranslationCache[cacheKey]);
+                return;
+            }
+
+            let toastMsg = `Loading details for ${careerName}...`;
+            if (currentLanguage !== 'en') {
+                toastMsg = await translateText(toastMsg, currentLanguage);
+            }
+            showToast(toastMsg);
             try {
                 const response = await fetch('/api/career-detail', {
                     method: 'POST',
@@ -3508,11 +4544,22 @@
                     body: JSON.stringify({ career_name: careerName })
                 });
                 const data = await response.json();
-                if (data.career) showCareerDetailModal(data.career);
-                else showToast('Career details not available');
+                if (data.career) {
+                    const translatedCareer = await translateObject(data.career, currentLanguage);
+                    if (currentLanguage !== 'en') {
+                        careerTranslationCache[cacheKey] = translatedCareer;
+                    }
+                    showCareerDetailModal(translatedCareer);
+                } else {
+                    let errMsg = 'Career details not available';
+                    if (currentLanguage !== 'en') errMsg = await translateText(errMsg, currentLanguage);
+                    showToast(errMsg);
+                }
             } catch (error) {
                 console.error('Error fetching career detail:', error);
-                showToast('Error loading career details');
+                let errLoadMsg = 'Error loading career details';
+                if (currentLanguage !== 'en') errLoadMsg = await translateText(errLoadMsg, currentLanguage);
+                showToast(errLoadMsg);
             }
         }
 
@@ -3764,20 +4811,44 @@
             }
             const hasWorkData = hasArray(places) || hasText(workEnvText);
 
-            // Growth Path
+            // Expected Growth Path Normalization
+            const getGrowthPaths = (gList) => {
+                if (!Array.isArray(gList) || gList.length === 0) return [];
+                if (gList.every(item => typeof item === 'string' || typeof item === 'number')) {
+                    return [gList];
+                }
+                const pathsList = [];
+                gList.forEach(item => {
+                    if (Array.isArray(item)) {
+                        pathsList.push(item);
+                    } else if (item && typeof item === 'object') {
+                        if (Array.isArray(item.path)) {
+                            pathsList.push(item.path);
+                        } else {
+                            const val = item.step || item.title || item.name || item.role || item.designation;
+                            if (val) pathsList.push([val]);
+                        }
+                    }
+                });
+                return pathsList.length > 0 ? pathsList : [gList.map(x => String(x))];
+            };
+
             const growth = career.expected_growth_path || career.growth_path || [];
+            const normalizedPaths = getGrowthPaths(growth);
             let growthHtml = '';
-            if (Array.isArray(growth) && growth.length > 0) {
-                growthHtml = `
+
+            if (normalizedPaths.length > 0) {
+                growthHtml = normalizedPaths.map((path, pathIdx) => `
+                    ${normalizedPaths.length > 1 ? `<div style="color:var(--cyan); font-size:0.82rem; font-weight:600; margin-bottom:6px; margin-top:${pathIdx > 0 ? '12px' : '0'}">Option ${pathIdx + 1}</div>` : ''}
                     <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:rgba(255,255,255,0.015); border:1px solid var(--stroke); border-radius:12px; padding:16px 20px;">
-                        ${growth.map((step, idx) => `
+                        ${path.map((step, idx) => `
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <div style="background:linear-gradient(135deg, rgba(123, 97, 255, 0.2), rgba(0, 212, 255, 0.1)); border:1px solid var(--stroke); border-radius:10px; padding:8px 14px; font-weight:600; font-size:0.88rem; color:var(--ink);">${step}</div>
-                                ${idx < growth.length - 1 ? '<span style="color:var(--cyan); font-size:1.2rem; font-weight:700;">➔</span>' : ''}
+                                ${idx < path.length - 1 ? '<span style="color:var(--cyan); font-size:1.2rem; font-weight:700;">➔</span>' : ''}
                             </div>
                         `).join('')}
                     </div>
-                `;
+                `).join('');
             } else {
                 growthHtml = renderStructuredValue(growth);
             }
@@ -3950,7 +5021,7 @@
                 ` : '';
 
             const extraSections = Object.entries(career)
-                .filter(([key]) => !['career_name', 'description', 'personality_traits', 'educational_pathway', 'entrance_exams', 'course_fee', 'expected_income', 'scholarships', 'loans', 'where_will_you_study', 'institutes', 'where_will_you_work', 'places_of_work', 'work_environment', 'growth_path', 'expected_growth_path', 'related_careers', 'differently_abled_opportunities', 'entrepreneurship', 'ai_insights', 'success_story', 'example_from_field', 'future_scope', 'emerging_technologies', 'important_note', 'emoji', 'pages', 'source_page', 'source_pages', 'ranking_information', 'reference_ranking_website'].includes(key))
+                .filter(([key]) => !['career_name', 'description', 'personality_traits', 'educational_pathway', 'entrance_exams', 'course_fee', 'expected_income', 'scholarships', 'loans', 'where_will_you_study', 'institutes', 'where_will_you_work', 'places_of_work', 'work_environment', 'growth_path', 'expected_growth_path', 'related_careers', 'differently_abled_opportunities', 'entrepreneurship', 'ai_insights', 'success_story', 'example_from_field', 'future_scope', 'emerging_technologies', 'important_note', 'emoji', 'pages', 'source_page', 'source_pages', 'ranking_information', 'reference_ranking_website', 'riasec_tags'].includes(key))
                 .filter(([, value]) => hasRenderableValue(value))
                 .map(([key, value]) => `
                         <div style="margin-bottom:16px">
@@ -3958,6 +5029,14 @@
                             <div class="section-content">${renderStructuredValue(value)}</div>
                         </div>
                     `).join('');
+
+            // Expose globally so the modal download button can call it
+            window._downloadCurrentModalCareer = () => {
+                downloadCareerPDF(career);
+            };
+
+            const downloadBtnLabel = currentLanguage === 'hi' ? '📥 पीडीएफ डाउनलोड करें' : currentLanguage === 'mr' ? '📥 पीडीएफ डाउनलोड करा' : '📥 Download PDF';
+            const askBtnLabel = currentLanguage === 'hi' ? 'इस करियर के बारे में VERA से पूछें →' : currentLanguage === 'mr' ? 'या करिअरबद्दल VERA ला विचारा →' : 'Ask VERA about this career →';
 
             const modal = document.createElement('div');
             modal.className = 'modal-overlay';
@@ -3996,10 +5075,16 @@
                     ${exampleHtml}
                     ${noteHtml}
 
-                    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px" 
-                        onclick="this.closest('.modal-overlay').remove();document.body.style.overflow='';document.getElementById('counselor').scrollIntoView({behavior:'smooth'});document.getElementById('chatInput').value='Tell me more about becoming a ${careerName}';setTimeout(sendChat,500)">
-                        Ask VERA about this career →
-                    </button>
+                    <div style="display:flex; gap:12px; width:100%; margin-top:12px; flex-wrap: wrap;">
+                        <button class="btn" style="flex:1; min-width: 140px; justify-content:center; background:var(--glass); border:1px solid var(--stroke-bright); color:var(--cyan); font-weight:600; padding:10px 16px; border-radius:var(--r-sm); cursor:pointer;"
+                            onclick="window._downloadCurrentModalCareer()">
+                            ${downloadBtnLabel}
+                        </button>
+                        <button class="btn btn-primary" style="flex:1.5; min-width: 200px; justify-content:center;" 
+                            onclick="this.closest('.modal-overlay').remove();document.body.style.overflow='';document.getElementById('counselor').scrollIntoView({behavior:'smooth'});document.getElementById('chatInput').value='${currentLanguage === 'hi' ? 'मुझे ' + careerName + ' बनने के बारे में और बताएं' : currentLanguage === 'mr' ? 'मला ' + careerName + ' बनण्याबद्दल अधिक सांगा' : 'Tell me more about becoming a ' + careerName}';setTimeout(sendChat,500)">
+                            ${askBtnLabel}
+                        </button>
+                    </div>
                 </div>
             `;
             document.body.appendChild(modal);
@@ -4106,7 +5191,10 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({
+                        message: text,
+                        language: currentLanguage
+                    })
                 });
 
                 if (!response.ok) {
@@ -4121,7 +5209,11 @@
             } catch (error) {
                 console.error('Chat error:', error);
                 hideTyping();
-                addChatMessage('bot', '😔 Oops! I encountered a small issue. Let me try that again. Please retry your question or check your internet connection! 🌐');
+                let errChatMsg = '😔 Oops! I encountered a small issue. Let me try that again. Please retry your question or check your internet connection! 🌐';
+                if (currentLanguage !== 'en') {
+                    errChatMsg = await translateText(errChatMsg, currentLanguage);
+                }
+                addChatMessage('bot', errChatMsg);
             } finally {
                 isProcessing = false;
                 document.getElementById('chatSend').disabled = false;

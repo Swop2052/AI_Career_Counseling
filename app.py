@@ -1,4 +1,12 @@
 # app.py - Complete Production Flask Application
+import sys
+import io
+
+# Force stdout/stderr to use UTF-8 encoding on Windows to prevent Unicode/Emoji print crashes
+if sys.platform.startswith('win'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 import json
@@ -19,6 +27,7 @@ from core.exceptions import (
     IntentClassificationError, PersonaGenerationError,
     RetrievalError, LLMError, ValidationError
 )
+from modules.vector_store import vector_store
 
 # ============================================================
 # SETUP FLASK
@@ -30,6 +39,25 @@ app.config['SESSION_COOKIE_SECURE'] = config.flask_env == 'production'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 CORS(app, supports_credentials=True)
+
+# ============================================================
+# RATE LIMITING (SECURITY GUARD)
+# ============================================================
+from collections import defaultdict
+
+# Simple in-memory rate limiter: IP address -> list of request timestamps in the last 60 seconds
+RATE_LIMIT_WINDOW = 60  # seconds
+RATE_LIMIT_MAX_REQUESTS = 30  # maximum requests per window
+ip_request_history = defaultdict(list)
+
+def check_rate_limit(ip_address):
+    now = time.time()
+    # Clean old requests outside the window
+    ip_request_history[ip_address] = [t for t in ip_request_history[ip_address] if now - t < RATE_LIMIT_WINDOW]
+    if len(ip_request_history[ip_address]) >= RATE_LIMIT_MAX_REQUESTS:
+        return False
+    ip_request_history[ip_address].append(now)
+    return True
 
 # ============================================================
 # INITIALIZE MODULES
@@ -53,19 +81,31 @@ from career_retrieval_engine import retrieve_careers, clear_career_cache
 # ============================================================
 
 def load_career_database():
-    """Load career database from JSON file."""
+    """Load career database from active SQLite database or fallback JSON."""
     try:
-        with open(config.career_db_path, "r", encoding="utf-8-sig") as file:
-            data = json.load(file)
-        careers = data.get("careers", [])
-        print(f"[SUCCESS] Loaded {len(careers)} careers from {config.career_db_path}")
-        return careers
-    except FileNotFoundError:
-        print(f"[ERROR] File not found: {config.career_db_path}")
-        return []
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] JSON Error in {config.career_db_path}: {e}")
-        return []
+        from modules.conversation_memory import conversation_memory
+        db_careers = conversation_memory.get_all_careers()
+        
+        # Load from Data.json to see if we need to seed
+        fallback_careers = []
+        try:
+            with open(config.career_db_path, "r", encoding="utf-8-sig") as file:
+                data = json.load(file)
+            fallback_careers = data.get("careers", [])
+        except Exception as e:
+            print(f"[WARNING] Could not read local Data.json: {e}")
+
+        # If SQLite has fewer careers than Data.json (e.g. fresh start or test override), seed SQLite
+        if len(db_careers) < len(fallback_careers) and fallback_careers:
+            print(f"[INFO] SQLite 'careers' table has {len(db_careers)} records, seeding {len(fallback_careers)} careers from Data.json...")
+            conversation_memory.upsert_careers(fallback_careers)
+            db_careers = conversation_memory.get_all_careers()
+            
+        if db_careers:
+            print(f"[SUCCESS] Loaded {len(db_careers)} careers from SQLite 'careers' table.")
+            return db_careers
+            
+        return fallback_careers
     except Exception as e:
         print(f"[ERROR] Career Database Error: {e}")
         return []
@@ -286,14 +326,7 @@ def normalize_career_record(career):
 
 @app.route('/')
 def index():
-    """Render the main page and clear previous session to start clean."""
-    try:
-        if 'session_id' in session:
-            conversation_memory.clear_session(session['session_id'])
-        session.clear()
-        conversation_memory.cleanup_old_sessions()
-    except Exception as e:
-        print(f"[WARNING] Error cleaning up database on index load: {e}")
+    """Render the main page."""
     return render_template('index.html')
 
 
@@ -354,6 +387,32 @@ def submit_answers():
         
         session_id = get_session_id()
         conversation_memory.set_persona(session_id, persona_dict)
+        conversation_memory.save_relational_profile(session_id, student_info)
+        
+        # Parse and seed detailed question-by-question quiz answers to database
+        scale_mapping = {
+            5: "Exactly Like Me",
+            4: "Mostly Like Me",
+            3: "Sometimes Like Me",
+            2: "Rarely Like Me",
+            1: "Not Like Me At All"
+        }
+        detailed_answers = []
+        for ans in answers:
+            q_id = ans.get('question_id')
+            val = ans.get('value', 0)
+            category = ans.get('category', '')
+            q_text = "Unknown question text"
+            if q_id and 1 <= q_id <= len(QUESTIONS):
+                q_text = QUESTIONS[q_id - 1].get('question', '')
+            detailed_answers.append({
+                'question_id': q_id,
+                'question': q_text,
+                'category': category,
+                'value': val,
+                'response_text': scale_mapping.get(val, "Not Like Me At All")
+            })
+        conversation_memory.set_riasec_data(session_id, detailed_answers, scores)
         
         print("[INFO] Running career retrieval pipeline...")
         career_matches = retrieval_pipeline.retrieve(persona_dict, CAREER_DB)
@@ -375,6 +434,21 @@ def submit_answers():
         
         # Store in conversation memory (database)
         conversation_memory.set_career_matches(session_id, [m.to_dict() for m in career_matches])
+        
+        # Calculate final RIASEC code
+        sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        riasec_code = "".join([code for code, score in sorted_scores if score > 0][:3])
+        
+        # Save unified overall session snapshot
+        overall_snapshot = {
+            'student_info': student_info,
+            'riasec_answers': detailed_answers,
+            'riasec_scores': scores,
+            'riasec_code': riasec_code,
+            'persona': persona_dict,
+            'career_matches': top_careers
+        }
+        conversation_memory.set_overall_session(session_id, overall_snapshot)
         
         response_data = {
             'profile': profile,
@@ -401,6 +475,13 @@ def career_detail():
         data = request.json
         career_name = data.get('career_name')
         
+        # Check SQLite database first
+        from modules.conversation_memory import conversation_memory
+        career_record = conversation_memory.get_career_detail(career_name)
+        if career_record:
+            return jsonify({'career': normalize_career_record(career_record)})
+        
+        # Fallback to local in-memory scan
         for career in CAREER_DB:
             if career.get('career_name') == career_name:
                 return jsonify({'career': normalize_career_record(career)})
@@ -412,15 +493,54 @@ def career_detail():
         return jsonify({'error': str(e)}), 500
 
 
+def find_mentioned_careers(message: str, career_db: list) -> list:
+    """Find careers from the database mentioned in the user message."""
+    mentioned = []
+    msg_lower = message.lower()
+    
+    # Sort careers by name length descending to match longer names first
+    sorted_db = sorted(career_db, key=lambda x: len(x.get('career_name', '')), reverse=True)
+    
+    for career in sorted_db:
+        name = career.get('career_name', '')
+        if not name or len(name) < 4:
+            continue
+            
+        name_lower = name.lower()
+        
+        # Word boundary or substring check to be resilient to student typing patterns
+        if name_lower in msg_lower:
+            mentioned.append(career)
+            # Limit to 3 additional context careers to prevent prompt bloat
+            if len(mentioned) >= 3:
+                break
+                
+    return mentioned
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Handle chat messages with Nova."""
+    # Production Security: Rate limiting check (max 30 requests/min per IP)
+    ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if not check_rate_limit(ip_addr):
+        return jsonify({
+            'response': "You are sending messages too quickly. Please wait a moment before trying again."
+        }), 429
+
     try:
         start_time = time.time()
         
         data = request.json
         message = data.get('message', '').strip()
+        language = data.get('language', 'en').strip()
         
+        # Production Security: Input length validation (1500 chars)
+        if len(message) > 1500:
+            return jsonify({
+                'response': "Your message is a bit too long. Please keep it under 1500 characters so I can help you better!"
+            })
+            
         if not message:
             return jsonify({
                 'response': "Please ask me a question! I'm here to help with your career journey."
@@ -429,7 +549,7 @@ def chat():
         conv = get_or_create_conversation()
         session_id = get_session_id()
         
-        # Get persona from SQLite database memory or create default
+        # Get persona from SQLite session store or create default
         persona = conversation_memory.get_persona(session_id)
         if not persona:
             persona = {
@@ -440,7 +560,7 @@ def chat():
                 'preferences': {}
             }
         
-        # Check SQLite database for career matches
+        # Check SQLite session store for career matches
         career_matches = conversation_memory.get_career_matches(session_id)
         has_taken_test = session.get('has_taken_test', False) or (persona is not None and persona.get('riasec_profile') != {})
         
@@ -467,34 +587,57 @@ def chat():
         career_matches_data = []
         should_use_career_data = classification.should_use_career_data
         
-        if classification.requires_retrieval or should_use_career_data:
-            # Try to get career matches from database memory
-            stored_matches = conversation_memory.get_career_matches(session_id)
-            
-            if stored_matches:
-                for match_data in stored_matches[:6]:
-                    # Handle both dict and CareerMatch object
-                    if isinstance(match_data, dict):
-                        career_matches_data.append(CareerMatch(
-                            career_name=match_data.get('career_name', ''),
-                            career_data=match_data.get('career_data', {}),
-                            match_score=match_data.get('match_score', 0),
-                            profile_match=match_data.get('profile_match', 0),
-                            riasec_match=match_data.get('riasec_match', 0),
-                            subject_match=match_data.get('subject_match', 0),
-                            interest_match=match_data.get('interest_match', 0),
-                            goal_match=match_data.get('goal_match', 0),
-                            skill_match=match_data.get('skill_match', 0),
-                            location_match=match_data.get('location_match', 0),
-                            confidence=match_data.get('confidence', 0),
-                            reason=match_data.get('reason', ''),
-                            strengths=match_data.get('strengths', []),
-                            improvement_areas=match_data.get('improvement_areas', []),
-                            score_breakdown=match_data.get('score_breakdown', {})
-                        ))
-                    else:
-                        # Already a CareerMatch object
-                        career_matches_data.append(match_data)
+        # 1. Fetch student's top matching careers from memory
+        stored_matches = conversation_memory.get_career_matches(session_id)
+        if stored_matches:
+            for match_data in stored_matches[:6]:
+                # Handle both dict and CareerMatch object
+                if isinstance(match_data, dict):
+                    career_matches_data.append(CareerMatch(
+                        career_name=match_data.get('career_name', ''),
+                        career_data=match_data.get('career_data', {}),
+                        match_score=match_data.get('match_score', 0),
+                        profile_match=match_data.get('profile_match', 0),
+                        riasec_match=match_data.get('riasec_match', 0),
+                        subject_match=match_data.get('subject_match', 0),
+                        interest_match=match_data.get('interest_match', 0),
+                        goal_match=match_data.get('goal_match', 0),
+                        skill_match=match_data.get('skill_match', 0),
+                        location_match=match_data.get('location_match', 0),
+                        confidence=match_data.get('confidence', 0),
+                        reason=match_data.get('reason', ''),
+                        strengths=match_data.get('strengths', []),
+                        improvement_areas=match_data.get('improvement_areas', []),
+                        score_breakdown=match_data.get('score_breakdown', {})
+                    ))
+                else:
+                    # Already a CareerMatch object
+                    career_matches_data.append(match_data)
+        
+        # 2. Check user message for other mentioned database careers to pull contextual details dynamically
+        mentioned_db_careers = find_mentioned_careers(message, CAREER_DB)
+        for career in mentioned_db_careers:
+            name = career.get('career_name', '')
+            if name and not any(m.career_name.lower() == name.lower() for m in career_matches_data):
+                career_matches_data.append(CareerMatch(
+                    career_name=name,
+                    career_data=career,
+                    match_score=100.0,
+                    profile_match=100.0,
+                    riasec_match=100.0,
+                    subject_match=100.0,
+                    interest_match=100.0,
+                    goal_match=100.0,
+                    skill_match=100.0,
+                    location_match=100.0,
+                    confidence=1.0,
+                    reason="Explicit query by user",
+                    strengths=[],
+                    improvement_areas=[],
+                    score_breakdown={}
+                ))
+                # Enable career data retrieval in prompt builder
+                should_use_career_data = True
         
         # Get conversation history
         history = conversation_memory.get_history_for_prompt(session_id, limit=config.max_history_for_prompt)
@@ -511,13 +654,20 @@ def chat():
             should_use_career_data=should_use_career_data
         )
         
+        # Inject language instruction if not english
+        if language == 'hi':
+            prompt += "\n\n[CRITICAL INSTRUCTION] You MUST respond in Hindi (हिंदी). Translate all career facts, titles, and details into natural, simple Hindi language so a high school student can understand it easily. Keep the tone helpful, warm, and counseling-oriented."
+        elif language == 'mr':
+            prompt += "\n\n[CRITICAL INSTRUCTION] You MUST respond in Marathi (मराठी). Translate all career facts, titles, and details into natural, simple Marathi language so a high school student can understand it easily. Keep the tone helpful, warm, and counseling-oriented."
+
         # Generate response
-        raw_response = nova.generate_response(prompt)
+        raw_response = nova.generate_response(prompt, intent=classification.intent)
         
         # Validate response
         student_name = persona.get('student_info', {}).get('name', 'Student')
+        all_careers_list = [c.get('career_name') for c in CAREER_DB if c.get('career_name')]
         validated_response = response_validator.validate(
-            raw_response, career_matches_data, student_name
+            raw_response, career_matches_data, student_name, all_valid_careers=all_careers_list
         )
         
         # Add assistant response to memory
@@ -553,10 +703,8 @@ def all_careers():
 
 @app.route('/api/clear-session', methods=['POST'])
 def clear_session():
-    """Clear the current session."""
+    """Clear the current session cookie to start a fresh attempt without deleting old records."""
     try:
-        session_id = get_session_id()
-        conversation_memory.clear_session(session_id)
         session.clear()
         return jsonify({'status': 'success'})
     except Exception as e:
@@ -583,7 +731,7 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("\n" + "=" * 60)
-    print("[STARTUP] AI CAREER GUIDE SERVER STARTING... (Production Ready)")
+    print("[STARTUP] SkillSense SERVER STARTING... (Production Ready)")
     print("=" * 60)
     print(f"[INFO] Loaded {len(CAREER_DB)} careers")
     print(f"[INFO] Loaded {len(QUESTIONS)} questions")
