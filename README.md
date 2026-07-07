@@ -116,7 +116,7 @@ Each career shows:
 ---
 
 ## 🛠️ Tech Stack (Simple Version)
-
+```text
 | Component | What It Does |
 |-----------|--------------|
 | **Backend** | Flask (Python) - Handles all the logic |
@@ -126,6 +126,7 @@ Each career shows:
 | **AI Chatbot** | Nova (Claude API) - The career counselor |
 | **Frontend** | HTML, CSS, JavaScript - The user interface |
 
+'''
 ---
 
 ## 📁 Project Structure (Simple View)
@@ -180,7 +181,7 @@ Each career shows:
 ---
 
 ## 🛠️ Tech Stack (Simple Version)
-
+```text
 | Component | What It Does |
 |-----------|--------------|
 | **Backend** | Flask (Python) - Handles all the logic |
@@ -189,9 +190,9 @@ Each career shows:
 | **Ranking Engine** | Scores each career based on student profile |
 | **AI Chatbot** | Nova (Claude API) - The career counselor |
 | **Frontend** | HTML, CSS, JavaScript - The user interface |
-
+'''
 ---
-
+```text
 AI-Career-Guide/
 │
 ├── 🚀 app.py                          # Main application entry point
@@ -220,7 +221,7 @@ AI-Career-Guide/
 │
 └── 📁 templates/                      # Web templates
     └── index.html                     # Main webpage
-    
+'''  
 ---
 
 ## 🚀 How to Use (For Students)
@@ -256,7 +257,7 @@ Ask VERA anything about your career matches or any career-related question!
 ---
 
 ## 💡 What Can You Ask VERA?
-
+```text
 | Question Type | Example |
 |---------------|---------|
 | **Career Information** | "Tell me about becoming a Data Scientist" |
@@ -267,11 +268,11 @@ Ask VERA anything about your career matches or any career-related question!
 | **Study Guidance** | "What subjects should I study for medicine?" |
 | **Career Comparison** | "Compare Doctor vs. Nurse" |
 | **Profile Questions** | "Explain my RIASEC profile to me" |
-
+'''
 ---
 
 ## 🌟 Key Features
-
+```text
 | Feature | What It Does |
 |---------|--------------|
 | **RIASEC Test** | 42 questions to find your personality type |
@@ -283,7 +284,7 @@ Ask VERA anything about your career matches or any career-related question!
 | **Financial Info** | Scholarships, loans, and income |
 | **Growth Insights** | Career path and future opportunities |
 | **Trait Descriptions** | Click any personality trait to learn more |
-
+'''
 ---
 
 ## 📊 What Makes This Special?
