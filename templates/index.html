@@ -438,6 +438,18 @@
             animation-delay: 1.7s;
         }
 
+        .chip.c5 {
+            top: -12%;
+            left: 36%;
+            animation-delay: 2.2s;
+        }
+
+        .chip.c6 {
+            bottom: -10%;
+            left: 42%;
+            animation-delay: 1.4s;
+        }
+
         .section {
             position: relative;
             padding: 96px 0;
@@ -1790,7 +1802,7 @@
     <!-- ============================== NAV ============================== -->
     <nav class="nav" id="nav">
         <div class="nav-in">
-            <div class="brand"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
+            <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
             <div class="nav-links">
                 <a onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</a>
                 <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take Test</a>
@@ -1858,6 +1870,8 @@
                 <div class="chip c2"><span class="dot" style="background:var(--cyan)"></span>Doctor</div>
                 <div class="chip c3"><span class="dot" style="background:var(--amber)"></span>Designer</div>
                 <div class="chip c4"><span class="dot" style="background:var(--coral)"></span>Founder</div>
+                <div class="chip c5"><span class="dot" style="background:#10b981"></span>Scientist</div>
+                <div class="chip c6"><span class="dot" style="background:#ec4899"></span>Lawyer</div>
             </div>
         </div>
     </header>
@@ -2204,7 +2218,7 @@
         <div class="wrap">
             <div class="foot-grid">
                 <div class="foot-col foot-about">
-                    <div class="brand"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
+                    <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
                     <p>An intelligent career guidance platform helping students discover their strengths, explore
                         opportunities, and build a roadmap for their future.</p>
                 </div>
@@ -2448,7 +2462,24 @@
                 "placeholder-chat": "Ask Nova about your career matches, colleges, entrance exams...",
                 "btn-send": "Send",
                 "chat-disclaimer": "Disclaimer: VERA is an AI assistant. Guidance is for informational purposes only. Consult professional counselors for critical career decisions.",
-                "modal-close": "Close"
+                "modal-close": "Close",
+                "title-overview": "📋 Career Overview",
+                "title-why-matches": "🎯 Why It Matches Student Profile",
+                "title-traits": "🧠 Personality Traits Alignment",
+                "title-pathway": "🎓 Educational Pathway",
+                "title-fees": "💰 Course Fees",
+                "title-income": "💵 Expected Income",
+                "title-scholarships": "🎓 Scholarships",
+                "title-loans": "🏦 Loans",
+                "title-study": "🏛️ Where Will You Study?",
+                "title-gov": "🏛️ Government",
+                "title-priv": "🏢 Private",
+                "title-dist": "💻 Distance Learning",
+                "title-work": "🏢 Where Will You Work?",
+                "title-growth": "📈 Expected Growth Path",
+                "title-skills": "📚 Skill Development Plan",
+                "title-example": "🌟 Example From The Field",
+                "title-exams": "📝 Entrance Exams"
             },
             hi: {
                 "brand-title": "🚀 SkillSense",
@@ -2548,7 +2579,24 @@
                 "placeholder-chat": "अपने करियर मैच, कॉलेज, प्रवेश परीक्षाओं के बारे में नोवा से पूछें...",
                 "btn-send": "भेजें",
                 "chat-disclaimer": "अस्वीकरण: VERA एक एआई सहायक है। यह मार्गदर्शन केवल सूचनात्मक उद्देश्यों के लिए है। अंतिम निर्णयों के लिए पेशेवर सलाहकारों से संपर्क करें।",
-                "modal-close": "बंद करें"
+                "modal-close": "बंद करें",
+                "title-overview": "📋 करियर विवरण",
+                "title-why-matches": "🎯 यह छात्र प्रोफाइल से क्यों मेल खाता है",
+                "title-traits": "🧠 व्यक्तित्व लक्षण संरेखण",
+                "title-pathway": "🎓 शैक्षणिक मार्ग (पाथवे)",
+                "title-fees": "💰 कोर्स शुल्क",
+                "title-income": "💵 अपेक्षित मासिक आय",
+                "title-scholarships": "🎓 छात्रवृत्तियां",
+                "title-loans": "🏦 शैक्षणिक ऋण",
+                "title-study": "🏛️ आप कहाँ अध्ययन करेंगे?",
+                "title-gov": "🏛️ सरकारी संस्थान",
+                "title-priv": "🏢 निजी संस्थान",
+                "title-dist": "💻 दूरी शिक्षा (डिस्टेंस लर्निंग)",
+                "title-work": "🏢 आप कहाँ काम करेंगे?",
+                "title-growth": "📈 अपेक्षित विकास पथ",
+                "title-skills": "📚 कौशल विकास योजना",
+                "title-example": "🌟 क्षेत्र से उदाहरण",
+                "title-exams": "📝 प्रवेश परीक्षाएं"
             },
             mr: {
                 "brand-title": "🚀 SkillSense",
@@ -2648,7 +2696,24 @@
                 "placeholder-chat": "तुमच्या करिअरचे सामने, कॉलेजेस, प्रवेश परीक्षांबद्दल नोव्हाला विचारा...",
                 "btn-send": "पाठवा",
                 "chat-disclaimer": "अस्वीकरण: VERA हे एआय सहाय्यक आहे. हे मार्गदर्शन केवळ माहितीच्या उद्देशाने आहे. अंतिम करिअर निर्णयांसाठी व्यावसायिक सल्लागारांचा सल्ला घ्या.",
-                "modal-close": "बंद करा"
+                "modal-close": "बंद करा",
+                "title-overview": "📋 करिअर विहंगावलोकन",
+                "title-why-matches": "🎯 हे विद्यार्थ्याच्या प्रोफाइलशी का जुळते",
+                "title-traits": "🧠 व्यक्तिमत्व वैशिष्ट्ये संरेखन",
+                "title-pathway": "🎓 शैक्षणिक मार्ग (पाथवे)",
+                "title-fees": "💰 कोर्स शुल्क",
+                "title-income": "💵 अपेक्षित मासिक उत्पन्न",
+                "title-scholarships": "🎓 शिष्यवृत्ती",
+                "title-loans": "🏦 शैक्षणिक कर्ज",
+                "title-study": "🏛️ तुम्ही कुठे अभ्यास कराल?",
+                "title-gov": "🏛️ शासकीय संस्था",
+                "title-priv": "🏢 खाजगी संस्था",
+                "title-dist": "💻 दूरस्थ शिक्षण (डिस्टन्स लर्निंग)",
+                "title-work": "🏢 तुम्ही कुठे काम कराल?",
+                "title-growth": "📈 अपेक्षित वाढीचा मार्ग",
+                "title-skills": "📚 कौशल्य विकास योजना",
+                "title-example": "🌟 क्षेत्रातील उदाहरण",
+                "title-exams": "📝 प्रवेश परीक्षा"
             }
         };
 
@@ -2769,7 +2834,7 @@
             } else if (Array.isArray(obj)) {
                 obj.forEach(item => getTranslatableStrings(item, collected));
             } else if (obj && typeof obj === 'object') {
-                const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName', 'government_institutes', 'private_institutes', 'distance_learning', 'entrance_exams', 'personality_traits', 'related_careers'];
+                const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName'];
                 for (const key in obj) {
                     if (Object.prototype.hasOwnProperty.call(obj, key) && !skipKeys.includes(key)) {
                         getTranslatableStrings(obj[key], collected);
@@ -2793,7 +2858,7 @@
                 }
                 return obj;
             } else if (obj && typeof obj === 'object') {
-                const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName', 'government_institutes', 'private_institutes', 'distance_learning', 'entrance_exams', 'personality_traits', 'related_careers'];
+                const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName'];
                 for (const key in obj) {
                     if (Object.prototype.hasOwnProperty.call(obj, key) && !skipKeys.includes(key)) {
                         obj[key] = applyTranslatedStrings(obj[key], translationMap);
@@ -2886,7 +2951,7 @@
                 const translatedObj = {};
                 for (const key in obj) {
                     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                        const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName', 'government_institutes', 'private_institutes', 'distance_learning', 'entrance_exams', 'personality_traits', 'related_careers'];
+                        const skipKeys = ['emoji', 'link', 'color', 'value', 'id', 'category', 'match_score', 'confidence', 'image', 'url', 'website', 'source', 'originalName'];
                         if (skipKeys.includes(key)) {
                             translatedObj[key] = obj[key];
                         } else {
@@ -4515,6 +4580,7 @@
                         });
                         const data = await response.json();
                         if (data.career) {
+                            data.career.skill_development_plan = generateSkillPlan(data.career);
                             const translatedCareer = await translateObject(data.career, lang);
                             careerTranslationCache[cacheKey] = translatedCareer;
                             console.log(`[PREFETCH] Successfully pre-translated and cached: ${careerName} (${lang})`);
@@ -4553,6 +4619,7 @@
                 });
                 const data = await response.json();
                 if (data.career) {
+                    data.career.skill_development_plan = generateSkillPlan(data.career);
                     const translatedCareer = await translateObject(data.career, currentLanguage);
                     if (currentLanguage !== 'en') {
                         careerTranslationCache[cacheKey] = translatedCareer;
@@ -4575,6 +4642,7 @@
         // SHOW CAREER DETAIL MODAL
         // ============================================================
         function showCareerDetailModal(career) {
+            const dict = uiTranslations[currentLanguage] || uiTranslations['en'];
             console.log('Career Data:', career);
 
             const hasText = (value) => {
@@ -4769,19 +4837,19 @@
                     <div class="grid-3" id="modalInstitutesGrid">
                         ${showGov ? `
                         <div>
-                            <h5 style="color:var(--amber);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏛️ Government ${prefRange === 'government' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            <h5 style="color:var(--amber);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏛️ ${dict['title-gov'] || 'Government'} ${prefRange === 'government' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
                             ${govListHtml}
                         </div>
                         ` : ''}
                         ${showPriv ? `
                         <div>
-                            <h5 style="color:var(--coral);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏢 Private ${prefRange === 'private' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            <h5 style="color:var(--coral);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏢 ${dict['title-priv'] || 'Private'} ${prefRange === 'private' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
                             ${privListHtml}
                         </div>
                         ` : ''}
                         ${showDist ? `
                         <div>
-                            <h5 style="color:var(--violet-2);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">💻 Distance Learning ${prefRange === 'distance' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            <h5 style="color:var(--violet-2);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">💻 ${dict['title-dist'] || 'Distance Learning'} ${prefRange === 'distance' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
                             ${distListHtml}
                         </div>
                         ` : ''}
@@ -4879,7 +4947,7 @@
                     const sourceHtml = (source && isVidyalakshmi) ? `<p style="color:var(--faint);font-size:0.75rem;margin-top:8px">Source: <a href="${source}" target="_blank" class="link-item">${source}</a></p>` : '';
 
                     exampleHtml = `
-                    <h4 class="section-title">🌟 Example From The Field</h4>
+                    <h4 class="section-title">${dict['title-example'] || '🌟 Example From The Field'}</h4>
                     <div class="story-card">
                         ${name ? `<p style="font-size:1.1rem;font-weight:600;color:var(--ink)">${name}</p>` : ''}
                         ${role ? `<p style="color:var(--muted)">${role}${org ? ' at ' + org : ''}</p>` : ''}
@@ -4924,23 +4992,23 @@
             }
 
             // Skill Plan
-            const skills = generateSkillPlan(career);
+            const skills = career.skill_development_plan || generateSkillPlan(career);
             const skillHtml = skills.map(s => `<div class="list-item">${s}</div>`).join('');
 
             const whyMatches = traits.length > 0 ? `This career aligns with your personality traits: ${traits.slice(0, 3).join(', ')}` : 'This career matches your RIASEC profile based on your interests and personality traits.';
 
             const traitsSection = hasArray(traits) ? `
-                    <h4 class="section-title">🧠 Personality Traits Alignment</h4>
+                    <h4 class="section-title">${dict['title-traits'] || '🧠 Personality Traits Alignment'}</h4>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">${traitHtml}</div>
                 ` : '';
 
             const pathwaySection = hasRenderableValue(pathway) ? `
-                    <h4 class="section-title">🎓 Educational Pathway</h4>
+                    <h4 class="section-title">${dict['title-pathway'] || '🎓 Educational Pathway'}</h4>
                     <div style="margin-bottom:16px">${pathwayHtml}</div>
                 ` : '';
 
             const examsSection = hasRenderableValue(exams) ? `
-                    <h4 class="section-title">📝 Entrance Exams</h4>
+                    <h4 class="section-title">${dict['title-exams'] || '📝 Entrance Exams'}</h4>
                     <div style="margin-bottom:16px">${examHtml}</div>
                 ` : '';
 
@@ -4948,13 +5016,13 @@
                     <div class="grid-2">
                     ${hasText(feeText) ? `
                     <div>
-                        <h4 class="section-title">💰 Course Fees</h4>
+                        <h4 class="section-title">${dict['title-fees'] || '💰 Course Fees'}</h4>
                         <p class="section-content">${feeText.split(' • ').join('<br/>')}</p>
                     </div>
                     ` : ''}
                     ${hasText(incomeData.text) ? `
                     <div>
-                        <h4 class="section-title">💵 Expected Income</h4>
+                        <h4 class="section-title">${dict['title-income'] || '💵 Expected Income'}</h4>
                         <p class="section-content">${incomeData.text}</p>
                         ${incomeSourceHtml}
                     </div>
@@ -4963,12 +5031,12 @@
                 ` : '';
 
             const scholarshipsSection = hasArray(scholarships) ? `
-                    <h4 class="section-title">🎓 Scholarships</h4>
+                    <h4 class="section-title">${dict['title-scholarships'] || '🎓 Scholarships'}</h4>
                     <div style="margin-bottom:16px">${schHtml}</div>
                 ` : '';
 
             const loansSection = hasArray(loans) ? `
-                    <h4 class="section-title">🏦 Loans</h4>
+                    <h4 class="section-title">${dict['title-loans'] || '🏦 Loans'}</h4>
                     <div style="margin-bottom:16px">${loanHtml}</div>
                 ` : '';
 
@@ -4990,7 +5058,7 @@
             ` : '';
 
             const studySection = hasStudyData ? `
-                    <h4 class="section-title">🏛️ Where Will You Study?</h4>
+                    <h4 class="section-title">${dict['title-study'] || '🏛️ Where Will You Study?'}</h4>
                     ${prefFilterBar}
                     <div id="modalInstitutesContainer" style="margin-bottom: 16px;">
                         ${renderStudySection(true)}
@@ -4998,33 +5066,33 @@
                 ` : '';
 
             const workSection = hasWorkData ? `
-                    <h4 class="section-title">🏢 Where Will You Work?</h4>
+                    <h4 class="section-title">${dict['title-work'] || '🏢 Where Will You Work?'}</h4>
                     ${hasText(workEnvText) ? `<p class="section-content">${workEnvText}</p>` : ''}
                     ${hasArray(places) ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${placesHtml}</div>` : ''}
                 ` : '';
 
             const growthSection = hasArray(growth) ? `
-                    <h4 class="section-title">📈 Expected Growth Path</h4>
+                    <h4 class="section-title">${dict['title-growth'] || '📈 Expected Growth Path'}</h4>
                     <div style="margin-bottom:16px">${growthHtml}</div>
                 ` : '';
 
             const futureScopeSection = hasText(futureScope) ? `
-                    <h4 class="section-title">🔮 Future Scope</h4>
+                    <h4 class="section-title">${currentLanguage === 'hi' ? '🔮 भविष्य की संभावनाएं' : currentLanguage === 'mr' ? '🔮 भविष्यातील वाव' : '🔮 Future Scope'}</h4>
                     <p class="section-content">${futureScope}</p>
                 ` : '';
 
             const techSection = hasArray(emergingTech) ? `
-                    <h4 class="section-title">⚡ Emerging Technologies</h4>
+                    <h4 class="section-title">${currentLanguage === 'hi' ? '⚡ उभरती हुई तकनीकें' : currentLanguage === 'mr' ? '⚡ उदयोन्मुख तंत्रज्ञान' : '⚡ Emerging Technologies'}</h4>
                     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">${techHtml}</div>
                 ` : '';
 
             const skillsSection = hasArray(skills) ? `
-                    <h4 class="section-title">📚 Skill Development Plan</h4>
+                    <h4 class="section-title">${dict['title-skills'] || '📚 Skill Development Plan'}</h4>
                     <div style="margin-bottom:16px">${skillHtml}</div>
                 ` : '';
 
             const relatedSection = hasRenderableValue(related) ? `
-                    <h4 class="section-title">🔗 Related Careers</h4>
+                    <h4 class="section-title">${currentLanguage === 'hi' ? '🔗 संबंधित करियर' : currentLanguage === 'mr' ? '🔗 संबंधित करिअर' : '🔗 Related Careers'}</h4>
                     <div style="margin-bottom:16px">${relatedHtml}</div>
                 ` : '';
 
@@ -5059,10 +5127,10 @@
                         <button class="modal-close" onclick="this.closest('.modal-overlay').remove();document.body.style.overflow=''">✕</button>
                     </div>
 
-                    <h4 class="section-title">📋 Career Overview</h4>
+                    <h4 class="section-title">${dict['title-overview'] || '📋 Career Overview'}</h4>
                     <p class="section-content">${description}</p>
 
-                    <h4 class="section-title">🎯 Why It Matches Student Profile</h4>
+                    <h4 class="section-title">${dict['title-why-matches'] || '🎯 Why It Matches Student Profile'}</h4>
                     <p class="section-content">${whyMatches}</p>
 
                     ${traitsSection}
