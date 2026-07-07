@@ -46,10 +46,22 @@ class VectorStore:
                 
                 self.client = chromadb.PersistentClient(path=db_path)
                 
-                # Setup embedding function with sentence-transformers all-MiniLM-L6-v2
-                self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-                    model_name="all-MiniLM-L6-v2"
-                )
+                # Setup embedding function (Cloud API if HF_TOKEN is provided, otherwise Local SentenceTransformer)
+                hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_API_KEY")
+                is_local = True
+                
+                if hf_token:
+                    print("[INFO] Initializing Hugging Face Cloud Embedding API (sentence-transformers/all-MiniLM-L6-v2)...")
+                    self.emb_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+                        api_key=hf_token,
+                        model_name="sentence-transformers/all-MiniLM-L6-v2"
+                    )
+                    is_local = False
+                else:
+                    print("[INFO] No HF_TOKEN found. Initializing local SentenceTransformerEmbeddingFunction...")
+                    self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+                        model_name="all-MiniLM-L6-v2"
+                    )
                 
                 # Get or create collection using cosine similarity metric
                 self.collection = self.client.get_or_create_collection(
@@ -58,12 +70,13 @@ class VectorStore:
                     metadata={"hnsw:space": "cosine"}
                 )
                 
-                # Warm load the model on the main thread to prevent thread conflicts with Werkzeug on Windows
-                print("[INFO] Warm loading SentenceTransformer model weights on the main thread...")
-                self.emb_fn(["warmup"])
+                # Warm load the model on the main thread if local to prevent thread conflicts with Werkzeug on Windows
+                if is_local:
+                    print("[INFO] Warm loading SentenceTransformer model weights on the main thread...")
+                    self.emb_fn(["warmup"])
                 
                 self.enabled = True
-                print("[SUCCESS] ChromaDB Vector Store successfully initialized with all-MiniLM-L6-v2.")
+                print("[SUCCESS] ChromaDB Vector Store successfully initialized.")
             except BaseException as e:
                 print(f"[WARNING] Failed to initialize ChromaDB Vector Store (running on fallback): {e}")
                 traceback.print_exc()
