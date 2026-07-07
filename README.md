@@ -191,41 +191,36 @@ Each career shows:
 | **Frontend** | HTML, CSS, JavaScript - The user interface |
 
 ---
-'''
-
-## 📁 Project Structure (Simple View)
 
 AI-Career-Guide/
 │
-├── app.py                    → Main application
-├── Data.json                 → Career database
-├── riasec_questions.json     → Personality test questions
-├── trait_definitions.py      → Trait definitions
-├── profile_generator.py      → Builds student profiles
-├── career_retrieval_engine.py → Finds career matches
+├── 🚀 app.py                          # Main application entry point
+├── 📊 Data.json                       # Career database
+├── 📝 raise_questions.json            # Personality test questions
+├── ⚙️ config.py                       # Application settings
+├── 📌 constants.py                    # Fixed values & enums
+├── 🧩 models.py                       # Data structures (Pydantic/Dataclasses)
+├── ❌ exceptions.py                   # Custom error handling
+├── 🛠️ utils.py                        # Helper functions
 │
-├── core/                     → Core system
-│   ├── config.py            → Settings
-│   ├── constants.py         → Fixed values
-│   ├── models.py            → Data structures
-│   ├── exceptions.py        → Error handling
-│   └── utils.py             → Helper functions
+├── 📁 core/                           # Core system modules
+│   ├── trait_definitions.py           # Trait definitions & mapping
+│   ├── profile_generator.py           # Builds student profiles
+│   └── career_retrieval_engine.py     # Finds career matches
 │
-├── modules/                  → Main features
-│   ├── intent_classifier.py    → Understands user intent
-│   ├── persona_fusion.py       → Creates student profile
-│   ├── ranking_engine.py       → Scores careers
-│   ├── retrieval_pipeline.py   → Finds best careers
-│   ├── conversation_memory.py  → Remembers chat history
-│   ├── prompt_builder.py       → Builds AI prompts
-│   ├── llm_engine.py           → Nova AI brain
-│   └── response_validator.py   → Checks AI answers
+├── 📁 modules/                        # Main feature modules
+│   ├── intent_classifier.py           # Understands user intent
+│   ├── persona_fusion.py              # Creates student profile
+│   ├── ranking_engine.py              # Scores & ranks careers
+│   ├── retrieval_pipeline.py          # End-to-end career retrieval
+│   ├── conversation_memory.py         # Chat history management
+│   ├── prompt_builder.py              # Builds AI prompts
+│   ├── llm_engine.py                  # Nova AI brain (LLM integration)
+│   └── response_validator.py          # Validates AI responses
 │
-└── templates/
-    └── index.html            → Main webpage
-'''
-
-
+└── 📁 templates/                      # Web templates
+    └── index.html                     # Main webpage
+    
 ---
 
 ## 🚀 How to Use (For Students)
