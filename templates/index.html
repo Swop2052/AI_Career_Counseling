@@ -2441,6 +2441,7 @@
                 "scale-so-me": "So me!",
                 "btn-back": "← Back",
                 "btn-next": "Next →",
+                "btn-submit-test": "Submit Test →",
                 "sec-counselor-eyebrow": "Nova AI Counselor",
                 "sec-counselor-title": "Have questions? <span class=\"grad\">Ask VERA.</span>",
                 "sec-counselor-sub": "Ask anything about your matches, course fees, colleges, entrance exams, or alternate paths.",
@@ -2540,6 +2541,7 @@
                 "scale-so-me": "बिल्कुल मैं!",
                 "btn-back": "← पीछे",
                 "btn-next": "आगे →",
+                "btn-submit-test": "टेस्ट सबमिट करें →",
                 "sec-counselor-eyebrow": "नोवा एआई काउंसलर",
                 "sec-counselor-title": "कोई सवाल है? <span class=\"grad\"> वेरा से पूछें।</span>",
                 "sec-counselor-sub": "अपने करियर मैच, कॉलेज फीस, प्रवेश परीक्षाओं या वैकल्पिक मार्गों के बारे में कुछ भी पूछें।",
@@ -2639,6 +2641,7 @@
                 "scale-so-me": "अगदी मीच!",
                 "btn-back": "← मागे",
                 "btn-next": "पुढे →",
+                "btn-submit-test": "चाचणी सबमिट करा →",
                 "sec-counselor-eyebrow": "वेरा एआय समुपदेशक",
                 "sec-counselor-title": "काही प्रश्न आहेत? <span class=\"grad\">वेराला विचारा.</span>",
                 "sec-counselor-sub": "तुमचे करिअर सामने, कॉलेज फी, प्रवेश परीक्षा किंवा पर्यायी मार्गांबद्दल काहीही विचारा.",
@@ -3147,8 +3150,10 @@
             const backBtn = document.getElementById('backBtn');
             if (backBtn) backBtn.textContent = dict['btn-back'];
             const nextBtn = document.getElementById('nextBtn');
-            if (nextBtn && nextBtn.textContent.includes('Next')) {
-                nextBtn.textContent = dict['btn-next'];
+            if (nextBtn) {
+                nextBtn.textContent = currentQuestion === questions.length - 1 
+                    ? (dict['btn-submit-test'] || 'Submit Test →') 
+                    : (dict['btn-next'] || 'Next →');
             }
 
             // Counselor Section
@@ -3338,7 +3343,10 @@
 
             if (nextBtn) {
                 nextBtn.disabled = !hasAnswer;
-                nextBtn.textContent = currentQuestion === questions.length - 1 ? 'Submit Test' : 'Next →';
+                const dict = uiTranslations[currentLanguage] || uiTranslations['en'];
+                nextBtn.textContent = currentQuestion === questions.length - 1 
+                    ? (dict['btn-submit-test'] || 'Submit Test →') 
+                    : (dict['btn-next'] || 'Next →');
             }
         }
 
