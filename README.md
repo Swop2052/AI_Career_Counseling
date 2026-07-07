@@ -191,6 +191,7 @@ Each career shows:
 | **Frontend** | HTML, CSS, JavaScript - The user interface |
 
 ---
+'''
 
 ## 📁 Project Structure (Simple View)
 
@@ -222,8 +223,7 @@ AI-Career-Guide/
 │
 └── templates/
     └── index.html            → Main webpage
-
-
+'''
 
 
 ---
