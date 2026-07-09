@@ -64,11 +64,26 @@ class VectorStore:
                     )
                 
                 # Get or create collection using cosine similarity metric
-                self.collection = self.client.get_or_create_collection(
-                    name="careers",
-                    embedding_function=self.emb_fn,
-                    metadata={"hnsw:space": "cosine"}
-                )
+                try:
+                    self.collection = self.client.get_or_create_collection(
+                        name="careers",
+                        embedding_function=self.emb_fn,
+                        metadata={"hnsw:space": "cosine"}
+                    )
+                except ValueError as val_err:
+                    if "Embedding function conflict" in str(val_err):
+                        print("[WARNING] Embedding function conflict detected. Rebuilding collection 'careers'...")
+                        try:
+                            self.client.delete_collection(name="careers")
+                        except Exception:
+                            pass
+                        self.collection = self.client.get_or_create_collection(
+                            name="careers",
+                            embedding_function=self.emb_fn,
+                            metadata={"hnsw:space": "cosine"}
+                        )
+                    else:
+                        raise val_err
                 
                 # Warm load the model on the main thread if local to prevent thread conflicts with Werkzeug on Windows
                 if is_local:

@@ -298,10 +298,25 @@ What would you like to know about your career journey? I'm here to help! 😊"""
             for c_name in matched_careers[:3]:
                 c_data = next((c for c in all_careers if c.get("career_name", "").lower() == c_name.lower()), None)
                 if c_data:
-                    inst = c_data.get("institutes", []) or c_data.get("study_options", {}).get("government_institutes", [])
-                    if inst:
+                    inst_data = c_data.get("institutes") or c_data.get("where_will_you_study") or c_data.get("study_options", {}).get("government_institutes", [])
+                    flat_inst = []
+                    if isinstance(inst_data, dict):
+                        for key in ["government_institutes", "private_institutes", "distance_learning_institutes", "government", "private", "distance_learning"]:
+                            val = inst_data.get(key)
+                            if isinstance(val, list):
+                                flat_inst.extend(val)
+                        if not flat_inst:
+                            for val in inst_data.values():
+                                if isinstance(val, list):
+                                    flat_inst.extend(val)
+                    elif isinstance(inst_data, list):
+                        flat_inst = inst_data
+                    elif isinstance(inst_data, str):
+                        flat_inst = [inst_data]
+
+                    if flat_inst:
                         response += f"🏫 **{c_name}**:\n"
-                        for i in inst[:3]:
+                        for i in flat_inst[:3]:
                             name_inst = i.get("name") if isinstance(i, dict) else i
                             loc_inst = i.get("location", "") if isinstance(i, dict) else ""
                             loc_str = f" ({loc_inst})" if loc_inst else ""
