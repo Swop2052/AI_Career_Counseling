@@ -94,6 +94,34 @@ class ConversationMemory:
                         career_data TEXT
                     )
                 """)
+                
+                # 5. Create student feedback table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS student_feedback (
+                        feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        student_id TEXT NOT NULL,
+                        assessment_id TEXT NOT NULL,
+                        career_id TEXT,
+                        liked_result INTEGER,
+                        feedback_category TEXT,
+                        comment TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(student_id) REFERENCES tests(test_id) ON DELETE CASCADE
+                    )
+                """)
+                
+                # 6. Create contact messages table
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS contact_messages (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        fullname TEXT NOT NULL,
+                        email TEXT NOT NULL,
+                        company TEXT,
+                        subject TEXT NOT NULL,
+                        message TEXT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
             print("[SUCCESS] SQLite simplified database successfully initialized.")
         except Exception as e:
             print(f"[ERROR] Failed to initialize SQLite database: {e}")
@@ -528,6 +556,47 @@ class ConversationMemory:
             print(f"[SUCCESS] Overall session JSON snapshot saved for session {session_id}.")
         except Exception as e:
             print(f"[ERROR] Failed to save overall session snapshot: {e}")
+        finally:
+            if cursor:
+                cursor.close()
+            conn.close()
+
+    def add_contact_message(self, fullname: str, email: str, company: Optional[str], subject: str, message: str):
+        """Save contact form message to database."""
+        conn = self._get_connection()
+        cursor = None
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO contact_messages (fullname, email, company, subject, message)
+                    VALUES (?, ?, ?, ?, ?)
+                """, (fullname, email, company, subject, message))
+            print(f"[SUCCESS] Contact form message saved for {fullname}.")
+        except Exception as e:
+            print(f"[ERROR] Failed to save contact message: {e}")
+            raise e
+        finally:
+            if cursor:
+                cursor.close()
+            conn.close()
+
+    def add_feedback(self, student_id: str, assessment_id: str, career_id: str, liked_result: int, feedback_category: str, comment: str):
+        """Save student guide download feedback to student_feedback table."""
+        self.get_session(student_id)  # Self-healing: guarantee student record exists in tests table
+        conn = self._get_connection()
+        cursor = None
+        try:
+            with conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO student_feedback (student_id, assessment_id, career_id, liked_result, feedback_category, comment)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (student_id, assessment_id, career_id, liked_result, feedback_category, comment))
+            print(f"[SUCCESS] Student feedback saved for session {student_id} and career {career_id}.")
+        except Exception as e:
+            print(f"[ERROR] Failed to save student feedback: {e}")
+            raise e
         finally:
             if cursor:
                 cursor.close()

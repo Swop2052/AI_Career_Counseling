@@ -712,6 +712,70 @@ def clear_session():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/contact', methods=['POST'])
+def save_contact():
+    """Receive and save a contact form submission."""
+    if not check_rate_limit(request.remote_addr):
+        return jsonify({'error': 'Too many requests. Please try again later.'}), 429
+    try:
+        data = request.get_json() or {}
+        fullname = data.get('fullname') or data.get('name')
+        email = data.get('email')
+        company = data.get('company')
+        subject = data.get('subject')
+        message = data.get('message')
+        
+        if not fullname or not email or not subject or not message:
+            return jsonify({'error': 'Required fields are missing.'}), 400
+            
+        conversation_memory.add_contact_message(
+            fullname=str(fullname).strip(),
+            email=str(email).strip(),
+            company=str(company).strip() if company else None,
+            subject=str(subject).strip(),
+            message=str(message).strip()
+        )
+        return jsonify({'status': 'success', 'message': 'Contact form saved successfully.'})
+    except Exception as e:
+        print(f"[ERROR] Error in save_contact: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/feedback', methods=['POST'])
+def save_feedback():
+    """Receive and save student guide feedback."""
+    try:
+        data = request.get_json() or {}
+        liked_result = data.get('liked_result')
+        feedback_category = data.get('feedback_category') or 'career_match'
+        comment = data.get('comment') or ''
+        career_id = data.get('career_id')
+        
+        # Retrieve session_id
+        session_id = session.get('session_id')
+        if not session_id:
+            return jsonify({'error': 'No active session found.'}), 400
+            
+        if liked_result is None or not career_id:
+            return jsonify({'error': 'Required feedback parameters are missing.'}), 400
+            
+        # liked_result should be saved as integer (1 for True, 0 for False)
+        liked_val = 1 if liked_result else 0
+        
+        conversation_memory.add_feedback(
+            student_id=session_id,
+            assessment_id=session_id,
+            career_id=str(career_id).strip(),
+            liked_result=liked_val,
+            feedback_category=str(feedback_category).strip(),
+            comment=str(comment).strip()
+        )
+        return jsonify({'status': 'success', 'message': 'Feedback saved successfully.'})
+    except Exception as e:
+        print(f"[ERROR] Error in save_feedback: {e}")
+        return jsonify({'error': str(e)}), 500
+
+
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors."""

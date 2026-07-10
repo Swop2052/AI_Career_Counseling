@@ -22,9 +22,9 @@ try:
     try:
         import torch
         torch.set_num_threads(1)
-    except ImportError:
+    except (ImportError, OSError, Exception):
         pass
-except ImportError:
+except (ImportError, OSError, Exception):
     print("[WARNING] ChromaDB or sentence-transformers is not installed. Vector search is disabled, running on heuristic fallback.")
 
 class VectorStore:
