@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section" id="contact-section">
+<div class="wrap reveal">
+<div class="sec-head" style="text-align:center; margin: 0 auto 50px;">
+<div class="eyebrow" style="justify-content:center">Let's Connect</div>
+<h2 class="h-sec">Let's <span class="grad">Connect</span></h2>
+<p class="lead" style="margin:0 auto; text-align:center; max-width: 700px;">
+                    Whether you are a student exploring your path, a school administrator looking to bring SkillSense to your campus, or have questions about our platform, we are here to help.
+                </p>
+</div>
+<div class="contact-grid">
+<!-- Left: Contact Details -->
+<div style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+<div class="glass" style="padding: 32px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+<h4 style="margin: 0 0 24px 0; font-size: 1.3rem; font-weight: 600;">Contact Information</h4>
+<div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-start;">
+<div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; color: var(--cyan);">✉️</div>
+<div>
+<div id="contact-email-label" style="font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">Email Us</div>
+<div id="contact-email-sub" style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Direct lines to our departments</div>
+<a href="mailto:skillsenseofficial@gmail.com" style="color: var(--cyan); text-decoration: none; font-weight: 500; font-size: 0.9rem;">skillsenseofficial@gmail.com</a>
+</div>
+</div>
+<div style="display: flex; gap: 16px; margin-bottom: 24px; align-items: flex-start;">
+<div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; color: var(--cyan);">📍</div>
+<div>
+<div id="contact-hq-label" style="font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">Location</div>
+<div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 4px;">Shegaon, Maharashtra, India</div>
+</div>
+</div>
+<div style="display: flex; gap: 16px; align-items: flex-start;">
+<div style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.2); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; color: var(--cyan);">📞</div>
+<div>
+<div id="contact-phone-label" style="font-weight: 600; font-size: 0.95rem; margin-bottom: 2px;">Call Us</div>
+<a href="tel:+919075175484" style="color: var(--cyan); text-decoration: none; font-weight: 500; font-size: 0.9rem;">+91 9075175484</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Message Form -->
+<div class="glass" style="padding: 32px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); width: 100%;">
+<h4 id="contact-form-title" style="margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 600;">Send a Message</h4>
+<p id="contact-form-sub" style="font-size: 0.88rem; color: var(--muted); margin-bottom: 24px;">Secure transmission through our encrypted routing system.</p>
+<form id="contactForm" onsubmit="handleContactSubmit(event)" style="display: flex; flex-direction: column; gap: 16px;">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+<input id="contact-name-input" placeholder="Full Name" required="" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 16px; color: #fff; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" type="text"/>
+<input id="contact-email-input" placeholder="Email Address" required="" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 16px; color: #fff; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" type="email"/>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+<input id="contact-company-input" placeholder="Company (Optional)" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 16px; color: #fff; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" type="text"/>
+<input id="contact-subject-input" placeholder="Subject" required="" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 16px; color: #fff; font-family: inherit; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" type="text"/>
+</div>
+<textarea id="contact-msg-input" placeholder="Your Message" required="" rows="5" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 16px; color: #fff; font-family: inherit; font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.2s;"></textarea>
+<button class="btn btn-primary" id="contact-btn" style="justify-content: center; padding: 12px 24px; font-weight: 600; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; border: none; transition: all 0.2s;" type="submit">
+                            ✈️ Send Message
+                        </button>
+</form>
+</div>
+</div>
+</div>
+</section>
+{% endblock %}

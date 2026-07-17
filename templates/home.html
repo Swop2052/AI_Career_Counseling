@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block content %}
+<header class="hero">
+<div class="wrap hero-grid">
+<div class="hero-copy">
+<div class="eyebrow">PERSONALITY · AI INSIGHTS · CAREER ROADMAPS</div>
+<h1>Find a career path<br/><span class="12">that matches who you are.</span></h1>
+<p class="sub">An intelligent career companion that understands your interests, strengths, and goals to
+                    create a personalized roadmap for your future.</p>
+<div class="hero-cta">
+<button class="btn btn-primary" onclick="window.location.href='/take-test'">Start Career Test <span class="arr">→</span></button>
+<button class="btn btn-ghost" onclick="window.location.href='/ai-counselor'">Chat with
+                        AI</button>
+</div>
+<div class="hero-stats">
+<div class="hstat">
+<div class="n">6</div>
+<div class="l">Personality Dimensions</div>
+</div>
+<div class="hstat">
+<div class="n">500+</div>
+<div class="l">Career Paths</div>
+</div>
+<div class="hstat">
+<div class="n">24/7</div>
+<div class="l">AI Guidance</div>
+</div>
+</div>
+</div>
+<div class="holo">
+<div class="holo-ring r1"></div>
+<div class="holo-ring r2"></div>
+<div class="holo-ring r3"></div>
+<div class="holo-core"><span class="bot">🧑‍🎓</span></div>
+<div class="chip c1"><span class="dot" style="background:var(--violet)"></span>AI Engineer</div>
+<div class="chip c2"><span class="dot" style="background:var(--cyan)"></span>Doctor</div>
+<div class="chip c3"><span class="dot" style="background:var(--amber)"></span>Designer</div>
+<div class="chip c4"><span class="dot" style="background:var(--coral)"></span>Founder</div>
+<div class="chip c5"><span class="dot" style="background:#10b981"></span>Scientist</div>
+<div class="chip c6"><span class="dot" style="background:#ec4899"></span>Lawyer</div>
+</div>
+</div>
+</header>
+{% endblock %}

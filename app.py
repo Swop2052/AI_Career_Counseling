@@ -12,6 +12,7 @@ from flask_cors import CORS
 import json
 import os
 import time
+import requests
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -327,7 +328,27 @@ def normalize_career_record(career):
 @app.route('/')
 def index():
     """Render the main page."""
-    return render_template('index.html')
+    return render_template('home.html')
+
+@app.route('/how-it-works')
+def how_it_works():
+    """Render the How it works page."""
+    return render_template('how.html')
+
+@app.route('/take-test')
+def take_test():
+    """Render the Take Test page."""
+    return render_template('test.html')
+
+@app.route('/ai-counselor')
+def ai_counselor():
+    """Render the AI Counselor page."""
+    return render_template('counselor.html')
+
+@app.route('/contact')
+def contact():
+    """Render the Contact page."""
+    return render_template('contact.html')
 
 
 @app.route('/api/questions', methods=['GET'])
@@ -724,6 +745,32 @@ def internal_error(error):
     print(f"[ERROR] Internal server error: {error}")
     return jsonify({'error': 'Internal server error'}), 500
 
+
+# ============================================================
+# IMAGE UPLOAD (PERMANENT HOSTING)
+# ============================================================
+@app.route('/api/upload-image', methods=['POST'])
+def upload_image():
+    if 'file' not in request.files:
+        return jsonify({'status': 'error', 'message': 'No file part'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'status': 'error', 'message': 'No selected file'}), 400
+        
+    try:
+        # catbox.moe provides permanent free anonymous hosting
+        response = requests.post(
+            'https://catbox.moe/user/api.php',
+            data={'reqtype': 'fileupload'},
+            files={'fileToUpload': (file.filename, file.read(), file.content_type)}
+        )
+        if response.status_code == 200:
+            return jsonify({'status': 'success', 'data': {'url': response.text.strip()}})
+        else:
+            return jsonify({'status': 'error', 'message': f'Upload failed: {response.status_code}'}), 500
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # ============================================================
 # MAIN

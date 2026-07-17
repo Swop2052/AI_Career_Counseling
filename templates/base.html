@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
 
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSense — Career Guidance Chatbot</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SkillSense — Career Guidance Chatbot</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<style>
         /* ============================================================
            SkillSense — Design System
            ============================================================ */
@@ -32,6 +32,62 @@
             --shadow: 0 24px 70px -28px rgba(0, 0, 0, 0.85);
             --body: 'Inter', system-ui, sans-serif;
             --maxw: 1180px;
+        }
+
+        /* Light Theme Overrides */
+        html[data-theme="light"] {
+            --bg: #F4F6FF;
+            --bg-2: #E8ECF8;
+            --ink: #050816;
+            --muted: #5B678F;
+            --faint: #9AA6CC;
+            --glass: rgba(0, 0, 0, 0.045);
+            --glass-2: rgba(0, 0, 0, 0.07);
+            --stroke: rgba(109, 74, 255, 0.15);
+            --stroke-bright: rgba(0, 212, 255, 0.3);
+            --shadow: 0 24px 70px -28px rgba(91, 103, 143, 0.15);
+        }
+        
+        html[data-theme="light"] .aura {
+            background: radial-gradient(60% 50% at 18% 8%, rgba(109, 74, 255, 0.08), transparent 60%), radial-gradient(50% 50% at 86% 12%, rgba(0, 212, 255, 0.06), transparent 60%), radial-gradient(60% 60% at 50% 110%, rgba(123, 97, 255, 0.08), transparent 60%);
+        }
+
+        .theme-toggle-floating {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            z-index: 99999;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--glass-2);
+            border: 1px solid var(--stroke);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+            transition: all 0.25s ease;
+        }
+        .theme-toggle-floating:hover {
+            transform: scale(1.1);
+            border-color: var(--cyan);
+            box-shadow: 0 0 15px var(--stroke-bright);
+        }
+
+        @media (max-width: 768px) {
+            .theme-toggle-floating {
+                right: 16px !important;
+                top: 16px !important;
+                left: auto !important;
+                bottom: auto !important;
+                transform: none !important;
+            }
+            .theme-toggle-floating:hover {
+                transform: scale(1.1) !important;
+            }
         }
 
         * {
@@ -1792,32 +1848,26 @@
             }
         }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
-
 <body>
-
-    <div class="aura"></div>
-    <div class="grain"></div>
-
-    <!-- ============================== NAV ============================== -->
-    <nav class="nav" id="nav">
-        <div class="nav-in">
-            <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
-            <div class="nav-links">
-<<<<<<< Updated upstream
-                <a onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</a>
-                <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take Test</a>
-                <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI Counselor</a>
-=======
-                <a href="#how">How it works</a>
-                <a href="#quiz-section">Take Test</a>
-                <a href="#counselor">AI Counselor</a>
-                <a href="#contact-section">Contact</a>
->>>>>>> Stashed changes
-            </div>
-            <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
-                <button class="btn nav-cta" onclick="startQuiz()">Start Career Test</button>
-                <select id="langSelect" onchange="switchLanguage(this.value)" style="
+<!-- Theme Toggle Floating Button -->
+<div class="theme-toggle-floating" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">🌕</div>
+<div class="aura"></div>
+<div class="grain"></div>
+<!-- ============================== NAV ============================== -->
+<nav class="nav" id="nav">
+<div class="nav-in">
+<div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img alt="SkillSense Logo" class="brand-logo" src="/static/logo.png" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"/> SkillSense</div>
+<div class="nav-links">
+<a href="/how-it-works">How it works</a>
+<a href="/take-test">Take Test</a>
+<a href="/ai-counselor">AI Counselor</a>
+<a href="/contact">Contact</a>
+</div>
+<div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
+<button class="btn nav-cta" onclick="window.location.href='/take-test'">Start Career Test</button>
+<select id="langSelect" onchange="switchLanguage(this.value)" style="
                     background: rgba(255, 255, 255, 0.08);
                     color: #fff;
                     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -1830,432 +1880,79 @@
                     outline: none;
                     transition: all 0.25s ease;
                 ">
-                    <option value="en" style="background:#13111C; color:#fff;">English</option>
-                    <option value="hi" style="background:#13111C; color:#fff;">हिंदी (Hindi)</option>
-                    <option value="mr" style="background:#13111C; color:#fff;">मराठी (Marathi)</option>
-                </select>
-            </div>
-        </div>
-    </nav>
+<option style="background:#13111C; color:#fff;" value="en">English</option>
+<option style="background:#13111C; color:#fff;" value="hi">हिंदी (Hindi)</option>
+<option style="background:#13111C; color:#fff;" value="mr">मराठी (Marathi)</option>
+</select>
+</div>
+</div>
+</nav>
+<!-- ============================== HERO ============================== -->
+{% block content %}{% endblock %}
+<!-- ============================== HOW IT WORKS ============================== -->
 
-    <!-- ============================== HERO ============================== -->
-    <header class="hero">
-        <div class="wrap hero-grid">
-            <div class="hero-copy">
-                <div class="eyebrow">PERSONALITY · AI INSIGHTS · CAREER ROADMAPS</div>
-                <h1>Find a career path<br><span class="12">that matches who you are.</span></h1>
-                <p class="sub">An intelligent career companion that understands your interests, strengths, and goals to
-                    create a personalized roadmap for your future.</p>
-                <div class="hero-cta">
-                    <button class="btn btn-primary" onclick="startQuiz()">Start Career Test <span
-                            class="arr">→</span></button>
-                    <button class="btn btn-ghost"
-                        onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">Chat with
-                        AI</button>
-                </div>
-                <div class="hero-stats">
-                    <div class="hstat">
-                        <div class="n">6</div>
-                        <div class="l">Personality Dimensions</div>
-                    </div>
-                    <div class="hstat">
-                        <div class="n">500+</div>
-                        <div class="l">Career Paths</div>
-                    </div>
-                    <div class="hstat">
-                        <div class="n">24/7</div>
-                        <div class="l">AI Guidance</div>
-                    </div>
-                </div>
-            </div>
-            <div class="holo">
-                <div class="holo-ring r1"></div>
-                <div class="holo-ring r2"></div>
-                <div class="holo-ring r3"></div>
-                <div class="holo-core"><span class="bot">🧑‍🚀</span></div>
-                <div class="chip c1"><span class="dot" style="background:var(--violet)"></span>AI Engineer</div>
-                <div class="chip c2"><span class="dot" style="background:var(--cyan)"></span>Doctor</div>
-                <div class="chip c3"><span class="dot" style="background:var(--amber)"></span>Designer</div>
-                <div class="chip c4"><span class="dot" style="background:var(--coral)"></span>Founder</div>
-                <div class="chip c5"><span class="dot" style="background:#10b981"></span>Scientist</div>
-                <div class="chip c6"><span class="dot" style="background:#ec4899"></span>Lawyer</div>
-            </div>
-        </div>
-    </header>
+<!-- ============================== QUIZ SECTION ============================== -->
 
-    <!-- ============================== HOW IT WORKS ============================== -->
-    <section class="section" id="how">
-        <div class="wrap">
-            <div class="sec-head reveal">
-                <div class="eyebrow">The journey</div>
-                <h2 class="h-sec">Four steps to your <span class="grad">career match</span></h2>
-            </div>
-            <div class="steps">
-                <div class="step glass reveal">
-                    <div class="num">01</div>
-                    <div class="ic">📝</div>
-                    <h4>Build your profile</h4>
-                    <p>Tell us your name, age, class, interests and hobbies — your AI assistant guides you through.</p>
-                </div>
-                <div class="step glass reveal">
-                    <div class="num">02</div>
-                    <div class="ic">🎮</div>
-                    <h4>Play the career test</h4>
-                    <p>Quick cards, XP, coins and streaks. It feels like a game, not an exam.</p>
-                </div>
-                <div class="step glass reveal">
-                    <div class="num">03</div>
-                    <div class="ic">🧠</div>
-                    <h4>AI reads your strengths</h4>
-                    <p>Your answers become a personalized personality and interest profile in seconds.</p>
-                </div>
-                <div class="step glass reveal">
-                    <div class="num">04</div>
-                    <div class="ic">🚀</div>
-                    <h4>Get your roadmap</h4>
-                    <p>Matched careers, colleges, scholarships and a step-by-step path forward.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- ============================== AI COUNSELOR ============================== -->
 
-    <!-- ============================== QUIZ SECTION ============================== -->
-    <section class="section" id="quiz-section">
-        <div class="wrap">
-            <div class="sec-head reveal" style="text-align:center;margin:0 auto 40px">
-                <div class="eyebrow" style="justify-content:center">CAREER DISCOVERY ASSESSMENT</div>
-                <h2 class="h-sec">Discover the path <span class="grad">that fits you.</span></h2>
-                <p class="lead" style="margin:0 auto;text-align:center">Tell us about yourself and answer a few
-                    questions to understand your interests, strengths, and career preferences.</p>
-            </div>
+<!-- ============================== CONTACT SECTION ============================== -->
+<style>
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 32px;
+            margin-top: 40px;
+            text-align: left;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .contact-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
 
-            <!-- Profile Form - Simplified -->
-            <div class="profile-form-container active" id="profileFormContainer">
-                <div class="glass" style="padding:30px">
-                    <h3 style="text-align:center;margin-bottom:20px;color:var(--ink)">Tell us about yourself</h3>
-                    <form id="profileForm" onsubmit="submitProfile(event)">
-                        <!-- Basic Information -->
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="studentName">Full Name *</label>
-                                <input type="text" id="studentName" placeholder="Enter your full name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="studentAge">Age *</label>
-                                <input type="number" id="studentAge" placeholder="Enter your age" min="10" max="30"
-                                    required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="studentClass">Class/Year *</label>
-                                <select id="studentClass" required>
-                                    <option value="">Select your class</option>
-                                    <option value="8th">8th</option>
-                                    <option value="9th">9th</option>
-                                    <option value="10th">10th</option>
-                                    <option value="11th">11th</option>
-                                    <option value="12th">12th</option>
-                                    <option value="1st Year College">1st Year College</option>
-                                    <option value="2nd Year College">2nd Year College</option>
-                                    <option value="3rd Year College">3rd Year College</option>
-                                    <option value="4th Year College">4th Year College</option>
-                                    <option value="Graduate">Graduate</option>
-                                    <option value="Post Graduate">Post Graduate</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="studentEducation">Education Stream/Field</label>
-                                <input type="text" id="studentEducation"
-                                    placeholder="e.g., Science, Commerce, Arts, Engineering">
-                            </div>
-                        </div>
-
-                        <!-- Academic Profile -->
-                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">📚 Your Learning Profile</h4>
-                        <div class="form-group">
-                            <label for="studentSubjects">Subjects you enjoy learning</label>
-                            <input type="text" id="studentSubjects"
-                                placeholder="e.g., Mathematics, Physics, English, Biology, History">
-                        </div>
-                        <div class="form-group">
-                            <label for="studentWeakSubjects">Subjects You Find Challenging</label>
-                            <input type="text" id="studentWeakSubjects"
-                                placeholder="e.g., Chemistry, Statistics, Economics">
-                        </div>
-
-                        <!-- Interests & Hobbies -->
-                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">🎯 What inspires you outside academics?</h4>
-                        <div class="form-group">
-                            <label for="studentInterests">Your Interests</label>
-                            <input type="text" id="studentInterests"
-                                placeholder="e.g., Technology, Research, Art, Sports, Social Work">
-                        </div>
-                        <div class="form-group">
-                            <label for="studentHobbies">Your Hobbies</label>
-                            <input type="text" id="studentHobbies"
-                                placeholder="e.g., Reading, Gaming, Painting, Coding, Gardening">
-                        </div>
-                        <div class="form-group">
-                            <label for="studentStrengths">Your natural strengths</label>
-                            <input type="text" id="studentStrengths"
-                                placeholder="e.g., Problem-solving, Communication, Leadership, Creativity">
-                        </div>
-                        <div class="form-group">
-                            <label for="studentAspirations">Career Aspirations (if any)</label>
-                            <input type="text" id="studentAspirations"
-                                placeholder="e.g., Engineer, Doctor, Scientist, Entrepreneur">
-                        </div>
-
-                        <!-- Career Preferences - Only 3 fields as requested -->
-                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">💼 Career Preferences</h4>
-                        <div class="form-group">
-                            <label for="learningMode">Preferred Learning Mode</label>
-                            <select id="learningMode">
-                                <option value="offline">Offline (Classroom/Lab)</option>
-                                <option value="distance">Distance/Online Learning</option>
-                                <option value="hybrid">Hybrid (Mix)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="budgetPreference">Budget Preference</label>
-                            <select id="budgetPreference">
-                                <option value="moderate">Moderate Budget</option>
-                                <option value="budget_sensitive">Budget Sensitive</option>
-                                <option value="no_constraint">No Budget Constraint</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="locationPreference">Location Preference</label>
-                            <select id="locationPreference">
-                                <option value="india">India Wide</option>
-                                <option value="local">Local Opportunities</option>
-                                <option value="international">International Career</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="studentLocation">Preferred Study Location</label>
-                            <input type="text" id="studentLocation" placeholder="e.g., Tamil Nadu, Maharashtra, Delhi">
-                        </div>
-                        <div class="form-group">
-                            <label for="collegeRange">Preferred College Type/Range</label>
-                            <select id="collegeRange">
-                                <option value="all">All Colleges (Govt & Private)</option>
-                                <option value="government">Government Colleges Only</option>
-                                <option value="private">Private Colleges Only</option>
-                                <option value="distance">Distance Learning Only</option>
-                            </select>
-                        </div>
-
-                        <button type="submit" class="btn btn-success"
-                            style="width:100%;justify-content:center;margin-top:20px">
-                            Continue to Career Test →
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Quiz Container -->
-            <div class="quiz-container" id="quizContainer">
-                <div class="glass" style="padding:30px">
-                    <div class="quiz-progress">
-                        <div class="qcount" id="qCount">Question 1 of 42</div>
-                        <div class="pbar"><i id="qbar" style="width:0%"></i></div>
-                    </div>
-                    <div class="qcard" id="qCard">
-                        <div class="qicon" id="qIcon">💡</div>
-                        <div class="qtype" id="qTypeLabel">Realistic</div>
-                        <div class="qtext" id="qText">Loading questions...</div>
-                        <div class="scale" id="scaleButtons">
-                            <button onclick="answerQuestion(1)"><span class="e">😣</span><span class="t">Not
-                                    me</span></button>
-                            <button onclick="answerQuestion(2)"><span class="e">🙁</span><span class="t">A
-                                    little</span></button>
-                            <button onclick="answerQuestion(3)"><span class="e">😐</span><span
-                                    class="t">Maybe</span></button>
-                            <button onclick="answerQuestion(4)"><span class="e">🙂</span><span
-                                    class="t">Yes</span></button>
-                            <button onclick="answerQuestion(5)"><span class="e">🤩</span><span class="t">So
-                                    me!</span></button>
-                        </div>
-                        <div class="quiz-nav">
-                            <button id="backBtn" class="btn btn-ghost" onclick="goToPreviousQuestion()">← Back</button>
-                            <button id="nextBtn" class="btn btn-primary" onclick="goToNextQuestion()">Next →</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Results Container -->
-            <div class="results-container" id="resultsContainer">
-                <div class="glass" style="padding:30px">
-                    <!-- Student Profile Card -->
-                    <div class="student-profile-card" id="studentProfileCard">
-                        <div class="profile-header">
-                            <div class="profile-avatar" id="profileAvatar">🧑</div>
-                            <div class="profile-info">
-                                <div class="name" id="profileName">Student Name</div>
-                                <div class="details">
-                                    <span id="profileAge">Age: --</span>
-                                    <span id="profileClass">Class: --</span>
-                                    <span id="profileEducation">Stream: --</span>
-                                </div>
-                                <div class="details" style="font-size:0.85rem;color:var(--faint)">
-                                    <span id="profileHobbies">Hobbies: --</span>
-                                    <span id="profileSubjects">Subjects: --</span>
-                                </div>
-                            </div>
-                            <div class="profile-riasec">
-                                <div>
-                                    <div class="label">Your Personality Code</div>
-                                    <div class="code" id="profileRiasecCode">---</div>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Personality Traits with click to open modal -->
-                        <div class="profile-traits" id="profileTraits"></div>
-                        <!-- RIASEC Score Bars -->
-                        <div class="riasec-scores" id="riasecScoreBars">
-                            <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Realistic')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Realistic</div>
-                                <div class="score-bar-container">
-                                    <div class="score-bar r" id="scoreBarR" style="width:0%"></div>
-                                </div>
-                                <div class="score-value" id="scoreValR">0%</div>
-                            </div>
-                            <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Investigative')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Investigative</div>
-                                <div class="score-bar-container">
-                                    <div class="score-bar i" id="scoreBarI" style="width:0%"></div>
-                                </div>
-                                <div class="score-value" id="scoreValI">0%</div>
-                            </div>
-                            <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Artistic')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Artistic</div>
-                                <div class="score-bar-container">
-                                    <div class="score-bar a" id="scoreBarA" style="width:0%"></div>
-                                </div>
-                                <div class="score-value" id="scoreValA">0%</div>
-                            </div>
-                            <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Social')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Social</div>
-                                <div class="score-bar-container">
-                                    <div class="score-bar s" id="scoreBarS" style="width:0%"></div>
-                                </div>
-                                <div class="score-value" id="scoreValS">0%</div>
-                            </div>
-                            <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Enterprising')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Enterprising</div>
-                                <div class="score-bar-container">
-                                    <div class="score-bar e" id="scoreBarE" style="width:0%"></div>
-                                </div>
-                                <div class="score-value" id="scoreValE">0%</div>
-                            </div>
-                            <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Conventional')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Conventional</div>
-                                <div class="score-bar-container">
-                                    <div class="score-bar c" id="scoreBarC" style="width:0%"></div>
-                                </div>
-                                <div class="score-value" id="scoreValC">0%</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="result-header">
-                        <div class="eyebrow" style="justify-content:center">Your Career Matches</div>
-                        <p style="color:var(--muted);font-size:1.05rem" id="profileDescription">Top 6 careers based on
-                            your personality</p>
-                    </div>
-                    <div id="careerResults">
-                        <div class="loading-spinner">
-                            <div class="spinner"></div>
-                            <p style="color:var(--muted)">Analyzing your matches...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================== AI COUNSELOR ============================== -->
-    <section class="section" id="counselor">
-        <div class="wrap">
-            <div class="sec-head reveal" style="text-align:center;margin:0 auto 40px">
-                <div class="eyebrow" style="justify-content:center">Always-on mentor</div>
-                <h2 class="h-sec">Meet <span class="grad">VERA — Your AI Career Companion</span></h2>
-                <p class="lead" style="margin:0 auto;text-align:center">Ask anything about careers, skills, colleges,
-                    opportunities, and your future roadmap. VERA helps you make informed decisions based on who you are.
-                </p>
-            </div>
-            <div class="glass chat-wrap reveal">
-                <div class="chat-hd">
-                    <div class="av">🧑‍🚀</div>
-                    <div class="who">
-                        <b>VERA</b>
-                        <span><i class="live"></i> online · AI Career Companion</span>
-                    </div>
-                </div>
-                <div class="chat-body" id="chatBody">
-                    <div class="msg bot">👋 Hi! I'm VERA, your AI Career Companion.
-                        I’m here to help you explore career options, understand your strengths, discover required
-                        skills, and plan your next steps. 🚀</div>
-                </div>
-                <div class="quickq" id="quickq">
-                    <button onclick="askQuick(this)">📊 What careers match me?</button>
-                    <button onclick="askQuick(this)">💡 What skills should I learn?</button>
-                    <button onclick="askQuick(this)">💰 How much can I earn?</button>
-                    <button onclick="askQuick(this)">🎓 Which colleges should I target?</button>
-                </div>
-                <div class="chat-input">
-                    <input id="chatInput" placeholder="Ask VERA anything... (e.g., 'Tell me about AI engineer careers')"
-                        onkeydown="if(event.key==='Enter')sendChat()">
-                    <button id="chatSend" onclick="sendChat()">➤</button>
-                </div>
-                <div id="chatDisclaimer"
-                    style="font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px; opacity: 0.8; line-height: 1.3;">
-                    Disclaimer: VERA is an AI assistant. Guidance is for informational purposes only. Consult
-                    professional counselors for critical career decisions.
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================== FOOTER ============================== -->
-    <footer>
-        <div class="wrap">
-            <div class="foot-grid">
-                <div class="foot-col foot-about">
-                    <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
-                    <p>An intelligent career guidance platform helping students discover their strengths, explore
+<!-- ============================== FOOTER ============================== -->
+<footer>
+<div class="wrap">
+<div class="foot-grid">
+<div class="foot-col foot-about">
+<div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img alt="SkillSense Logo" class="brand-logo" src="/static/logo.png" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"/> SkillSense</div>
+<p>An intelligent career guidance platform helping students discover their strengths, explore
                         opportunities, and build a roadmap for their future.</p>
-                </div>
-                <div class="foot-col">
-                    <h5>Explore</h5>
-                    <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take
+</div>
+<div class="foot-col">
+<h5>Explore</h5>
+<a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take
                         Test</a>
-                    <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI
+<a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI
                         Counselor</a>
-                </div>
-                <div class="foot-col">
-                    <h5>Resources</h5>
-                    <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">Career
+<a onclick="document.getElementById('contact-section').scrollIntoView({behavior:'smooth'})">Contact</a>
+</div>
+<div class="foot-col">
+<h5>Resources</h5>
+<a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">Career
                         Advice</a>
-                </div>
-                <div class="foot-col">
-                    <h5>Get Started</h5>
-                    <a onclick="startQuiz()">Start Career Test</a>
-                </div>
-            </div>
-            <div class="foot-bottom">
-                <span>© 2026 SkillSense. Built for curious students.</span>
-                <span></span>
-            </div>
-        </div>
-    </footer>
+</div>
+<div class="foot-col">
+<h5>Get Started</h5>
+<a onclick="startQuiz()">Start Career Test</a>
+</div>
+</div>
+<div class="foot-bottom">
+<span>© 2026 SkillSense. Built for curious students.</span>
+<span></span>
+</div>
+</div>
+</footer>
+<div class="toast" id="toast"></div>
+<script>
+        // Immediately apply saved theme on load to prevent flash
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
 
-    <div class="toast" id="toast"></div>
-
-    <script>
         // ============================================================
         // TRAIT DEFINITIONS WITH DESCRIPTIONS
         // ============================================================
@@ -2376,7 +2073,24 @@
                 "nav-how": "How it works",
                 "nav-test": "Take Test",
                 "nav-counselor": "AI Counselor",
+                "nav-contact": "Contact",
                 "nav-start": "Start Career Test",
+                "contact-eyebrow": "Let's Connect",
+                "contact-title": "Let's <span class=\"grad\">Connect</span>",
+                "contact-lead": "Whether you are a student exploring your path, a school administrator looking to bring SkillSense to your campus, or have questions about our platform, we are here to help.",
+                "contact-info-title": "Contact Information",
+                "contact-email-label": "Email Us",
+                "contact-email-sub": "Direct lines to our departments",
+                "contact-hq-label": "Headquarters",
+                "contact-phone-label": "Call Us",
+                "contact-form-title": "Send a Message",
+                "contact-form-sub": "Secure transmission through our encrypted routing system.",
+                "contact-name-placeholder": "Full Name",
+                "contact-email-placeholder": "Email Address",
+                "contact-company-placeholder": "Company (Optional)",
+                "contact-subject-placeholder": "Subject",
+                "contact-msg-placeholder": "Your Message",
+                "contact-btn-text": "✈️ Send Message",
                 "hero-eyebrow": "PERSONALITY · AI INSIGHTS · CAREER ROADMAPS",
                 "hero-title": "Find a career path<br><span class=\"12\">that matches who you are.</span>",
                 "hero-sub": "An intelligent career companion that understands your interests, strengths, and goals to create a personalized roadmap for your future.",
@@ -2493,7 +2207,24 @@
                 "nav-how": "यह कैसे काम करता है",
                 "nav-test": "टेस्ट लें",
                 "nav-counselor": "एआई काउंसलर",
+                "nav-contact": "संपर्क",
                 "nav-start": "करियर टेस्ट शुरू करें",
+                "contact-eyebrow": "आइए जुड़ें",
+                "contact-title": "आइए <span class=\"grad\">जुड़ें</span>",
+                "contact-lead": "चाहे आप अपना रास्ता तलाशने वाले छात्र हों, अपने परिसर में स्किलसेंस लाने के इच्छुक स्कूल प्रशासक हों, या हमारे प्लेटफॉर्म के बारे में प्रश्न हों, हम मदद के लिए यहां हैं।",
+                "contact-info-title": "संपर्क जानकारी",
+                "contact-email-label": "हमें ईमेल करें",
+                "contact-email-sub": "हमारे विभागों के लिए सीधी लाइनें",
+                "contact-hq-label": "मुख्यालय",
+                "contact-phone-label": "हमें कॉल करें",
+                "contact-form-title": "एक संदेश भेजें",
+                "contact-form-sub": "हमारे सुरक्षित राउटिंग सिस्टम के माध्यम से सुरक्षित ट्रांसमिशन।",
+                "contact-name-placeholder": "पूरा नाम",
+                "contact-email-placeholder": "ईमेल पता",
+                "contact-company-placeholder": "कंपनी (वैकल्पिक)",
+                "contact-subject-placeholder": "विषय",
+                "contact-msg-placeholder": "आपका संदेश",
+                "contact-btn-text": "✈️ संदेश भेजें",
                 "hero-eyebrow": "व्यक्तित्व · एआई अंतर्दृष्टि · करियर रोडमैप",
                 "hero-title": "एक ऐसा करियर पथ खोजें<br><span class=\"12\">जो आपके व्यक्तित्व से मेल खाता हो।</span>",
                 "hero-sub": "एक बुद्धिमान करियर साथी जो आपके भविष्य के लिए एक व्यक्तिगत रोडमैप बनाने के लिए आपके हितों, शक्तियों और लक्ष्यों को समझता है।",
@@ -2610,7 +2341,24 @@
                 "nav-how": "कसे कार्य करते",
                 "nav-test": "चाचणी घ्या",
                 "nav-counselor": "एआय समुपदेशक",
+                "nav-contact": "संपर्क",
                 "nav-start": "करिअर चाचणी सुरू करा",
+                "contact-eyebrow": "चला जोडूया",
+                "contact-title": "चला <span class=\"grad\">जोडूया</span>",
+                "contact-lead": "तुम्ही तुमचा मार्ग शोधणारे विद्यार्थी असाल, तुमच्या शाळेत स्किलसेन्स आणू इच्छिणारे प्रशासक असाल किंवा आमच्या प्लॅटफॉर्मबद्दल काही प्रश्न असतील, आम्ही मदतीसाठी येथे आहोत.",
+                "contact-info-title": "संपर्क माहिती",
+                "contact-email-label": "आम्हाला ईमेल करा",
+                "contact-email-sub": "आमच्या विभागांसाठी थेट संपर्क",
+                "contact-hq-label": "मुख्यालय",
+                "contact-phone-label": "आम्हाला कॉल करा",
+                "contact-form-title": "संदेश पाठवा",
+                "contact-form-sub": "आमच्या सुरक्षित प्रणालीद्वारे सुरक्षित संदेश पाठवणे.",
+                "contact-name-placeholder": "पूर्ण नाव",
+                "contact-email-placeholder": "ईमेल पत्ता",
+                "contact-company-placeholder": "कंपनी (पर्यायी)",
+                "contact-subject-placeholder": "विषय",
+                "contact-msg-placeholder": "तुमचा संदेश",
+                "contact-btn-text": "✈️ संदेश पाठवा",
                 "hero-eyebrow": "व्यक्तिमत्त्व · एआय अंतर्दृष्टी · करिअर रोडमॅप",
                 "hero-title": "तुमच्या व्यक्तिमत्त्वाशी जुळणारा<br><span class=\"12\">करिअरचा मार्ग शोधा.</span>",
                 "hero-sub": "एक बुद्धिमान करिअर सोबती जो तुमच्या भविष्यासाठी वैयक्तिकृत रोडमॅप तयार करण्यासाठी तुमचे स्वारस्य, सामर्थ्य आणि उद्दिष्टे समजून घेतो.",
@@ -2722,7 +2470,7 @@
                 "title-example": "🌟 क्षेत्रातील उदाहरण",
                 "title-exams": "📝 प्रवेश परीक्षा"
             }
-        };
+        }
 
         const riasecQuestionsTranslations = {
             hi: {
@@ -3241,12 +2989,141 @@
             if (chatSend) chatSend.textContent = dict['btn-send'];
             const chatDisclaimer = document.getElementById('chatDisclaimer');
             if (chatDisclaimer) chatDisclaimer.textContent = dict['chat-disclaimer'];
+
+            // Contact section translations
+            const contactEyebrow = document.querySelector('#contact-section .sec-head .eyebrow');
+            if (contactEyebrow) contactEyebrow.textContent = dict['contact-eyebrow'] || `Let's Connect`;
+            
+            const contactTitle = document.querySelector('#contact-section .sec-head h2');
+            if (contactTitle) contactTitle.innerHTML = dict['contact-title'] || `Let's <span class="grad">Connect</span>`;
+            
+            const contactLead = document.querySelector('#contact-section .sec-head p');
+            if (contactLead) contactLead.textContent = dict['contact-lead'] || 'Whether you are a student exploring your path, a school administrator looking to bring SkillSense to your campus, or have questions about our platform, we are here to help.';
+            
+            const contactInfoTitle = document.querySelector('#contact-section h4');
+            if (contactInfoTitle) contactInfoTitle.textContent = dict['contact-info-title'] || 'Contact Information';
+            
+            const contactEmailLabel = document.querySelector('#contact-email-label');
+            if (contactEmailLabel) contactEmailLabel.textContent = dict['contact-email-label'] || 'Email Us';
+            
+            const contactEmailSub = document.querySelector('#contact-email-sub');
+            if (contactEmailSub) contactEmailSub.textContent = dict['contact-email-sub'] || 'Direct lines to our departments';
+            
+            const contactHqLabel = document.querySelector('#contact-hq-label');
+            if (contactHqLabel) contactHqLabel.textContent = dict['contact-hq-label'] || 'Headquarters';
+            
+            const contactPhoneLabel = document.querySelector('#contact-phone-label');
+            if (contactPhoneLabel) contactPhoneLabel.textContent = dict['contact-phone-label'] || 'Call Us';
+            
+            const contactFormTitle = document.querySelector('#contact-form-title');
+            if (contactFormTitle) contactFormTitle.textContent = dict['contact-form-title'] || 'Send a Message';
+            
+            const contactFormSub = document.querySelector('#contact-form-sub');
+            if (contactFormSub) contactFormSub.textContent = dict['contact-form-sub'] || 'Secure transmission through our encrypted routing system.';
+            
+            const contactNameInput = document.querySelector('#contact-name-input');
+            if (contactNameInput) contactNameInput.placeholder = dict['contact-name-placeholder'] || 'Full Name';
+            
+            const contactEmailInput = document.querySelector('#contact-email-input');
+            if (contactEmailInput) contactEmailInput.placeholder = dict['contact-email-placeholder'] || 'Email Address';
+            
+            const contactCompanyInput = document.querySelector('#contact-company-input');
+            if (contactCompanyInput) contactCompanyInput.placeholder = dict['contact-company-placeholder'] || 'Company (Optional)';
+            
+            const contactSubjectInput = document.querySelector('#contact-subject-input');
+            if (contactSubjectInput) contactSubjectInput.placeholder = dict['contact-subject-placeholder'] || 'Subject';
+            
+            const contactMsgInput = document.querySelector('#contact-msg-input');
+            if (contactMsgInput) contactMsgInput.placeholder = dict['contact-msg-placeholder'] || 'Your Message';
+            
+            const contactBtn = document.querySelector('#contact-btn');
+            if (contactBtn) contactBtn.innerHTML = dict['contact-btn-text'] || '✈️ Send Message';
+
+            if (typeof navLinks !== 'undefined' && navLinks.length >= 4) {
+                navLinks[3].textContent = dict['nav-contact'] || 'Contact';
+            }
+        }
+
+
+        // ============================================================
+        // CONTACT FORM SUBMISSION
+        // ============================================================
+        function handleContactSubmit(event) {
+            event.preventDefault();
+            const lang = currentLanguage || 'en';
+            
+            const fullname = document.getElementById('contact-name-input').value;
+            const email = document.getElementById('contact-email-input').value;
+            const company = document.getElementById('contact-company-input').value;
+            const subject = document.getElementById('contact-subject-input').value;
+            const message = document.getElementById('contact-msg-input').value;
+            
+            const btn = document.getElementById('contact-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = lang === 'mr' ? '⏳ पाठवत आहे...' : (lang === 'hi' ? '⏳ भेज रहे हैं...' : '⏳ Sending...');
+            
+            fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ fullname, email, company, subject, message })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const toastMsgs = {
+                        en: '📩 Message sent successfully! We will get in touch soon.',
+                        hi: '📩 संदेश सफलतापूर्वक भेजा गया! हम जल्द ही आपसे संपर्क करेंगे।',
+                        mr: '📩 संदेश यशस्वीरित्या पाठवला! आम्ही लवकरच तुमच्याशी संपर्क साधू.'
+                    };
+                    showToast(toastMsgs[lang] || toastMsgs['en']);
+                    event.target.reset();
+                } else {
+                    showToast('⚠️ ' + (data.error || 'Failed to send message.'));
+                }
+            })
+            .catch(err => {
+                console.error('Error sending message:', err);
+                showToast('⚠️ ' + (lang === 'mr' ? 'कनेक्शन एरर!' : (lang === 'hi' ? 'कनेक्शन एरर!' : 'Connection error!')));
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            });
+        }
+
+        // ============================================================
+        // THEME FUNCTIONS
+        // ============================================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            const currentTheme = html.getAttribute('data-theme') || 'dark';
+            
+            if (currentTheme === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                if (toggleBtn) toggleBtn.textContent = '🌗';
+                localStorage.setItem('theme', 'light');
+                showToast('☀️ Light Theme Enabled');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                if (toggleBtn) toggleBtn.textContent = '🌕';
+                localStorage.setItem('theme', 'dark');
+                showToast('🌙 Dark Theme Enabled');
+            }
         }
 
         // ============================================================
         // INIT
         // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const toggleBtn = document.getElementById('themeToggleBtn');
+            if (toggleBtn) {
+                toggleBtn.textContent = savedTheme === 'light' ? '🌗' : '🌕';
+            }
             loadQuestions();
             observeReveals();
             window.addEventListener('scroll', () => {
@@ -3388,6 +3265,11 @@
             updateScaleSelection(value);
             updateQuizProgress();
             updateNavigationButtons();
+            
+            // Auto-advance to the next question (or submit if it's the last)
+            setTimeout(() => {
+                goToNextQuestion();
+            }, 300);
         }
 
         function updateQuizProgress() {
@@ -4010,12 +3892,408 @@
             }
 
             showToast('✨ Results ready! Scroll down to see your matches.');
+            
+            // Trigger LinkedIn Share Modal after 5 seconds
+            setTimeout(() => {
+                if (document.getElementById('resultsContainer').classList.contains('active')) {
+                    showLinkedInShareModal(data);
+                }
+            }, 5000);
         }
 
         // ============================================================
         // DOWNLOAD CAREER GUIDE AS PDF
         // ============================================================
+        
+        // ============================================================
+        // SHOW DYNAMIC LINKEDIN SHARE POPUP (AUTOMATIC AFTER 5S)
+        // ============================================================
+        function showLinkedInShareModal(data) {
+            if (!data) return;
+            const profile = data.profile || {};
+            const student = profile.student_info || {};
+            
+            const studentName = student.name || 'Student';
+            const studentHashtag = studentName.replace(/\s+/g, '');
+            
+            const traits = profile.traits || [];
+            const traitListText = traits.slice(0, 3).join(', ');
+            
+            let mbti = 'INFP';
+            const code = profile.riasec_code || 'ISA';
+            const mbtiMap = {
+                'R': 'ISTP', 'I': 'INTP', 'A': 'INFP', 'S': 'ENFJ', 'E': 'ENTJ', 'C': 'ISTJ'
+            };
+            if (code && code.length > 0) {
+                mbti = mbtiMap[code[0]] || 'INFP';
+            }
+            
+            const topCareers = data.top_careers || [];
+            const careerHashtags = topCareers.slice(0, 3).map(c => `#${c.name.replace(/[^a-zA-Z0-9]/g, '')}`).join(' ');
+            
+            let careersText = '';
+            topCareers.slice(0, 6).forEach((c, idx) => {
+                careersText += `${idx + 1}️⃣ ${c.name}
+`;
+            });
+            
+            const dynamicMessage = `${studentName} is a ${traitListText.toLowerCase()} individual with hobbies like ${student.hobbies || 'learning'} and interests in ${student.interests || 'technology'}. Based on their profile, they are highly aligned with careers like ${topCareers.slice(0, 3).map(c => c.name).join(', ')}.`;
+            
+            const postText = `🌟 Let's Connect! My SkillSense Career Assessment Results! 🚀
+
+` +
+                `${dynamicMessage}
+
+` +
+                `🧠 Key Traits: ${traitListText}
+` +
+                `📊 Personality Code: ${profile.riasec_code || '---'}
+
+` +
+                `🎯 Top Recommended Careers:
+${careersText}
+` +
+                `Explore your path at https://careerguide.aisense.co.in!
+
+` +
+                `#VitalsAndVectors #SkillSense #CareerGuidance #AIGuidance #${studentHashtag} ${careerHashtags}`;
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'linkedinShareModal';
+            modalOverlay.className = 'trait-modal-overlay';
+            
+            modalOverlay.innerHTML = `
+                <div class="trait-modal glass" style="max-width: 900px; width: 90%; padding: 28px; border: 1px solid rgba(255,255,255,0.12); text-align: left;">
+                    <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                        <h3 style="margin:0; font-size:1.4rem; display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.6rem">🌟</span> Share Your Achievement!
+                        </h3>
+                        <button class="modal-close" onclick="this.closest('.trait-modal-overlay').remove();" style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer;">✕</button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start;">
+                        <!-- Left: Card Preview Container (Fixed width for perfect canvas compile) -->
+                        <div style="flex: 1; min-width: 320px; display: flex; flex-direction: column; align-items: center;">
+                            <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Preview Card</div>
+                            
+                            <!-- Shareable Card Element -->
+                            <div id="shareableCardElement" style="
+                                width: 380px;
+                                padding: 24px;
+                                border-radius: 16px;
+                                background: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'radial-gradient(135deg, #120e36 0%, #070913 100%)' : 'radial-gradient(135deg, #ffffff 0%, #f0f4f8 100%)'};
+                                border: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(0, 212, 255, 0.2)' : 'rgba(0, 212, 255, 0.4)'};
+                                box-shadow: 0 15px 30px ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)'};
+                                font-family: 'Inter', system-ui, sans-serif;
+                                color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#fff' : '#1a202c'};
+                                position: relative;
+                                overflow: hidden;
+                                box-sizing: border-box;
+                            ">
+                                <!-- Glowing backgrounds -->
+                                <div style="position: absolute; top: -10%; left: -10%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(109, 74, 255, 0.2) 0%, transparent 70%); pointer-events: none;"></div>
+                                <div style="position: absolute; bottom: -10%; right: -10%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(0, 212, 255, 0.12) 0%, transparent 70%); pointer-events: none;"></div>
+
+                                <!-- Card Header -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}; padding-bottom: 12px; margin-bottom: 16px; position: relative; z-index: 2;">
+                                    <div style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.05rem; color: #00D4FF; letter-spacing: 0.02em;">
+                                        🚀 SkillSense
+                                    </div>
+                                    <div style="font-size: 0.65rem; letter-spacing: 0.08em; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}; text-transform: uppercase; font-weight: 600;">
+                                        AI Career Assessment
+                                    </div>
+                                </div>
+
+                                <!-- Student profile info -->
+                                <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 16px; position: relative; z-index: 2;">
+                                    <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6D4AFF, #00D4FF); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 700; color: #fff; box-shadow: 0 0 15px rgba(109, 74, 255, 0.35);">
+                                        ${studentName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h4 style="margin: 0; font-size: 1.12rem; font-weight: 700; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#fff' : '#1a202c'}; letter-spacing: -0.01em;">${studentName}</h4>
+                                        <div style="font-size: 0.78rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#9AA6CC' : '#4a5568'}; margin-top: 2px; display: flex; gap: 8px;">
+                                            <span>🧠 Code: <b>${profile.riasec_code || '---'}</b></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hobbies & Interests Row -->
+                                <div style="display: flex; gap: 16px; margin-bottom: 14px; border-top: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}; padding-top: 12px; position: relative; z-index: 2;">
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 0.62rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}; text-transform: uppercase; font-weight: 700; margin-bottom: 3px;">Hobbies</div>
+                                        <div style="color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)'}; font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${student.hobbies || '---'}</div>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 0.62rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}; text-transform: uppercase; font-weight: 700; margin-bottom: 3px;">Interests</div>
+                                        <div style="color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)'}; font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${student.interests || '---'}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Traits list -->
+                                <div style="margin-bottom: 16px; position: relative; z-index: 2;">
+                                    <div style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'}; font-weight: 700; margin-bottom: 8px;">Key Personality Traits</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                                        ${traits.slice(0, 3).map(t => '<span style="background: rgba(109, 74, 255, 0.1); border: 1px solid rgba(109, 74, 255, 0.2); color: ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#9AA6CC' : '#4a5568') + '; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 12px; white-space: nowrap;">' + t + '</span>').join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Top careers lists -->
+                                <div style="margin-bottom: 20px; position: relative; z-index: 2;">
+                                    <div style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'}; font-weight: 700; margin-bottom: 8px;">Top Career Mappings</div>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                        ${topCareers.slice(0, 6).map((c, idx) => '<div style="background: ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)') + '; border: 1px solid ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)') + '; padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: flex-start; gap: 4px;"><span style="font-size: 0.78rem; font-weight: 600; color: ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)') + '; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">' + (idx + 1) + '. ' + c.name + '</span></div>').join('')}
+                                    </div>
+                                </div>
+
+                                <!-- Footer branding -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}; padding-top: 12px; position: relative; z-index: 2;">
+                                    <div style="font-size: 0.68rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)'}; font-weight: 500;">
+                                        Explore at <b>careerguide.aisense.co.in</b>
+                                    </div>
+                                    <div style="font-size: 0.62rem; color: #00D4FF; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
+                                        🤖 VERA — AI Counselor
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Actions & Copier -->
+                        <div style="flex: 1.2; min-width: 320px; display: flex; flex-direction: column; justify-content: space-between; align-self: stretch;">
+                            <div>
+                                <p style="font-size:0.92rem; color:var(--muted); margin: 0 0 16px 0; line-height:1.45;">
+                                    Congratulations! We've designed a custom **SkillSense Career Card** showing your results. Download your image card and copy the post details to share on LinkedIn.
+                                </p>
+                                
+                                <div style="font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Post Text Template</div>
+                                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 14px; margin-bottom: 18px; max-height: 160px; overflow-y: auto;">
+                                    <pre id="sharePostText" style="white-space: pre-wrap; font-family: inherit; font-size: 0.85rem; color: var(--text); margin: 0; line-height:1.45;">${postText}</pre>
+                                </div>
+                            </div>
+                            
+                            <div style="display:flex; gap:10px; flex-wrap: wrap; justify-content: flex-end; margin-top: 12px;">
+                                <button id="downloadCardBtn" class="btn" style="background: rgba(0, 212, 255, 0.1); border: 1px solid rgba(0, 212, 255, 0.25); color: #00D4FF; padding: 10px 16px; font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                                    💾 Download Card
+                                </button>
+                                <button id="copyPostBtn" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: var(--text); padding: 10px 16px; font-weight: 500; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                                    📂 Copy Post
+                                </button>
+                                <button id="linkedinGoBtn" class="btn btn-primary" style="padding: 10px 18px; font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 6px; transition: all 0.2s;">
+                                    🔗 Share on LinkedIn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modalOverlay);
+            
+            const downloadBtn = modalOverlay.querySelector('#downloadCardBtn');
+            downloadBtn.addEventListener('click', function() {
+                const card = document.getElementById('shareableCardElement');
+                downloadBtn.innerHTML = '⏳ Generating...';
+                downloadBtn.disabled = true;
+                
+                html2canvas(card, {
+                    backgroundColor: null,
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const link = document.createElement('a');
+                    link.download = `${studentName.replace(/\s+/g, '_')}_SkillSense_Assessment.png`;
+                    link.href = imgData;
+                    link.click();
+                    
+                    downloadBtn.innerHTML = '💾 Download Card';
+                    downloadBtn.disabled = false;
+                    showToast('🎉 Card image downloaded successfully!');
+                }).catch(err => {
+                    console.error('Failed to generate card image:', err);
+                    downloadBtn.innerHTML = '💾 Download Card';
+                    downloadBtn.disabled = false;
+                    showToast('⚠️ Failed to generate card image.');
+                });
+            });
+            
+            const copyBtn = modalOverlay.querySelector('#copyPostBtn');
+            copyBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(postText).then(() => {
+                    copyBtn.innerHTML = '✅ Copied!';
+                    copyBtn.style.background = 'rgba(0, 200, 83, 0.15)';
+                    copyBtn.style.borderColor = 'rgba(0, 200, 83, 0.4)';
+                    copyBtn.style.color = '#00e676';
+                    showToast('📝 Post copied to clipboard!');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '📂 Copy Post';
+                        copyBtn.style.background = 'rgba(255,255,255,0.08)';
+                        copyBtn.style.borderColor = 'rgba(255,255,255,0.15)';
+                        copyBtn.style.color = 'var(--text)';
+                    }, 2000);
+                });
+            });
+            
+            const goBtn = modalOverlay.querySelector('#linkedinGoBtn');
+            goBtn.addEventListener('click', function() {
+                const card = document.getElementById('shareableCardElement');
+                const originalText = goBtn.innerHTML;
+                
+                // Open window synchronously to avoid popup blocker
+                const newWindow = window.open('about:blank', '_blank');
+                newWindow.document.write('<html><body style="background:#120e36;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;"><h2>⏳ Generating Career Card...<br><span style="font-size:1rem;font-weight:normal;opacity:0.7">Please wait while we prepare your post.</span></h2></body></html>');
+                
+                goBtn.innerHTML = '⏳ Preparing post...';
+                goBtn.disabled = true;
+
+                html2canvas(card, {
+                    backgroundColor: null,
+                    scale: 2,
+                    logging: false,
+                    useCORS: true
+                }).then(canvas => {
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'career_card.png');
+                        
+                        fetch('/api/upload-image', {
+                            method: 'POST',
+                            body: formData
+                        }).then(res => res.json()).then(data => {
+                            if(data.status !== 'success') throw new Error("Upload failed");
+                            const fileUrl = data.data.url;
+                            const baseText = document.getElementById('sharePostText').innerText;
+                            const finalPostText = baseText + `\n\nCareer Card: ${fileUrl}`;
+                            const shareUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(finalPostText)}`;
+                            
+                            newWindow.location.href = shareUrl;
+                            
+                            goBtn.innerHTML = originalText;
+                            goBtn.disabled = false;
+                        }).catch(err => {
+                            console.error('Upload failed', err);
+                            newWindow.close();
+                            showToast('⚠️ Failed to upload image for sharing.');
+                            goBtn.innerHTML = originalText;
+                            goBtn.disabled = false;
+                        });
+                    }, 'image/png');
+                }).catch(err => {
+                    console.error('Canvas generation failed', err);
+                    newWindow.close();
+                    showToast('⚠️ Failed to generate card.');
+                    goBtn.innerHTML = originalText;
+                    goBtn.disabled = false;
+                });
+            });
+        }
+
+        // ============================================================
+        // FEEDBACK REQUIRED BEFORE DOWNLOAD
+        // ============================================================
+        const careerFeedbackSubmitted = {};
+
+        function showDownloadFeedbackModal(career) {
+            const careerName = career.career_name || career.name;
+            const lang = currentLanguage || 'en';
+            
+            const labels = {
+                en: {
+                    title: "Feedback Required",
+                    sub: `To download the guide for <b>${careerName}</b>, please let us know if this career matches your interests:`,
+                    yes: "👍 Yes, it matches!",
+                    no: "👎 No, it doesn't match",
+                    saving: "Saving feedback..."
+                },
+                hi: {
+                    title: "फीडबैक आवश्यक है",
+                    sub: `<b>${careerName}</b> का गाइड डाउनलोड करने के लिए, कृपया बताएं कि क्या यह करियर आपकी पसंद से मेल खाता है:`,
+                    yes: "👍 हाँ, यह मेल खाता है!",
+                    no: "👎 नहीं, यह मेल नहीं खाता",
+                    saving: "फीडबैक सहेज रहे हैं..."
+                },
+                mr: {
+                    title: "फीडबॅक आवश्यक आहे",
+                    sub: `<b>${careerName}</b> चे मार्गदर्शक डाउनलोड करण्यासाठी, कृपया सांगा की हे करिअर तुमच्या आवडीशी जुळते का:`,
+                    yes: "👍 होय, हे जुळते!",
+                    no: "👎 नाही, हे जुळत नाही",
+                    saving: "फीडबॅक जतन करत आहे..."
+                }
+            };
+            
+            const l = labels[lang] || labels['en'];
+            
+            const overlay = document.createElement('div');
+            overlay.id = 'downloadFeedbackModal';
+            overlay.className = 'trait-modal-overlay';
+            overlay.style.zIndex = '999999';
+            
+            overlay.innerHTML = `
+                <div class="trait-modal glass" style="max-width: 450px; padding: 28px; border: 1px solid rgba(255,255,255,0.12); text-align: center;">
+                    <div style="font-size: 2.8rem; margin-bottom: 12px;">📊</div>
+                    <h3 style="margin: 0 0 12px 0; font-size: 1.4rem; font-weight:600;">${l.title}</h3>
+                    <p style="font-size: 0.95rem; color: var(--muted); line-height: 1.5; margin-bottom: 24px;">
+                        ${l.sub}
+                    </p>
+                    
+                    <div id="feedbackOptions" style="display: flex; gap: 16px; justify-content: center; margin-bottom: 8px;">
+                        <button class="btn" id="feedbackYesBtn" style="flex: 1; justify-content: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(0, 200, 83, 0.3); background: rgba(0, 200, 83, 0.08); color: #00e676; font-weight: 600; cursor: pointer; transition: all 0.2s; gap: 6px;">
+                            ${l.yes}
+                        </button>
+                        <button class="btn" id="feedbackNoBtn" style="flex: 1; justify-content: center; padding: 12px; border-radius: 8px; border: 1px solid rgba(244, 67, 54, 0.3); background: rgba(244, 67, 54, 0.08); color: #ff5252; font-weight: 600; cursor: pointer; transition: all 0.2s; gap: 6px;">
+                            ${l.no}
+                        </button>
+                    </div>
+                    
+                    <div id="feedbackSpinner" style="display: none; font-size: 0.95rem; color: var(--muted); margin: 12px 0;">
+                        <div class="spinner" style="width:20px; height:20px; display:inline-block; vertical-align:middle; margin-right:8px;"></div>
+                        <span>${l.saving}</span>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            const submitFeedbackAction = async (liked) => {
+                overlay.querySelector('#feedbackOptions').style.display = 'none';
+                overlay.querySelector('#feedbackSpinner').style.display = 'block';
+                
+                try {
+                    await fetch('/api/feedback', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            liked_result: liked,
+                            feedback_category: 'career_match',
+                            comment: 'Auto-submitted via PDF download intercept',
+                            career_id: careerName
+                        })
+                    });
+                } catch (e) {
+                    console.error('Failed to submit download feedback:', e);
+                }
+                
+                careerFeedbackSubmitted[careerName] = true;
+                overlay.remove();
+                
+                // Trigger actual PDF generation
+                downloadCareerPDF(career);
+            };
+            
+            overlay.querySelector('#feedbackYesBtn').addEventListener('click', () => submitFeedbackAction(true));
+            overlay.querySelector('#feedbackNoBtn').addEventListener('click', () => submitFeedbackAction(false));
+        }
+
         function downloadCareerPDF(career) {
+            const targetCareerName = career.career_name || career.name;
+            
+            // Intercept if feedback is not yet submitted for this career
+            if (!careerFeedbackSubmitted[targetCareerName]) {
+                showDownloadFeedbackModal(career);
+                return;
+            }
+
             const printWindow = window.open('', '_blank');
             if (!printWindow) {
                 showToast('⚠️ Popup blocked! Please allow popups to save the PDF.');
@@ -4844,19 +5122,19 @@
                     <div class="grid-3" id="modalInstitutesGrid">
                         ${showGov ? `
                         <div>
-                            <h5 style="color:var(--amber);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏛️ ${dict['title-gov'] || 'Government'} ${prefRange === 'government' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            <h5 style="color:var(--amber);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">${dict['title-gov'] || 'Government'} ${prefRange === 'government' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
                             ${govListHtml}
                         </div>
                         ` : ''}
                         ${showPriv ? `
                         <div>
-                            <h5 style="color:var(--coral);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">🏢 ${dict['title-priv'] || 'Private'} ${prefRange === 'private' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            <h5 style="color:var(--coral);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">${dict['title-priv'] || 'Private'} ${prefRange === 'private' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
                             ${privListHtml}
                         </div>
                         ` : ''}
                         ${showDist ? `
                         <div>
-                            <h5 style="color:var(--violet-2);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">💻 ${dict['title-dist'] || 'Distance Learning'} ${prefRange === 'distance' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
+                            <h5 style="color:var(--violet-2);margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:4px;">${dict['title-dist'] || 'Distance Learning'} ${prefRange === 'distance' ? '<span style="color:var(--cyan);font-size:0.75rem;">(Preferred)</span>' : ''}</h5>
                             ${distListHtml}
                         </div>
                         ` : ''}
@@ -5393,7 +5671,56 @@
             `;
             document.body.appendChild(modalOverlay);
         };
+
+        // Persist test state to prevent loss on accidental navigation
+        window.addEventListener('beforeunload', () => {
+            if (window.location.pathname === '/take-test') {
+                const wrap = document.querySelector('.wrap');
+                if (wrap) {
+                    sessionStorage.setItem('testWrapHTML', wrap.innerHTML);
+                    sessionStorage.setItem('testVars', JSON.stringify({
+                        currentQuestion: typeof currentQuestion !== 'undefined' ? currentQuestion : 0,
+                        answers: typeof answers !== 'undefined' ? answers : [],
+                        topCareers: typeof topCareers !== 'undefined' ? topCareers : [],
+                        studentInfo: typeof studentInfo !== 'undefined' ? studentInfo : {},
+                        riasecScores: typeof riasecScores !== 'undefined' ? riasecScores : { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
+                        userProfile: typeof userProfile !== 'undefined' ? userProfile : null,
+                        rawResultsData: typeof rawResultsData !== 'undefined' ? rawResultsData : null
+                    }));
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.location.pathname === '/take-test') {
+                const navEntries = performance.getEntriesByType("navigation");
+                if (navEntries.length > 0 && navEntries[0].type === "reload") {
+                    sessionStorage.removeItem('testWrapHTML');
+                    sessionStorage.removeItem('testVars');
+                    return;
+                }
+
+                const savedHTML = sessionStorage.getItem('testWrapHTML');
+                const savedVarsStr = sessionStorage.getItem('testVars');
+                
+                if (savedHTML && savedVarsStr) {
+                    const wrap = document.querySelector('.wrap');
+                    if (wrap && wrap.innerHTML.trim() !== '') {
+                        wrap.innerHTML = savedHTML;
+                        try {
+                            const savedVars = JSON.parse(savedVarsStr);
+                            if (savedVars.currentQuestion !== undefined) currentQuestion = savedVars.currentQuestion;
+                            if (savedVars.answers !== undefined) answers = savedVars.answers;
+                            if (savedVars.topCareers !== undefined) topCareers = savedVars.topCareers;
+                            if (savedVars.studentInfo !== undefined) studentInfo = savedVars.studentInfo;
+                            if (savedVars.riasecScores !== undefined) riasecScores = savedVars.riasecScores;
+                            if (savedVars.userProfile !== undefined) userProfile = savedVars.userProfile;
+                            if (savedVars.rawResultsData !== undefined) rawResultsData = savedVars.rawResultsData;
+                        } catch(e) {}
+                    }
+                }
+            }
+        });
     </script>
 </body>
-
 </html>
