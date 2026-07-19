@@ -41,7 +41,6 @@ class VectorStore:
         self.is_initializing = False
         
         if CHROMA_AVAILABLE:
-<<<<<<< HEAD
             try:
                 # Store ChromaDB SQLite files inside the data directory
                 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
