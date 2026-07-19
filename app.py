@@ -801,9 +801,6 @@ if __name__ == '__main__':
     print("[INFO] Server running at http://localhost:5000")
     print("=" * 60 + "\n")
     
-    app.run(
-        debug=config.debug,
-        host='0.0.0.0',
-        port=5000,
-        threaded=True
-    )
+    print("[INFO] Starting Waitress Production WSGI Server...")
+    from waitress import serve
+    serve(app, host='0.0.0.0', port=5000, threads=6)
