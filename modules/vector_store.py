@@ -10,6 +10,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 import json
 import traceback
+import threading
 from typing import List, Dict, Any
 
 CHROMA_AVAILABLE = False
@@ -37,8 +38,10 @@ class VectorStore:
         self.client = None
         self.collection = None
         self.enabled = False
+        self.is_initializing = False
         
         if CHROMA_AVAILABLE:
+<<<<<<< HEAD
             try:
                 # Store ChromaDB SQLite files inside the data directory
                 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -95,6 +98,44 @@ class VectorStore:
             except BaseException as e:
                 print(f"[WARNING] Failed to initialize ChromaDB Vector Store (running on fallback): {e}")
                 traceback.print_exc()
+=======
+            self.is_initializing = True
+            # Start background initialization so app boots instantly
+            threading.Thread(target=self._async_init, daemon=True).start()
+            
+    def _async_init(self):
+        """Asynchronously load ChromaDB and SentenceTransformer weights."""
+        try:
+            print("[INFO] Starting background initialization for ChromaDB and ML models...")
+            # Store ChromaDB SQLite files inside the data directory
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            db_path = os.path.join(base_dir, "data", "chroma_db")
+            
+            self.client = chromadb.PersistentClient(path=db_path)
+            
+            # Setup embedding function with sentence-transformers all-MiniLM-L6-v2
+            self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+                model_name="all-MiniLM-L6-v2"
+            )
+            
+            # Get or create collection using cosine similarity metric
+            self.collection = self.client.get_or_create_collection(
+                name="careers",
+                embedding_function=self.emb_fn,
+                metadata={"hnsw:space": "cosine"}
+            )
+            
+            # Warm load the model
+            self.emb_fn(["warmup"])
+            
+            self.enabled = True
+            self.is_initializing = False
+            print("[SUCCESS] ChromaDB Vector Store successfully initialized in background!")
+        except BaseException as e:
+            self.is_initializing = False
+            print(f"[WARNING] Failed to initialize ChromaDB Vector Store (running on fallback): {e}")
+            traceback.print_exc()
+>>>>>>> Master
                 
     def add_careers(self, careers: List[Dict[str, Any]]):
         """Add careers to ChromaDB."""

@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section" id="quiz-section">
+<div class="wrap">
+<div class="sec-head reveal" style="text-align:center;margin:0 auto 40px">
+<div class="eyebrow" style="justify-content:center">CAREER DISCOVERY ASSESSMENT</div>
+<h2 class="h-sec">Discover the path <span class="grad">that fits you.</span></h2>
+<p class="lead" style="margin:0 auto;text-align:center">Tell us about yourself and answer a few
+                    questions to understand your interests, strengths, and career preferences.</p>
+</div>
+<!-- Profile Form - Simplified -->
+<div class="profile-form-container active" id="profileFormContainer">
+<div class="glass" style="padding:30px">
+<h3 style="text-align:center;margin-bottom:20px;color:var(--ink)">Tell us about yourself</h3>
+<form id="profileForm" onsubmit="submitProfile(event)">
+<div id="step1">
+<!-- Basic Information -->
+<div class="form-row">
+<div class="form-group">
+<label for="studentName">Full Name *</label>
+<input id="studentName" placeholder="Enter your full name" required="" type="text"/>
+</div>
+<div class="form-group">
+<label for="studentAge">Age *</label>
+<input id="studentAge" placeholder="Enter your age" required="" type="number"/>
+</div>
+</div>
+<div class="form-row">
+<div class="form-group">
+<label for="studentClass">Class/Year *</label>
+<select id="studentClass" required="">
+<option value="">Select your class</option>
+<option value="8th">8th</option>
+<option value="9th">9th</option>
+<option value="10th">10th</option>
+<option value="11th">11th</option>
+<option value="12th">12th</option>
+<option value="1st Year College">1st Year College</option>
+<option value="2nd Year College">2nd Year College</option>
+<option value="3rd Year College">3rd Year College</option>
+<option value="4th Year College">4th Year College</option>
+<option value="Graduate">Graduate</option>
+<option value="Post Graduate">Post Graduate</option>
+</select>
+</div>
+<div class="form-group">
+<label for="studentEducation">Education Stream/Field</label>
+<input id="studentEducation" placeholder="e.g., Science, Commerce, Arts, Engineering" type="text"/>
+</div>
+</div>
+<!-- Academic Profile -->
+<h4 style="color:var(--cyan);margin:20px 0 12px 0">Your Learning Profile</h4>
+<div class="form-group">
+<label for="studentSubjects">Subjects you enjoy learning</label>
+<input id="studentSubjects" placeholder="e.g., Mathematics, Physics, English, Biology, History" type="text"/>
+</div>
+<div class="form-group">
+<label for="studentWeakSubjects">Subjects You Find Challenging</label>
+<input id="studentWeakSubjects" placeholder="e.g., Chemistry, Statistics, Economics" type="text"/>
+</div>
+<button type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:20px" onclick="if(validateStep(1)) nextStep(2)">Next Step →</button>
+</div>
+
+<div id="step2" style="display:none">
+<!-- Interests & Hobbies -->
+<h4 style="color:var(--cyan);margin:20px 0 12px 0">What inspires you outside academics?</h4>
+<div class="form-group">
+<label for="studentInterests">Your Interests</label>
+<input id="studentInterests" placeholder="e.g., Technology, Research, Art, Sports, Social Work" type="text"/>
+</div>
+<div class="form-group">
+<label for="studentHobbies">Your Hobbies</label>
+<input id="studentHobbies" placeholder="e.g., Reading, Gaming, Painting, Coding, Gardening" type="text"/>
+</div>
+<div class="form-group">
+<label for="studentStrengths">Your natural strengths</label>
+<input id="studentStrengths" placeholder="e.g., Problem-solving, Communication, Leadership, Creativity" type="text"/>
+</div>
+<div class="form-group">
+<label for="studentAspirations">Career Aspirations (if any)</label>
+<input id="studentAspirations" placeholder="e.g., Engineer, Doctor, Scientist, Entrepreneur" type="text"/>
+</div>
+<div style="display:flex;gap:10px;margin-top:20px">
+    <button type="button" class="btn btn-ghost" style="width:50%;justify-content:center" onclick="prevStep(1)">← Back</button>
+    <button type="button" class="btn btn-primary" style="width:50%;justify-content:center" onclick="if(validateStep(2)) nextStep(3)">Next Step →</button>
+</div>
+</div>
+
+<div id="step3" style="display:none">
+<!-- Career Preferences - Only 3 fields as requested -->
+<h4 style="color:var(--cyan);margin:20px 0 12px 0">Career Ambitions & Preferences</h4>
+<div class="form-group">
+<label for="learningMode">Preferred Learning Mode</label>
+<select id="learningMode">
+<option value="offline">Offline (Classroom/Lab)</option>
+<option value="distance">Distance/Online Learning</option>
+<option value="hybrid">Hybrid (Mix)</option>
+</select>
+</div>
+<div class="form-group">
+<label for="budgetPreference">Budget Preference</label>
+<select id="budgetPreference">
+<option value="moderate">Moderate Budget</option>
+<option value="budget_sensitive">Budget Sensitive</option>
+<option value="no_constraint">No Budget Constraint</option>
+</select>
+</div>
+<div class="form-group">
+<label for="locationPreference">Location Preference</label>
+<select id="locationPreference">
+<option value="india">India Wide</option>
+<option value="local">Local Opportunities</option>
+<option value="international">International Career</option>
+</select>
+</div>
+<div class="form-group">
+<label for="studentLocation">Preferred Study Location</label>
+<input id="studentLocation" placeholder="e.g., Tamil Nadu, Maharashtra, Delhi" type="text"/>
+</div>
+<div class="form-group">
+<label for="collegeRange">Preferred College Type/Range</label>
+<select id="collegeRange">
+<option value="all">All Colleges (Govt &amp; Private)</option>
+<option value="government">Government Colleges Only</option>
+<option value="private">Private Colleges Only</option>
+<option value="distance">Distance Learning Only</option>
+</select>
+</div>
+<div style="display:flex;gap:10px;margin-top:20px">
+    <button type="button" class="btn btn-ghost" style="width:50%;justify-content:center" onclick="prevStep(2)">← Back</button>
+    <button class="btn btn-success" style="width:50%;justify-content:center" type="submit">
+                                Continue to Career Test →
+    </button>
+</div>
+</div>
+</form>
+<script>
+function nextStep(step) {
+    document.getElementById('step1').style.display = 'none';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('step3').style.display = 'none';
+    document.getElementById('step' + step).style.display = 'block';
+}
+function prevStep(step) {
+    nextStep(step);
+}
+function validateStep(step) {
+    let container = document.getElementById('step' + step);
+    let inputs = container.querySelectorAll('input[required], select[required]');
+    for(let i=0; i<inputs.length; i++) {
+        if(!inputs[i].checkValidity()) {
+            inputs[i].reportValidity();
+            return false;
+        }
+    }
+    return true;
+}
+</script>
+</div>
+</div>
+<!-- Quiz Container -->
+<div class="quiz-container" id="quizContainer">
+<div class="glass" style="padding:30px">
+<div class="quiz-progress">
+<div class="qcount" id="qCount">Question 1 of 42</div>
+<div class="pbar"><i id="qbar" style="width:0%"></i></div>
+</div>
+<div class="qcard" id="qCard">
+<div class="qicon" id="qIcon">💡</div>
+<div class="qtype" id="qTypeLabel">Realistic</div>
+<div class="qtext" id="qText">Loading questions...</div>
+<div class="scale" id="scaleButtons">
+<button onclick="answerQuestion(1)"><span class="e">😣</span><span class="t">Not
+                                    me</span></button>
+<button onclick="answerQuestion(2)"><span class="e">🙁</span><span class="t">A
+                                    little</span></button>
+<button onclick="answerQuestion(3)"><span class="e">😐</span><span class="t">Maybe</span></button>
+<button onclick="answerQuestion(4)"><span class="e">🙂</span><span class="t">Yes</span></button>
+<button onclick="answerQuestion(5)"><span class="e">🤩</span><span class="t">So
+                                    me!</span></button>
+</div>
+<div class="quiz-nav">
+<button class="btn btn-ghost" id="backBtn" onclick="goToPreviousQuestion()">← Back</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Results Container -->
+<div class="results-container" id="resultsContainer">
+<div class="student-profile-wrapper">
+<!-- Student Profile Card -->
+<div class="student-profile-card" id="studentProfileCard">
+<div class="profile-header">
+<div class="profile-avatar" id="profileAvatar">🧑</div>
+<div class="profile-info">
+<div class="name" id="profileName">Student Name</div>
+<div class="details">
+<span id="profileAge">Age: --</span>
+<span id="profileClass">Class: --</span>
+<span id="profileEducation">Stream: --</span>
+</div>
+<div class="details" style="font-size:0.85rem;color:var(--muted)">
+<span id="profileHobbies">Hobbies: --</span>
+<span id="profileSubjects">Subjects: --</span>
+</div>
+</div>
+<div class="profile-riasec">
+<div>
+<div class="label">Your Personality Code</div>
+<div class="code" id="profileRiasecCode">---</div>
+</div>
+</div>
+</div>
+<!-- Personality Traits with click to open modal -->
+<div class="profile-traits" id="profileTraits"></div>
+<!-- RIASEC Score Bars -->
+<div class="riasec-scores" id="riasecScoreBars">
+<div class="score-item">
+<div class="score-label" onclick="window.showRiasecModal('Realistic')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Realistic</div>
+<div class="score-bar-container">
+<div class="score-bar r" id="scoreBarR" style="width:0%"></div>
+</div>
+<div class="score-value" id="scoreValR">0%</div>
+</div>
+<div class="score-item">
+<div class="score-label" onclick="window.showRiasecModal('Investigative')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Investigative</div>
+<div class="score-bar-container">
+<div class="score-bar i" id="scoreBarI" style="width:0%"></div>
+</div>
+<div class="score-value" id="scoreValI">0%</div>
+</div>
+<div class="score-item">
+<div class="score-label" onclick="window.showRiasecModal('Artistic')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Artistic</div>
+<div class="score-bar-container">
+<div class="score-bar a" id="scoreBarA" style="width:0%"></div>
+</div>
+<div class="score-value" id="scoreValA">0%</div>
+</div>
+<div class="score-item">
+<div class="score-label" onclick="window.showRiasecModal('Social')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Social</div>
+<div class="score-bar-container">
+<div class="score-bar s" id="scoreBarS" style="width:0%"></div>
+</div>
+<div class="score-value" id="scoreValS">0%</div>
+</div>
+<div class="score-item">
+<div class="score-label" onclick="window.showRiasecModal('Enterprising')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Enterprising</div>
+<div class="score-bar-container">
+<div class="score-bar e" id="scoreBarE" style="width:0%"></div>
+</div>
+<div class="score-value" id="scoreValE">0%</div>
+</div>
+<div class="score-item">
+<div class="score-label" onclick="window.showRiasecModal('Conventional')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Conventional</div>
+<div class="score-bar-container">
+<div class="score-bar c" id="scoreBarC" style="width:0%"></div>
+</div>
+<div class="score-value" id="scoreValC">0%</div>
+</div>
+</div>
+</div>
+<div class="result-header">
+<div class="eyebrow" style="justify-content:center">Your Career Matches</div>
+<p id="profileDescription" style="color:var(--muted);font-size:1.05rem">Top 6 careers based on
+                            your personality</p>
+</div>
+<div id="careerResults">
+<div class="loading-spinner">
+<div class="spinner"></div>
+<p style="color:var(--muted)">Analyzing your matches...</p>
+</div>
+</div>
+</div>
+</section>
+{% endblock %}

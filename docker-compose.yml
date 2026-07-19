@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: skillsense_backend
-    restart: unless-stopped
+    restart: always
     ports:
       - "5000:5000"
     env_file:
@@ -18,3 +18,8 @@ services:
       - DB_PATH=/app/data/career_guide.db
     volumes:
       - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

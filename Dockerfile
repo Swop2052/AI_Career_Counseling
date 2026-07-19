@@ -15,7 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy the requirements file and install dependencies
 COPY requirements.txt .
+<<<<<<< HEAD
 RUN pip install --no-cache-dir -r requirements.txt
+=======
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt
+>>>>>>> Master
 
 # Copy the rest of the application files
 COPY . .
@@ -23,5 +29,10 @@ COPY . .
 # Expose the Flask port
 EXPOSE 5000
 
+<<<<<<< HEAD
 # Run the database indexing migration, then launch Flask with Gunicorn WSGI server
 CMD ["sh", "-c", "python init_chromadb.py && gunicorn --bind 0.0.0.0:5000 --workers 4 --threads 2 --timeout 120 --preload app:app"]
+=======
+# Run the database indexing migration, then launch Flask with Waitress WSGI server
+CMD ["sh", "-c", "python init_chromadb.py && python app.py"]
+>>>>>>> Master
