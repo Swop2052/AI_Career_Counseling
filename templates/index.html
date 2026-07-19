@@ -13,23 +13,26 @@
            SkillSense — Design System
            ============================================================ */
         :root {
-            --violet: #6D4AFF;
-            --violet-2: #7B61FF;
-            --cyan: #00D4FF;
-            --amber: #FFB347;
-            --coral: #FF6B6B;
-            --bg: #050816;
-            --bg-2: #0B1020;
-            --ink: #F4F6FF;
-            --muted: #9AA6CC;
-            --faint: #5B678F;
-            --glass: rgba(255, 255, 255, 0.045);
-            --glass-2: rgba(255, 255, 255, 0.07);
-            --stroke: rgba(123, 97, 255, 0.22);
-            --stroke-bright: rgba(0, 212, 255, 0.45);
-            --r: 22px;
-            --r-sm: 14px;
-            --shadow: 0 24px 70px -28px rgba(0, 0, 0, 0.85);
+            --primary: #00A86B;
+            --primary-hover: #008f5a;
+            --secondary: #00A86B;
+            --violet: #00A86B;
+            --violet-2: #008f5a;
+            --cyan: #00A86B;
+            --amber: #FF9500;
+            --coral: #FF3B30;
+            --bg: #FFFFFF;
+            --bg-2: #F4FBF7;
+            --ink: #1C1C1E;
+            --muted: #636366;
+            --faint: #AEAEB2;
+            --glass: #F4FBF7;
+            --glass-2: #E8F5EE;
+            --stroke: rgba(0, 168, 107, 0.15);
+            --stroke-bright: rgba(0, 168, 107, 0.3);
+            --r: 20px;
+            --r-sm: 10px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
             --body: 'Inter', system-ui, sans-serif;
             --maxw: 1180px;
         }
@@ -53,18 +56,11 @@
             inset: 0;
             z-index: 0;
             pointer-events: none;
-            background: radial-gradient(60% 50% at 18% 8%, rgba(109, 74, 255, 0.22), transparent 60%), radial-gradient(50% 50% at 86% 12%, rgba(0, 212, 255, 0.14), transparent 60%), radial-gradient(60% 60% at 50% 110%, rgba(123, 97, 255, 0.16), transparent 60%);
+            background-color: var(--bg);
         }
 
         .grain {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            opacity: 0.4;
-            pointer-events: none;
-            background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-            background-size: 46px 46px;
-            mask-image: radial-gradient(circle at 50% 40%, #000 0, transparent 80%);
+            display: none;
         }
 
         .wrap {
@@ -135,70 +131,61 @@
         }
 
         .btn-primary {
-            background: linear-gradient(100deg, var(--violet), var(--violet-2));
+            background: var(--primary);
             color: #fff;
-            box-shadow: 0 14px 40px -12px rgba(109, 74, 255, 0.85);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
         }
 
         .btn-primary:hover {
-            filter: brightness(1.08);
+            background: var(--primary-hover);
             transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
         }
 
         .btn-ghost {
-            background: var(--glass);
+            background: #ffffff;
             border: 1px solid var(--stroke);
             color: var(--ink);
-            backdrop-filter: blur(12px);
         }
 
         .btn-ghost:hover {
-            border-color: var(--stroke-bright);
-            background: var(--glass-2);
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: linear-gradient(100deg, #00c853, #00e676);
-            color: #fff;
-            box-shadow: 0 14px 40px -12px rgba(0, 200, 83, 0.85);
-        }
-
-        .btn-success:hover {
-            filter: brightness(1.08);
+            border-color: var(--primary);
+            background: #f4f7f9;
             transform: translateY(-2px);
         }
 
         .glass {
-            background: linear-gradient(160deg, var(--glass-2), var(--glass));
+            background: #F4FBF7;
             border: 1px solid var(--stroke);
             border-radius: var(--r);
-            backdrop-filter: blur(16px);
             box-shadow: var(--shadow);
         }
 
         .nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: var(--maxw);
             z-index: 40;
             transition: 0.3s;
+            background: #E8EAE6;
+            border-radius: 999px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         }
 
         .nav-in {
-            max-width: var(--maxw);
-            margin: 0 auto;
-            padding: 16px 22px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
         .nav.scrolled {
-            background: rgba(5, 8, 22, 0.72);
+            background: rgba(232, 234, 230, 0.95);
             backdrop-filter: blur(18px);
-            border-bottom: 1px solid rgba(123, 97, 255, 0.14);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
 
         .brand {
@@ -207,6 +194,7 @@
             gap: 11px;
             font-weight: 700;
             font-size: 1.12rem;
+            color: var(--primary);
         }
 
         .brand .orb {
@@ -215,8 +203,8 @@
             border-radius: 11px;
             display: grid;
             place-items: center;
-            background: linear-gradient(135deg, var(--violet), var(--cyan));
-            box-shadow: 0 0 24px -4px var(--violet);
+            background: var(--primary);
+            color: #fff;
             font-size: 1rem;
         }
 
@@ -236,25 +224,22 @@
         }
 
         .nav-links a:hover {
-            color: var(--ink);
+            color: var(--primary);
         }
 
         .nav-cta {
             font-size: 0.88rem;
             padding: 9px 20px;
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--primary);
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: none;
+            border: none;
+            border-radius: 999px;
             transition: all 0.25s ease;
         }
 
         .nav-cta:hover {
-            background: rgba(255, 255, 255, 0.16);
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: none;
         }
 
         .hero {
@@ -263,9 +248,23 @@
             display: flex;
             align-items: center;
             padding-top: 90px;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('{{ url_for("static", filename="bg-hero-boy-watermark.png") }}') center center / auto 85% no-repeat;
+            opacity: 0.25;
+            z-index: 0;
+            pointer-events: none;
+            mix-blend-mode: multiply;
         }
 
         .hero-grid {
+            position: relative;
+            z-index: 1;
             display: grid;
             grid-template-columns: 1.05fr 0.95fr;
             gap: 40px;
@@ -276,7 +275,7 @@
             font-size: clamp(2.0rem, 4.6vw, 3.4rem);
             font-weight: 700;
             line-height: 1.08;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            text-shadow: none;
         }
 
         .hero h1 .l2 {
@@ -322,132 +321,110 @@
             letter-spacing: 0.04em;
         }
 
-        .holo {
-            position: relative;
-            height: 480px;
-            display: grid;
-            place-items: center;
-        }
-
-        .holo-ring {
-            position: absolute;
-            border-radius: 50%;
-            border: 1px solid var(--stroke);
-            animation: spin 26s linear infinite;
-        }
-
-        .holo-ring.r1 {
-            width: 430px;
-            height: 430px;
-            border-color: rgba(123, 97, 255, 0.28);
-        }
-
-        .holo-ring.r2 {
-            width: 330px;
-            height: 330px;
-            border-style: dashed;
-            border-color: rgba(0, 212, 255, 0.3);
-            animation-duration: 18s;
-            animation-direction: reverse;
-        }
-
-        .holo-ring.r3 {
-            width: 235px;
-            height: 235px;
-            border-color: rgba(255, 179, 71, 0.25);
-            animation-duration: 34s;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .holo-core {
-            position: relative;
-            width: 190px;
-            height: 190px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 30%, rgba(123, 97, 255, 0.9), rgba(0, 212, 255, 0.5) 60%, transparent 75%);
-            box-shadow: 0 0 90px -10px rgba(109, 74, 255, 0.9), inset 0 0 50px rgba(255, 255, 255, 0.15);
-            display: grid;
-            place-items: center;
-            animation: bob 6s ease-in-out infinite;
-        }
-
-        @keyframes bob {
-            50% {
-                transform: translateY(-14px);
-            }
-        }
-
-        .holo-core .bot {
-            font-size: 4.6rem;
-        }
-
-        .chip {
-            position: absolute;
+        .hero-chat-mockup {
             display: flex;
-            align-items: center;
-            gap: 7px;
-            padding: 9px 14px;
-            border-radius: 999px;
-            background: var(--glass-2);
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 360px;
+            margin-left: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .chat-bubble {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px 20px;
+            border-radius: var(--r);
+            background: #FFFFFF;
             border: 1px solid var(--stroke);
-            backdrop-filter: blur(10px);
-            font-size: 0.82rem;
-            font-weight: 600;
-            white-space: nowrap;
-            box-shadow: var(--shadow);
-            animation: float 7s ease-in-out infinite;
+            box-shadow: 0 10px 30px rgba(0, 168, 107, 0.08);
+            animation: slideUpFade 0.6s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
         }
 
-        .chip .dot {
-            width: 8px;
-            height: 8px;
+        .chat-bubble.user-bubble {
+            align-self: flex-end;
+            background: #F4FBF7;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-bubble.ai-bubble {
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            animation-delay: 0.8s;
+        }
+
+        .chat-bubble.user-typing {
+            align-self: flex-end;
+            background: #F4FBF7;
+            border-bottom-right-radius: 4px;
+            animation-delay: 1.8s;
+            padding: 12px 20px;
+        }
+
+        .chat-bubble .avatar {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        .chat-bubble .msg {
+            font-size: 0.95rem;
+            color: var(--ink);
+            line-height: 1.4;
+        }
+
+        .chat-bubble .msg strong {
+            color: var(--primary);
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            height: 24px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: var(--muted);
             border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
         }
 
-        @keyframes float {
+        .typing-dots span:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
             50% {
-                transform: translateY(-13px);
+                transform: translateY(-4px);
             }
         }
 
-        .chip.c1 {
-            top: 6%;
-            left: -6%;
-        }
-
-        .chip.c2 {
-            top: 24%;
-            right: -10%;
-            animation-delay: 1.1s;
-        }
-
-        .chip.c3 {
-            bottom: 22%;
-            left: -12%;
-            animation-delay: 0.6s;
-        }
-
-        .chip.c4 {
-            bottom: 4%;
-            right: -2%;
-            animation-delay: 1.7s;
-        }
-
-        .chip.c5 {
-            top: -12%;
-            left: 36%;
-            animation-delay: 2.2s;
-        }
-
-        .chip.c6 {
-            bottom: -10%;
-            left: 42%;
-            animation-delay: 1.4s;
+        @keyframes slideUpFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .section {
@@ -470,6 +447,46 @@
             padding: 26px 22px 28px;
             position: relative;
             overflow: hidden;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+            animation: float-step 6s ease-in-out infinite;
+        }
+
+        .step:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .step:nth-child(2) {
+            animation-delay: 1.5s;
+        }
+
+        .step:nth-child(3) {
+            animation-delay: 3s;
+        }
+
+        .step:nth-child(4) {
+            animation-delay: 4.5s;
+        }
+
+        @keyframes float-step {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .step:hover {
+            transform: translateY(-12px) !important;
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
         }
 
         .step .num {
@@ -730,25 +747,22 @@
             display: block;
         }
 
-        /* Student Profile Card - Enhanced */
+        .student-profile-wrapper {
+            background: var(--glass);
+            border: 1px solid var(--stroke);
+            border-radius: var(--r);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            color: var(--ink);
+        }
+
         .student-profile-card {
             display: none;
-            background: linear-gradient(135deg, rgba(109, 74, 255, 0.15), rgba(0, 212, 255, 0.08));
-            border: 1px solid var(--stroke-bright);
-            border-radius: var(--r);
-            padding: 24px 30px;
-            margin-bottom: 30px;
         }
 
         .student-profile-card.active {
             display: block;
-        }
-
-        .student-profile-card .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
         }
 
         .student-profile-card .profile-avatar {
@@ -801,7 +815,7 @@
 
         .student-profile-card .profile-riasec .label {
             font-size: 0.75rem;
-            color: var(--faint);
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }
@@ -831,7 +845,7 @@
         .score-bar-container {
             width: 100%;
             height: 6px;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.06);
             border-radius: 99px;
             margin: 4px 0;
             overflow: hidden;
@@ -884,18 +898,18 @@
         .student-profile-card .profile-traits .trait-tag {
             padding: 4px 14px;
             border-radius: 99px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
+            background: var(--stroke);
+            border: 1px solid var(--stroke-bright);
             font-size: 0.78rem;
-            color: var(--cyan);
+            color: var(--primary);
             cursor: pointer;
             transition: 0.2s;
         }
 
         .student-profile-card .profile-traits .trait-tag:hover {
-            background: rgba(0, 212, 255, 0.2);
+            background: var(--stroke-bright);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 168, 107, 0.15);
         }
 
         /* Trait Detail Modal */
@@ -909,6 +923,207 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+        }
+
+        .hero-card-stack {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            height: 420px;
+            margin-left: auto;
+            z-index: 2;
+            perspective: 1000px;
+            animation: float-stack 5s ease-in-out infinite;
+        }
+
+        @keyframes float-stack {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .stack-card {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--stroke);
+            border-radius: 24px;
+            padding: 32px 28px;
+            box-shadow: 0 15px 35px rgba(0, 168, 107, 0.05);
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            cursor: pointer;
+            transform-origin: center bottom;
+        }
+
+        .stack-card:nth-child(1) {
+            transform: translateY(0) scale(1) rotate(0);
+            z-index: 3;
+        }
+
+        .stack-card:nth-child(2) {
+            transform: translateY(20px) scale(0.95) rotate(-3deg);
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        .stack-card:nth-child(3) {
+            transform: translateY(40px) scale(0.9) rotate(3deg);
+            z-index: 1;
+            opacity: 0.8;
+        }
+
+        .hero-card-stack:hover .stack-card:nth-child(1) {
+            transform: translateY(-50px) scale(1.02) rotate(-3deg);
+            box-shadow: 0 30px 60px rgba(0, 168, 107, 0.12);
+        }
+
+        .hero-card-stack:hover .stack-card:nth-child(2) {
+            transform: translateY(10px) scale(1) rotate(6deg) translateX(30px);
+            opacity: 1;
+            box-shadow: 0 20px 40px rgba(0, 168, 107, 0.08);
+        }
+
+        .hero-card-stack:hover .stack-card:nth-child(3) {
+            transform: translateY(70px) scale(1) rotate(-5deg) translateX(-25px);
+            opacity: 1;
+            box-shadow: 0 20px 40px rgba(0, 168, 107, 0.08);
+        }
+
+        .sc-icon {
+            width: 54px;
+            height: 54px;
+            background: #F0FDF4;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .sc-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .sc-desc {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .card-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .card-modal {
+            background: #ffffff;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0, 168, 107, 0.15);
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            text-align: center;
+        }
+
+        .card-modal-overlay.active .card-modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .card-modal .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .card-modal .close-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .card-modal .cm-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: #F0FDF4;
+            padding: 20px;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+
+        .card-modal .cm-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 16px;
+        }
+
+        .card-modal .cm-desc {
+            font-size: 1.05rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .card-modal .cm-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card-modal .cm-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 168, 107, 0.4);
         }
 
         .trait-modal-overlay .trait-modal {
@@ -994,41 +1209,23 @@
         }
 
         .career-card {
-            padding: 26px;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            padding: 22px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            min-width: 0;
-            position: relative;
-            overflow: hidden;
-            border-radius: 20px;
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
-            border: 1px solid var(--stroke);
         }
 
         .career-card:hover {
             transform: translateY(-8px);
-            border-color: var(--stroke-bright);
-            box-shadow: 0 20px 40px -15px rgba(0, 212, 255, 0.25);
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-        }
-
-        .career-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--violet-2), var(--cyan));
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-
-        .career-card:hover::before {
-            opacity: 1;
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.1);
         }
 
         .career-card .top {
@@ -1059,20 +1256,18 @@
         }
 
         .career-card h4 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
+            font-size: 1.15rem;
+            margin: 0 0 8px 0;
             color: var(--ink);
             font-weight: 700;
-            letter-spacing: -0.01em;
             line-height: 1.3;
         }
 
         .career-card .career-desc {
+            font-size: 0.85rem;
             color: var(--muted);
-            font-size: 0.88rem;
             margin-bottom: 20px;
-            line-height: 1.6;
-            height: 4.8em;
+            line-height: 1.5;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
@@ -1088,18 +1283,17 @@
         }
 
         .career-card .cstat-box {
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 10px 12px;
-            transition: all 0.2s;
+            gap: 4px;
         }
 
         .career-card .cstat-box:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .career-card .cstat-box .lbl-row {
@@ -1113,9 +1307,9 @@
             font-size: 1rem;
         }
 
-        .career-card .cstat-box .lbl-row .lbl {
-            font-size: 0.68rem;
-            color: var(--faint);
+        .career-card .cstat-box .lbl {
+            font-size: 0.7rem;
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             font-weight: 600;
@@ -1141,16 +1335,16 @@
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             border-radius: 12px;
             padding: 10px 14px;
             transition: all 0.2s;
         }
 
         .career-card .cstat-row-full:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
         }
 
         .career-card .cstat-row-full .icon {
@@ -1168,7 +1362,7 @@
 
         .career-card .cstat-row-full .lbl {
             font-size: 0.68rem;
-            color: var(--faint);
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             font-weight: 600;
@@ -1802,37 +1996,42 @@
     <!-- ============================== NAV ============================== -->
     <nav class="nav" id="nav">
         <div class="nav-in">
-            <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
+            <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png"
+                    alt="SkillSense Logo" class="brand-logo"
+                    style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;">
+                SkillSense</div>
             <div class="nav-links">
-<<<<<<< Updated upstream
-                <a onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</a>
-                <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take Test</a>
-                <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI Counselor</a>
-=======
-                <a href="#how">How it works</a>
-                <a href="#quiz-section">Take Test</a>
-                <a href="#counselor">AI Counselor</a>
-                <a href="#contact-section">Contact</a>
->>>>>>> Stashed changes
+                <<<<<<< Updated upstream <a
+                    onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</a>
+                    <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take
+                        Test</a>
+                    <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI
+                        Counselor</a>
+                    =======
+                    <a href="#how">How it works</a>
+                    <a href="#quiz-section">Take Test</a>
+                    <a href="#counselor">AI Counselor</a>
+                    <a href="#contact-section">Contact</a>
+                    >>>>>>> Stashed changes
             </div>
             <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
                 <button class="btn nav-cta" onclick="startQuiz()">Start Career Test</button>
                 <select id="langSelect" onchange="switchLanguage(this.value)" style="
-                    background: rgba(255, 255, 255, 0.08);
-                    color: #fff;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    background: rgba(0, 0, 0, 0.06);
+                    color: #111827;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
                     border-radius: 8px;
                     padding: 8px 12px;
                     font-family: inherit;
-                    font-size: 0.9rem;
-                    font-weight: 500;
+                    font-size: 0.95rem;
+                    font-weight: 600;
                     cursor: pointer;
                     outline: none;
                     transition: all 0.25s ease;
                 ">
-                    <option value="en" style="background:#13111C; color:#fff;">English</option>
-                    <option value="hi" style="background:#13111C; color:#fff;">हिंदी (Hindi)</option>
-                    <option value="mr" style="background:#13111C; color:#fff;">मराठी (Marathi)</option>
+                    <option value="en" style="background:#ffffff; color:#111827;">English</option>
+                    <option value="hi" style="background:#ffffff; color:#111827;">हिंदी (Hindi)</option>
+                    <option value="mr" style="background:#ffffff; color:#111827;">मराठी (Marathi)</option>
                 </select>
             </div>
         </div>
@@ -1868,19 +2067,69 @@
                     </div>
                 </div>
             </div>
-            <div class="holo">
-                <div class="holo-ring r1"></div>
-                <div class="holo-ring r2"></div>
-                <div class="holo-ring r3"></div>
-                <div class="holo-core"><span class="bot">🧑‍🚀</span></div>
-                <div class="chip c1"><span class="dot" style="background:var(--violet)"></span>AI Engineer</div>
-                <div class="chip c2"><span class="dot" style="background:var(--cyan)"></span>Doctor</div>
-                <div class="chip c3"><span class="dot" style="background:var(--amber)"></span>Designer</div>
-                <div class="chip c4"><span class="dot" style="background:var(--coral)"></span>Founder</div>
-                <div class="chip c5"><span class="dot" style="background:#10b981"></span>Scientist</div>
-                <div class="chip c6"><span class="dot" style="background:#ec4899"></span>Lawyer</div>
+            <div class="hero-card-stack">
+                <div class="stack-card" onclick="openCardModal('card-1')">
+                    <div class="sc-icon">✨</div>
+                    <div class="sc-title">Find Your Calling</div>
+                    <div class="sc-desc">AI deeply analyzes your personality, interests, and skills to reveal your
+                        perfect career path.</div>
+                </div>
+                <div class="stack-card" onclick="openCardModal('card-2')">
+                    <div class="sc-icon">🧭</div>
+                    <div class="sc-title">Personalized Roadmap</div>
+                    <div class="sc-desc">Get a step-by-step guide with colleges, courses, and skills needed to reach
+                        your goal.</div>
+                </div>
+                <div class="stack-card" onclick="openCardModal('card-3')">
+                    <div class="sc-icon">📈</div>
+                    <div class="sc-title">Track Your Growth</div>
+                    <div class="sc-desc">Level up your skills, earn XP, and stay motivated on your journey to success.
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal()">
+            <div class="card-modal" id="cardModal" onclick="event.stopPropagation()">
+                <button class="close-btn" onclick="closeCardModal()">×</button>
+                <div class="cm-icon" id="cmIcon">✨</div>
+                <h3 class="cm-title" id="cmTitle">Title</h3>
+                <p class="cm-desc" id="cmDesc">Content</p>
+                <button class="cm-action" onclick="closeCardModal()">Got it!</button>
+            </div>
+        </div>
+
+        <script>
+            const modalData = {
+                'card-1': {
+                    icon: '✨',
+                    title: 'Unlock Your True Potential',
+                    desc: "Every great journey begins with a single step. You have a unique combination of talents, passions, and dreams that the world needs. Our AI doesn't just analyze data it uncovers the hidden genius within you. Don't settle for ordinary—discover the career that will make you excited to wake up every morning and change the world!"
+                },
+                'card-2': {
+                    icon: '🧭',
+                    title: 'Your Path to Greatness',
+                    desc: "A goal without a plan is just a wish. We provide you with a crystal-clear, step-by-step roadmap to turn your biggest dreams into reality. Whether it's the right college, the critical skills, or the key experiences—you will know exactly what to do next. Stop guessing and start progressing. Your future starts now."
+                },
+                'card-3': {
+                    icon: '📈',
+                    title: 'Level Up Your Life',
+                    desc: "Success is not an accident; it's the result of continuous growth. Treat your career like the ultimate game where you are the hero. Earn experience points, master new skills, and conquer challenges. Every small victory brings you closer to your ultimate calling. Stay motivated, stay hungry, and watch yourself become unstoppable."
+                }
+            };
+
+            function openCardModal(cardId) {
+                const data = modalData[cardId];
+                document.getElementById('cmIcon').innerText = data.icon;
+                document.getElementById('cmTitle').innerText = data.title;
+                document.getElementById('cmDesc').innerText = data.desc;
+                document.getElementById('cardModalOverlay').classList.add('active');
+            }
+
+            function closeCardModal() {
+                document.getElementById('cardModalOverlay').classList.remove('active');
+            }
+        </script>
     </header>
 
     <!-- ============================== HOW IT WORKS ============================== -->
@@ -1972,7 +2221,7 @@
                         </div>
 
                         <!-- Academic Profile -->
-                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">📚 Your Learning Profile</h4>
+                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">Your Learning Profile</h4>
                         <div class="form-group">
                             <label for="studentSubjects">Subjects you enjoy learning</label>
                             <input type="text" id="studentSubjects"
@@ -1985,7 +2234,7 @@
                         </div>
 
                         <!-- Interests & Hobbies -->
-                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">🎯 What inspires you outside academics?</h4>
+                        <h4 style="color:var(--cyan);margin:20px 0 12px 0">What inspires you outside academics?</h4>
                         <div class="form-group">
                             <label for="studentInterests">Your Interests</label>
                             <input type="text" id="studentInterests"
@@ -2088,7 +2337,7 @@
 
             <!-- Results Container -->
             <div class="results-container" id="resultsContainer">
-                <div class="glass" style="padding:30px">
+                <div class="student-profile-wrapper">
                     <!-- Student Profile Card -->
                     <div class="student-profile-card" id="studentProfileCard">
                         <div class="profile-header">
@@ -2117,42 +2366,54 @@
                         <!-- RIASEC Score Bars -->
                         <div class="riasec-scores" id="riasecScoreBars">
                             <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Realistic')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Realistic</div>
+                                <div class="score-label" onclick="window.showRiasecModal('Realistic')"
+                                    style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">
+                                    Realistic</div>
                                 <div class="score-bar-container">
                                     <div class="score-bar r" id="scoreBarR" style="width:0%"></div>
                                 </div>
                                 <div class="score-value" id="scoreValR">0%</div>
                             </div>
                             <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Investigative')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Investigative</div>
+                                <div class="score-label" onclick="window.showRiasecModal('Investigative')"
+                                    style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">
+                                    Investigative</div>
                                 <div class="score-bar-container">
                                     <div class="score-bar i" id="scoreBarI" style="width:0%"></div>
                                 </div>
                                 <div class="score-value" id="scoreValI">0%</div>
                             </div>
                             <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Artistic')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Artistic</div>
+                                <div class="score-label" onclick="window.showRiasecModal('Artistic')"
+                                    style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">
+                                    Artistic</div>
                                 <div class="score-bar-container">
                                     <div class="score-bar a" id="scoreBarA" style="width:0%"></div>
                                 </div>
                                 <div class="score-value" id="scoreValA">0%</div>
                             </div>
                             <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Social')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Social</div>
+                                <div class="score-label" onclick="window.showRiasecModal('Social')"
+                                    style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">
+                                    Social</div>
                                 <div class="score-bar-container">
                                     <div class="score-bar s" id="scoreBarS" style="width:0%"></div>
                                 </div>
                                 <div class="score-value" id="scoreValS">0%</div>
                             </div>
                             <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Enterprising')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Enterprising</div>
+                                <div class="score-label" onclick="window.showRiasecModal('Enterprising')"
+                                    style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">
+                                    Enterprising</div>
                                 <div class="score-bar-container">
                                     <div class="score-bar e" id="scoreBarE" style="width:0%"></div>
                                 </div>
                                 <div class="score-value" id="scoreValE">0%</div>
                             </div>
                             <div class="score-item">
-                                <div class="score-label" onclick="window.showRiasecModal('Conventional')" style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">Conventional</div>
+                                <div class="score-label" onclick="window.showRiasecModal('Conventional')"
+                                    style="cursor:pointer; border-bottom: 1px dashed rgba(255,255,255,0.3); padding-bottom: 2px;">
+                                    Conventional</div>
                                 <div class="score-bar-container">
                                     <div class="score-bar c" id="scoreBarC" style="width:0%"></div>
                                 </div>
@@ -2225,7 +2486,10 @@
         <div class="wrap">
             <div class="foot-grid">
                 <div class="foot-col foot-about">
-                    <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense</div>
+                    <div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img
+                            src="/static/logo.png" alt="SkillSense Logo" class="brand-logo"
+                            style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;">
+                        SkillSense</div>
                     <p>An intelligent career guidance platform helping students discover their strengths, explore
                         opportunities, and build a roadmap for their future.</p>
                 </div>
@@ -2414,12 +2678,12 @@
                 "option-select-class": "Select your class",
                 "label-stream": "Education Stream/Field",
                 "placeholder-stream": "e.g., Science, Commerce, Arts, Engineering",
-                "heading-learning-profile": "📚 Your Learning Profile",
+                "heading-learning-profile": "Your Learning Profile",
                 "label-subjects": "Subjects you enjoy learning",
                 "placeholder-subjects": "e.g., Mathematics, Physics, English, Biology, History",
                 "label-weak-subjects": "Subjects You Find Challenging",
                 "placeholder-weak-subjects": "e.g., Chemistry, Statistics, Economics",
-                "heading-outside-academics": "🎯 What inspires you outside academics?",
+                "heading-outside-academics": "What inspires you outside academics?",
                 "label-interests": "Your Interests",
                 "placeholder-interests": "e.g., Technology, Research, Art, Sports, Social Work",
                 "label-hobbies": "Your Hobbies",
@@ -3223,8 +3487,8 @@
             if (backBtn) backBtn.textContent = dict['btn-back'];
             const nextBtn = document.getElementById('nextBtn');
             if (nextBtn) {
-                nextBtn.textContent = currentQuestion === questions.length - 1 
-                    ? (dict['btn-submit-test'] || 'Submit Test →') 
+                nextBtn.textContent = currentQuestion === questions.length - 1
+                    ? (dict['btn-submit-test'] || 'Submit Test →')
                     : (dict['btn-next'] || 'Next →');
             }
 
@@ -3416,8 +3680,8 @@
             if (nextBtn) {
                 nextBtn.disabled = !hasAnswer;
                 const dict = uiTranslations[currentLanguage] || uiTranslations['en'];
-                nextBtn.textContent = currentQuestion === questions.length - 1 
-                    ? (dict['btn-submit-test'] || 'Submit Test →') 
+                nextBtn.textContent = currentQuestion === questions.length - 1
+                    ? (dict['btn-submit-test'] || 'Submit Test →')
                     : (dict['btn-next'] || 'Next →');
             }
         }
@@ -5341,7 +5605,7 @@
         window.submitProfile = submitProfile;
         window.getEmojiForCareer = getEmojiForCareer;
 
-        window.showRiasecModal = function(trait) {
+        window.showRiasecModal = function (trait) {
             const data = {
                 'Realistic': {
                     desc: 'People with a "Realistic" personality like to work with their hands, machines, and tools. They are practical, active, and enjoy building or fixing things.',
@@ -5368,9 +5632,9 @@
                     example: 'E.g., Accountant, Administrator, Data Entry.'
                 }
             };
-            
+
             const info = data[trait];
-            if(!info) return;
+            if (!info) return;
 
             const modalOverlay = document.createElement('div');
             modalOverlay.className = 'trait-modal-overlay';
@@ -5382,10 +5646,10 @@
                         </h3>
                         <button class="modal-close" onclick="this.closest('.trait-modal-overlay').remove();" style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer;">✕</button>
                     </div>
-                    <div style="font-size: 0.95rem; color: #fff; line-height: 1.6; margin-bottom: 16px;">
+                    <div style="font-size: 0.95rem; color: var(--ink); line-height: 1.6; margin-bottom: 16px;">
                         ${info.desc}
                     </div>
-                    <div style="font-size: 0.9rem; color: #9AA6CC; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 0.9rem; color: var(--muted); background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px;">
                         <strong>Examples:</strong><br>
                         ${info.example}
                     </div>

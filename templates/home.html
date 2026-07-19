@@ -27,18 +27,66 @@
 </div>
 </div>
 </div>
-<div class="holo">
-<div class="holo-ring r1"></div>
-<div class="holo-ring r2"></div>
-<div class="holo-ring r3"></div>
-<div class="holo-core"><span class="bot">🧑‍🎓</span></div>
-<div class="chip c1"><span class="dot" style="background:var(--violet)"></span>AI Engineer</div>
-<div class="chip c2"><span class="dot" style="background:var(--cyan)"></span>Doctor</div>
-<div class="chip c3"><span class="dot" style="background:var(--amber)"></span>Designer</div>
-<div class="chip c4"><span class="dot" style="background:var(--coral)"></span>Founder</div>
-<div class="chip c5"><span class="dot" style="background:#10b981"></span>Scientist</div>
-<div class="chip c6"><span class="dot" style="background:#ec4899"></span>Lawyer</div>
+<div class="hero-card-stack">
+    <div class="stack-card" onclick="openCardModal('card-1')">
+        <div class="sc-icon">✨</div>
+        <div class="sc-title">Find Your Calling</div>
+        <div class="sc-desc">AI deeply analyzes your personality, interests, and skills to reveal your perfect career path.</div>
+    </div>
+    <div class="stack-card" onclick="openCardModal('card-2')">
+        <div class="sc-icon">🧭</div>
+        <div class="sc-title">Personalized Roadmap</div>
+        <div class="sc-desc">Get a step-by-step guide with colleges, courses, and skills needed to reach your goal.</div>
+    </div>
+    <div class="stack-card" onclick="openCardModal('card-3')">
+        <div class="sc-icon">📈</div>
+        <div class="sc-title">Track Your Growth</div>
+        <div class="sc-desc">Level up your skills, earn XP, and stay motivated on your journey to success.</div>
+    </div>
 </div>
+
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal()">
+    <div class="card-modal" id="cardModal" onclick="event.stopPropagation()">
+        <button class="close-btn" onclick="closeCardModal()">×</button>
+        <div class="cm-icon" id="cmIcon">✨</div>
+        <h3 class="cm-title" id="cmTitle">Title</h3>
+        <p class="cm-desc" id="cmDesc">Content</p>
+        <button class="cm-action" onclick="closeCardModal()">Got it!</button>
+    </div>
+</div>
+
+<script>
+    const modalData = {
+        'card-1': {
+            icon: '✨',
+            title: 'Unlock Your True Potential',
+            desc: "Every great journey begins with a single step. You have a unique combination of talents, passions, and dreams that the world needs. Our AI doesn't just analyze data; it uncovers the hidden genius within you. Don't settle for ordinary—discover the career that will make you excited to wake up every morning and change the world!"
+        },
+        'card-2': {
+            icon: '🧭',
+            title: 'Your Path to Greatness',
+            desc: "A goal without a plan is just a wish. We provide you with a crystal-clear, step-by-step roadmap to turn your biggest dreams into reality. Whether it's the right college, the critical skills, or the key experiences—you will know exactly what to do next. Stop guessing and start progressing. Your future starts now."
+        },
+        'card-3': {
+            icon: '📈',
+            title: 'Level Up Your Life',
+            desc: "Success is not an accident; it's the result of continuous growth. Treat your career like the ultimate game where you are the hero. Earn experience points, master new skills, and conquer challenges. Every small victory brings you closer to your ultimate calling. Stay motivated, stay hungry, and watch yourself become unstoppable."
+        }
+    };
+
+    function openCardModal(cardId) {
+        const data = modalData[cardId];
+        document.getElementById('cmIcon').innerText = data.icon;
+        document.getElementById('cmTitle').innerText = data.title;
+        document.getElementById('cmDesc').innerText = data.desc;
+        document.getElementById('cardModalOverlay').classList.add('active');
+    }
+
+    function closeCardModal() {
+        document.getElementById('cardModalOverlay').classList.remove('active');
+    }
+</script>
+
 </div>
 </header>
 {% endblock %}

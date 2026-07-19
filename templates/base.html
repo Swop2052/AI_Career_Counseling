@@ -13,81 +13,33 @@
            SkillSense — Design System
            ============================================================ */
         :root {
-            --violet: #6D4AFF;
-            --violet-2: #7B61FF;
-            --cyan: #00D4FF;
-            --amber: #FFB347;
-            --coral: #FF6B6B;
-            --bg: #050816;
-            --bg-2: #0B1020;
-            --ink: #F4F6FF;
-            --muted: #9AA6CC;
-            --faint: #5B678F;
-            --glass: rgba(255, 255, 255, 0.045);
-            --glass-2: rgba(255, 255, 255, 0.07);
-            --stroke: rgba(123, 97, 255, 0.22);
-            --stroke-bright: rgba(0, 212, 255, 0.45);
-            --r: 22px;
-            --r-sm: 14px;
-            --shadow: 0 24px 70px -28px rgba(0, 0, 0, 0.85);
+            --primary: #00A86B;
+            --primary-hover: #008f5a;
+            --secondary: #00A86B;
+            --violet: #00A86B;
+            --violet-2: #008f5a;
+            --cyan: #00A86B;
+            --amber: #FF9500;
+            --coral: #FF3B30;
+            --bg: #FFFFFF;
+            --bg-2: #F4FBF7;
+            --ink: #1C1C1E;
+            --muted: #636366;
+            --faint: #AEAEB2;
+            --glass: #F4FBF7;
+            --glass-2: #E8F5EE;
+            --stroke: rgba(0, 168, 107, 0.15);
+            --stroke-bright: rgba(0, 168, 107, 0.3);
+            --r: 20px;
+            --r-sm: 10px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
             --body: 'Inter', system-ui, sans-serif;
             --maxw: 1180px;
         }
 
-        /* Light Theme Overrides */
-        html[data-theme="light"] {
-            --bg: #F4F6FF;
-            --bg-2: #E8ECF8;
-            --ink: #050816;
-            --muted: #5B678F;
-            --faint: #9AA6CC;
-            --glass: rgba(0, 0, 0, 0.045);
-            --glass-2: rgba(0, 0, 0, 0.07);
-            --stroke: rgba(109, 74, 255, 0.15);
-            --stroke-bright: rgba(0, 212, 255, 0.3);
-            --shadow: 0 24px 70px -28px rgba(91, 103, 143, 0.15);
-        }
-        
-        html[data-theme="light"] .aura {
-            background: radial-gradient(60% 50% at 18% 8%, rgba(109, 74, 255, 0.08), transparent 60%), radial-gradient(50% 50% at 86% 12%, rgba(0, 212, 255, 0.06), transparent 60%), radial-gradient(60% 60% at 50% 110%, rgba(123, 97, 255, 0.08), transparent 60%);
-        }
-
+        /* Dark mode overrides are removed since the theme is now unified */
         .theme-toggle-floating {
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            z-index: 99999;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--glass-2);
-            border: 1px solid var(--stroke);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            cursor: pointer;
-            box-shadow: var(--shadow);
-            backdrop-filter: blur(8px);
-            transition: all 0.25s ease;
-        }
-        .theme-toggle-floating:hover {
-            transform: scale(1.1);
-            border-color: var(--cyan);
-            box-shadow: 0 0 15px var(--stroke-bright);
-        }
-
-        @media (max-width: 768px) {
-            .theme-toggle-floating {
-                right: 16px !important;
-                top: 16px !important;
-                left: auto !important;
-                bottom: auto !important;
-                transform: none !important;
-            }
-            .theme-toggle-floating:hover {
-                transform: scale(1.1) !important;
-            }
+            display: none !important;
         }
 
         * {
@@ -109,18 +61,11 @@
             inset: 0;
             z-index: 0;
             pointer-events: none;
-            background: radial-gradient(60% 50% at 18% 8%, rgba(109, 74, 255, 0.22), transparent 60%), radial-gradient(50% 50% at 86% 12%, rgba(0, 212, 255, 0.14), transparent 60%), radial-gradient(60% 60% at 50% 110%, rgba(123, 97, 255, 0.16), transparent 60%);
+            background-color: var(--bg);
         }
 
         .grain {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            opacity: 0.4;
-            pointer-events: none;
-            background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-            background-size: 46px 46px;
-            mask-image: radial-gradient(circle at 50% 40%, #000 0, transparent 80%);
+            display: none;
         }
 
         .wrap {
@@ -191,70 +136,72 @@
         }
 
         .btn-primary {
-            background: linear-gradient(100deg, var(--violet), var(--violet-2));
+            background: var(--primary);
             color: #fff;
-            box-shadow: 0 14px 40px -12px rgba(109, 74, 255, 0.85);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
         }
 
         .btn-primary:hover {
-            filter: brightness(1.08);
+            background: var(--primary-hover);
             transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
         }
 
         .btn-ghost {
-            background: var(--glass);
+            background: #ffffff;
             border: 1px solid var(--stroke);
             color: var(--ink);
-            backdrop-filter: blur(12px);
         }
 
         .btn-ghost:hover {
-            border-color: var(--stroke-bright);
-            background: var(--glass-2);
+            border-color: var(--primary);
+            background: #f4f7f9;
             transform: translateY(-2px);
         }
 
         .btn-success {
-            background: linear-gradient(100deg, #00c853, #00e676);
+            background: var(--cyan);
             color: #fff;
-            box-shadow: 0 14px 40px -12px rgba(0, 200, 83, 0.85);
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.25);
         }
 
         .btn-success:hover {
-            filter: brightness(1.08);
+            background: #28a745;
             transform: translateY(-2px);
         }
 
         .glass {
-            background: linear-gradient(160deg, var(--glass-2), var(--glass));
+            background: #F4FBF7;
             border: 1px solid var(--stroke);
             border-radius: var(--r);
-            backdrop-filter: blur(16px);
             box-shadow: var(--shadow);
         }
 
         .nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: var(--maxw);
             z-index: 40;
             transition: 0.3s;
+            background: #E8EAE6;
+            border-radius: 999px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .nav-in {
-            max-width: var(--maxw);
-            margin: 0 auto;
-            padding: 16px 22px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
         .nav.scrolled {
-            background: rgba(5, 8, 22, 0.72);
+            background: rgba(232, 234, 230, 0.95);
             backdrop-filter: blur(18px);
-            border-bottom: 1px solid rgba(123, 97, 255, 0.14);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
         .brand {
@@ -263,6 +210,15 @@
             gap: 11px;
             font-weight: 700;
             font-size: 1.12rem;
+            color: var(--primary);
+        }
+
+        .brand-logo {
+            height: 48px !important;
+            width: 48px !important;
+            object-fit: contain;
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
+            margin-right: 8px;
         }
 
         .brand .orb {
@@ -271,8 +227,8 @@
             border-radius: 11px;
             display: grid;
             place-items: center;
-            background: linear-gradient(135deg, var(--violet), var(--cyan));
-            box-shadow: 0 0 24px -4px var(--violet);
+            background: var(--primary);
+            color: #fff;
             font-size: 1rem;
         }
 
@@ -292,25 +248,22 @@
         }
 
         .nav-links a:hover {
-            color: var(--ink);
+            color: var(--primary);
         }
 
         .nav-cta {
             font-size: 0.88rem;
             padding: 9px 20px;
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--primary);
             color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            box-shadow: none;
+            border: none;
+            border-radius: 999px;
             transition: all 0.25s ease;
         }
 
         .nav-cta:hover {
-            background: rgba(255, 255, 255, 0.16);
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: none;
         }
 
         .hero {
@@ -319,9 +272,23 @@
             display: flex;
             align-items: center;
             padding-top: 90px;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('{{ url_for("static", filename="bg-hero-boy-watermark.png") }}') center center / auto 85% no-repeat;
+            opacity: 0.25;
+            z-index: 0;
+            pointer-events: none;
+            mix-blend-mode: multiply;
         }
 
         .hero-grid {
+            position: relative;
+            z-index: 1;
             display: grid;
             grid-template-columns: 1.05fr 0.95fr;
             gap: 40px;
@@ -332,7 +299,7 @@
             font-size: clamp(2.0rem, 4.6vw, 3.4rem);
             font-weight: 700;
             line-height: 1.08;
-            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            text-shadow: none;
         }
 
         .hero h1 .l2 {
@@ -378,132 +345,189 @@
             letter-spacing: 0.04em;
         }
 
-        .holo {
+        .hero-card-stack {
             position: relative;
-            height: 480px;
-            display: grid;
-            place-items: center;
+            width: 100%;
+            max-width: 380px;
+            height: 420px;
+            margin-left: auto;
+            z-index: 2;
+            perspective: 1000px;
+            animation: float-stack 5s ease-in-out infinite;
         }
 
-        .holo-ring {
+        @keyframes float-stack {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .stack-card {
             position: absolute;
-            border-radius: 50%;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--stroke);
-            animation: spin 26s linear infinite;
+            border-radius: 24px;
+            padding: 32px 28px;
+            box-shadow: 0 15px 35px rgba(0, 168, 107, 0.05);
+            transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            cursor: pointer;
+            transform-origin: center bottom;
         }
 
-        .holo-ring.r1 {
-            width: 430px;
-            height: 430px;
-            border-color: rgba(123, 97, 255, 0.28);
+        .stack-card:nth-child(1) {
+            transform: translateY(0) scale(1) rotate(0);
+            z-index: 3;
+        }
+        
+        .stack-card:nth-child(2) {
+            transform: translateY(20px) scale(0.95) rotate(-3deg);
+            z-index: 2;
+            opacity: 0.9;
+        }
+        
+        .stack-card:nth-child(3) {
+            transform: translateY(40px) scale(0.9) rotate(3deg);
+            z-index: 1;
+            opacity: 0.8;
         }
 
-        .holo-ring.r2 {
-            width: 330px;
-            height: 330px;
-            border-style: dashed;
-            border-color: rgba(0, 212, 255, 0.3);
-            animation-duration: 18s;
-            animation-direction: reverse;
+        .hero-card-stack:hover .stack-card:nth-child(1) {
+            transform: translateY(-50px) scale(1.02) rotate(-3deg);
+            box-shadow: 0 30px 60px rgba(0, 168, 107, 0.12);
+        }
+        
+        .hero-card-stack:hover .stack-card:nth-child(2) {
+            transform: translateY(10px) scale(1) rotate(6deg) translateX(30px);
+            opacity: 1;
+            box-shadow: 0 20px 40px rgba(0, 168, 107, 0.08);
+        }
+        
+        .hero-card-stack:hover .stack-card:nth-child(3) {
+            transform: translateY(70px) scale(1) rotate(-5deg) translateX(-25px);
+            opacity: 1;
+            box-shadow: 0 20px 40px rgba(0, 168, 107, 0.08);
         }
 
-        .holo-ring.r3 {
-            width: 235px;
-            height: 235px;
-            border-color: rgba(255, 179, 71, 0.25);
-            animation-duration: 34s;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        .holo-core {
-            position: relative;
-            width: 190px;
-            height: 190px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 30%, rgba(123, 97, 255, 0.9), rgba(0, 212, 255, 0.5) 60%, transparent 75%);
-            box-shadow: 0 0 90px -10px rgba(109, 74, 255, 0.9), inset 0 0 50px rgba(255, 255, 255, 0.15);
-            display: grid;
-            place-items: center;
-            animation: bob 6s ease-in-out infinite;
-        }
-
-        @keyframes bob {
-            50% {
-                transform: translateY(-14px);
-            }
-        }
-
-        .holo-core .bot {
-            font-size: 4.6rem;
-        }
-
-        .chip {
-            position: absolute;
+        .sc-icon {
+            width: 54px;
+            height: 54px;
+            background: #F0FDF4;
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 7px;
-            padding: 9px 14px;
-            border-radius: 999px;
-            background: var(--glass-2);
-            border: 1px solid var(--stroke);
-            backdrop-filter: blur(10px);
-            font-size: 0.82rem;
-            font-weight: 600;
-            white-space: nowrap;
-            box-shadow: var(--shadow);
-            animation: float 7s ease-in-out infinite;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
         }
 
-        .chip .dot {
-            width: 8px;
-            height: 8px;
+        .sc-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .sc-desc {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .card-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .card-modal {
+            background: #ffffff;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0,168,107,0.15);
+            transform: translateY(30px) scale(0.95);
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            text-align: center;
+        }
+
+        .card-modal-overlay.active .card-modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .card-modal .close-btn {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(0,0,0,0.05);
+            border: none;
+            width: 32px; height: 32px;
             border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .card-modal .close-btn:hover { background: rgba(0,0,0,0.1); }
+
+        .card-modal .cm-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: #F0FDF4;
+            padding: 20px;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.2);
         }
 
-        @keyframes float {
-            50% {
-                transform: translateY(-13px);
-            }
+        .card-modal .cm-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin-bottom: 16px;
         }
 
-        .chip.c1 {
-            top: 6%;
-            left: -6%;
+        .card-modal .cm-desc {
+            font-size: 1.05rem;
+            color: var(--muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
         }
 
-        .chip.c2 {
-            top: 24%;
-            right: -10%;
-            animation-delay: 1.1s;
+        .card-modal .cm-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 999px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        .chip.c3 {
-            bottom: 22%;
-            left: -12%;
-            animation-delay: 0.6s;
-        }
-
-        .chip.c4 {
-            bottom: 4%;
-            right: -2%;
-            animation-delay: 1.7s;
-        }
-
-        .chip.c5 {
-            top: -12%;
-            left: 36%;
-            animation-delay: 2.2s;
-        }
-
-        .chip.c6 {
-            bottom: -10%;
-            left: 42%;
-            animation-delay: 1.4s;
+        .card-modal .cm-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 168, 107, 0.4);
         }
 
         .section {
@@ -526,6 +550,28 @@
             padding: 26px 22px 28px;
             position: relative;
             overflow: hidden;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+            animation: float-step 6s ease-in-out infinite;
+        }
+
+        .step:nth-child(1) { animation-delay: 0s; }
+        .step:nth-child(2) { animation-delay: 1.5s; }
+        .step:nth-child(3) { animation-delay: 3s; }
+        .step:nth-child(4) { animation-delay: 4.5s; }
+
+        @keyframes float-step {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .step:hover {
+            transform: translateY(-12px) !important;
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
         }
 
         .step .num {
@@ -786,14 +832,18 @@
             display: block;
         }
 
-        /* Student Profile Card - Enhanced */
+        .student-profile-wrapper {
+            background: var(--glass);
+            border: 1px solid var(--stroke);
+            border-radius: var(--r);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            margin-bottom: 30px;
+            color: var(--ink);
+        }
+
         .student-profile-card {
             display: none;
-            background: linear-gradient(135deg, rgba(109, 74, 255, 0.15), rgba(0, 212, 255, 0.08));
-            border: 1px solid var(--stroke-bright);
-            border-radius: var(--r);
-            padding: 24px 30px;
-            margin-bottom: 30px;
         }
 
         .student-profile-card.active {
@@ -857,7 +907,7 @@
 
         .student-profile-card .profile-riasec .label {
             font-size: 0.75rem;
-            color: var(--faint);
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
         }
@@ -887,7 +937,7 @@
         .score-bar-container {
             width: 100%;
             height: 6px;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.06);
             border-radius: 99px;
             margin: 4px 0;
             overflow: hidden;
@@ -940,18 +990,18 @@
         .student-profile-card .profile-traits .trait-tag {
             padding: 4px 14px;
             border-radius: 99px;
-            background: rgba(0, 212, 255, 0.1);
-            border: 1px solid rgba(0, 212, 255, 0.2);
+            background: var(--stroke);
+            border: 1px solid var(--stroke-bright);
             font-size: 0.78rem;
-            color: var(--cyan);
+            color: var(--primary);
             cursor: pointer;
             transition: 0.2s;
         }
 
         .student-profile-card .profile-traits .trait-tag:hover {
-            background: rgba(0, 212, 255, 0.2);
+            background: var(--stroke-bright);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 168, 107, 0.15);
         }
 
         /* Trait Detail Modal */
@@ -1050,41 +1100,23 @@
         }
 
         .career-card {
-            padding: 26px;
-            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            padding: 22px;
+            border-radius: 20px;
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            min-width: 0;
-            position: relative;
-            overflow: hidden;
-            border-radius: 20px;
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
-            border: 1px solid var(--stroke);
         }
 
         .career-card:hover {
             transform: translateY(-8px);
-            border-color: var(--stroke-bright);
-            box-shadow: 0 20px 40px -15px rgba(0, 212, 255, 0.25);
-            background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-        }
-
-        .career-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--violet-2), var(--cyan));
-            opacity: 0.7;
-            transition: opacity 0.3s;
-        }
-
-        .career-card:hover::before {
-            opacity: 1;
+            border-color: rgba(0, 212, 255, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.1);
         }
 
         .career-card .top {
@@ -1115,20 +1147,18 @@
         }
 
         .career-card h4 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
+            font-size: 1.15rem;
+            margin: 0 0 8px 0;
             color: var(--ink);
             font-weight: 700;
-            letter-spacing: -0.01em;
             line-height: 1.3;
         }
 
         .career-card .career-desc {
+            font-size: 0.85rem;
             color: var(--muted);
-            font-size: 0.88rem;
             margin-bottom: 20px;
-            line-height: 1.6;
-            height: 4.8em;
+            line-height: 1.5;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
@@ -1144,18 +1174,17 @@
         }
 
         .career-card .cstat-box {
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 10px 12px;
-            transition: all 0.2s;
+            gap: 4px;
         }
 
         .career-card .cstat-box:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .career-card .cstat-box .lbl-row {
@@ -1169,9 +1198,9 @@
             font-size: 1rem;
         }
 
-        .career-card .cstat-box .lbl-row .lbl {
-            font-size: 0.68rem;
-            color: var(--faint);
+        .career-card .cstat-box .lbl {
+            font-size: 0.7rem;
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             font-weight: 600;
@@ -1197,16 +1226,16 @@
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.05);
             border-radius: 12px;
             padding: 10px 14px;
             transition: all 0.2s;
         }
 
         .career-card .cstat-row-full:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
         }
 
         .career-card .cstat-row-full .icon {
@@ -1224,7 +1253,7 @@
 
         .career-card .cstat-row-full .lbl {
             font-size: 0.68rem;
-            color: var(--faint);
+            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.06em;
             font-weight: 600;
@@ -1858,7 +1887,7 @@
 <!-- ============================== NAV ============================== -->
 <nav class="nav" id="nav">
 <div class="nav-in">
-<div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img alt="SkillSense Logo" class="brand-logo" src="/static/logo.png" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"/> SkillSense</div>
+<div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img alt="SkillSense Logo" class="brand-logo" src="/static/logo.png"/> SkillSense</div>
 <div class="nav-links">
 <a href="/how-it-works">How it works</a>
 <a href="/take-test">Take Test</a>
@@ -1868,21 +1897,21 @@
 <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
 <button class="btn nav-cta" onclick="window.location.href='/take-test'">Start Career Test</button>
 <select id="langSelect" onchange="switchLanguage(this.value)" style="
-                    background: rgba(255, 255, 255, 0.08);
-                    color: #fff;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    background: rgba(0, 0, 0, 0.06);
+                    color: #111827;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
                     border-radius: 8px;
                     padding: 8px 12px;
                     font-family: inherit;
-                    font-size: 0.9rem;
-                    font-weight: 500;
+                    font-size: 0.95rem;
+                    font-weight: 600;
                     cursor: pointer;
                     outline: none;
                     transition: all 0.25s ease;
                 ">
-<option style="background:#13111C; color:#fff;" value="en">English</option>
-<option style="background:#13111C; color:#fff;" value="hi">हिंदी (Hindi)</option>
-<option style="background:#13111C; color:#fff;" value="mr">मराठी (Marathi)</option>
+<option style="background:#ffffff; color:#111827;" value="en">English</option>
+<option style="background:#ffffff; color:#111827;" value="hi">हिंदी (Hindi)</option>
+<option style="background:#ffffff; color:#111827;" value="mr">मराठी (Marathi)</option>
 </select>
 </div>
 </div>
@@ -1917,7 +1946,7 @@
 <div class="wrap">
 <div class="foot-grid">
 <div class="foot-col foot-about">
-<div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img alt="SkillSense Logo" class="brand-logo" src="/static/logo.png" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"/> SkillSense</div>
+<div class="brand" onclick="window.location.href = '/'" style="cursor: pointer;"><img alt="SkillSense Logo" class="brand-logo" src="/static/logo.png"/> SkillSense</div>
 <p>An intelligent career guidance platform helping students discover their strengths, explore
                         opportunities, and build a roadmap for their future.</p>
 </div>
@@ -2128,12 +2157,12 @@
                 "option-select-class": "Select your class",
                 "label-stream": "Education Stream/Field",
                 "placeholder-stream": "e.g., Science, Commerce, Arts, Engineering",
-                "heading-learning-profile": "📚 Your Learning Profile",
+                "heading-learning-profile": "Your Learning Profile",
                 "label-subjects": "Subjects you enjoy learning",
                 "placeholder-subjects": "e.g., Mathematics, Physics, English, Biology, History",
                 "label-weak-subjects": "Subjects You Find Challenging",
                 "placeholder-weak-subjects": "e.g., Chemistry, Statistics, Economics",
-                "heading-outside-academics": "🎯 What inspires you outside academics?",
+                "heading-outside-academics": "What inspires you outside academics?",
                 "label-interests": "Your Interests",
                 "placeholder-interests": "e.g., Technology, Research, Art, Sports, Social Work",
                 "label-hobbies": "Your Hobbies",
@@ -2142,7 +2171,7 @@
                 "placeholder-strengths": "e.g., Problem-solving, Communication, Leadership, Creativity",
                 "label-aspirations": "Career Aspirations (if any)",
                 "placeholder-aspirations": "e.g., Engineer, Doctor, Scientist, Entrepreneur",
-                "heading-preferences": "💼 Career Preferences",
+                "heading-preferences": "Career Ambitions & Preferences",
                 "label-learning-mode": "Preferred Learning Mode",
                 "label-budget": "Budget Preference",
                 "label-location": "Location Preference",
@@ -2184,26 +2213,26 @@
                 "btn-send": "Send",
                 "chat-disclaimer": "Disclaimer: VERA is an AI assistant. Guidance is for informational purposes only. Consult professional counselors for critical career decisions.",
                 "modal-close": "Close",
-                "title-overview": "📋 Career Overview",
-                "title-why-matches": "🎯 Why It Matches Student Profile",
-                "title-traits": "🧠 Personality Traits Alignment",
-                "title-pathway": "🎓 Educational Pathway",
-                "title-fees": "💰 Course Fees",
-                "title-income": "💵 Expected Income",
-                "title-scholarships": "🎓 Scholarships",
-                "title-loans": "🏦 Loans",
-                "title-study": "🏛️ Where Will You Study?",
-                "title-gov": "🏛️ Government",
-                "title-priv": "🏢 Private",
-                "title-dist": "💻 Distance Learning",
-                "title-work": "🏢 Where Will You Work?",
-                "title-growth": "📈 Expected Growth Path",
-                "title-skills": "📚 Skill Development Plan",
-                "title-example": "🌟 Example From The Field",
-                "title-exams": "📝 Entrance Exams"
+                "title-overview": "Career Overview",
+                "title-why-matches": "Why It Matches Student Profile",
+                "title-traits": "Personality Traits Alignment",
+                "title-pathway": "Educational Pathway",
+                "title-fees": "Course Fees",
+                "title-income": "Expected Income",
+                "title-scholarships": "Scholarships",
+                "title-loans": "Loans",
+                "title-study": "Where Will You Study?",
+                "title-gov": "Government",
+                "title-priv": "Private",
+                "title-dist": "Distance Learning",
+                "title-work": "Where Will You Work?",
+                "title-growth": "Expected Growth Path",
+                "title-skills": "Skill Development Plan",
+                "title-example": "Example From The Field",
+                "title-exams": "Entrance Exams"
             },
             hi: {
-                "brand-title": "🚀 SkillSense",
+                "brand-title": "SkillSense",
                 "nav-how": "यह कैसे काम करता है",
                 "nav-test": "टेस्ट लें",
                 "nav-counselor": "एआई काउंसलर",
@@ -2224,7 +2253,7 @@
                 "contact-company-placeholder": "कंपनी (वैकल्पिक)",
                 "contact-subject-placeholder": "विषय",
                 "contact-msg-placeholder": "आपका संदेश",
-                "contact-btn-text": "✈️ संदेश भेजें",
+                "contact-btn-text": "संदेश भेजें",
                 "hero-eyebrow": "व्यक्तित्व · एआई अंतर्दृष्टि · करियर रोडमैप",
                 "hero-title": "एक ऐसा करियर पथ खोजें<br><span class=\"12\">जो आपके व्यक्तित्व से मेल खाता हो।</span>",
                 "hero-sub": "एक बुद्धिमान करियर साथी जो आपके भविष्य के लिए एक व्यक्तिगत रोडमैप बनाने के लिए आपके हितों, शक्तियों और लक्ष्यों को समझता है।",
@@ -2262,12 +2291,12 @@
                 "option-select-class": "अपनी कक्षा चुनें",
                 "label-stream": "शिक्षा स्ट्रीम/क्षेत्र",
                 "placeholder-stream": "जैसे, विज्ञान, वाणिज्य, कला, इंजीनियरिंग",
-                "heading-learning-profile": "📚 आपका सीखने का प्रोफ़ाइल",
+                "heading-learning-profile": "आपका सीखने का प्रोफ़ाइल",
                 "label-subjects": "वे विषय जिन्हें पढ़ने में आपको मज़ा आता है",
                 "placeholder-subjects": "जैसे, गणित, भौतिकी, अंग्रेजी, जीव विज्ञान, इतिहास",
                 "label-weak-subjects": "वे विषय जो आपको कठिन लगते हैं",
                 "placeholder-weak-subjects": "जैसे, रसायन विज्ञान, सांख्यिकी, अर्थशास्त्र",
-                "heading-outside-academics": "🎯 पढ़ाई के अलावा आपको क्या प्रेरित करता है?",
+                "heading-outside-academics": "पढ़ाई के अलावा आपको क्या प्रेरित करता है?",
                 "label-interests": "आपकी रुचियां",
                 "placeholder-interests": "जैसे, प्रौद्योगिकी, अनुसंधान, कला, खेल, सामाजिक कार्य",
                 "label-hobbies": "आपके शौक",
@@ -2276,7 +2305,7 @@
                 "placeholder-strengths": "जैसे, समस्या-समाधान, संचार, नेतृत्व, रचनात्मकता",
                 "label-aspirations": "करियर आकांक्षाएं (यदि कोई हो)",
                 "placeholder-aspirations": "जैसे, इंजीनियर, डॉक्टर, वैज्ञानिक, उद्यमी",
-                "heading-preferences": "💼 करियर प्राथमिकताएं",
+                "heading-preferences": "करियर प्राथमिकताएं",
                 "label-learning-mode": "पसंदीदा सीखने का तरीका",
                 "label-budget": "बजट प्राथमिकता",
                 "label-location": "स्थान प्राथमिकता",
@@ -2318,26 +2347,26 @@
                 "btn-send": "भेजें",
                 "chat-disclaimer": "अस्वीकरण: VERA एक एआई सहायक है। यह मार्गदर्शन केवल सूचनात्मक उद्देश्यों के लिए है। अंतिम निर्णयों के लिए पेशेवर सलाहकारों से संपर्क करें।",
                 "modal-close": "बंद करें",
-                "title-overview": "📋 करियर विवरण",
-                "title-why-matches": "🎯 यह छात्र प्रोफाइल से क्यों मेल खाता है",
-                "title-traits": "🧠 व्यक्तित्व लक्षण संरेखण",
-                "title-pathway": "🎓 शैक्षणिक मार्ग (पाथवे)",
-                "title-fees": "💰 कोर्स शुल्क",
-                "title-income": "💵 अपेक्षित मासिक आय",
-                "title-scholarships": "🎓 छात्रवृत्तियां",
-                "title-loans": "🏦 शैक्षणिक ऋण",
-                "title-study": "🏛️ आप कहाँ अध्ययन करेंगे?",
-                "title-gov": "🏛️ सरकारी संस्थान",
-                "title-priv": "🏢 निजी संस्थान",
-                "title-dist": "💻 दूरी शिक्षा (डिस्टेंस लर्निंग)",
-                "title-work": "🏢 आप कहाँ काम करेंगे?",
-                "title-growth": "📈 अपेक्षित विकास पथ",
-                "title-skills": "📚 कौशल विकास योजना",
-                "title-example": "🌟 क्षेत्र से उदाहरण",
-                "title-exams": "📝 प्रवेश परीक्षाएं"
+                "title-overview": "करियर विवरण",
+                "title-why-matches": "यह छात्र प्रोफाइल से क्यों मेल खाता है",
+                "title-traits": "व्यक्तित्व लक्षण संरेखण",
+                "title-pathway": "शैक्षणिक मार्ग",
+                "title-fees": "कोर्स शुल्क",
+                "title-income": "अपेक्षित मासिक आय",
+                "title-scholarships": "छात्रवृत्तियां",
+                "title-loans": "शैक्षणिक ऋण",
+                "title-study": "आप कहाँ अध्ययन करेंगे?",
+                "title-gov": "सरकारी संस्थान",
+                "title-priv": "निजी संस्थान",
+                "title-dist": "दूरी शिक्षा",
+                "title-work": "आप कहाँ काम करेंगे?",
+                "title-growth": "अपेक्षित विकास पथ",
+                "title-skills": "कौशल विकास योजना",
+                "title-example": "क्षेत्र से उदाहरण",
+                "title-exams": "प्रवेश परीक्षाएं"
             },
             mr: {
-                "brand-title": "🚀 SkillSense",
+                "brand-title": "SkillSense",
                 "nav-how": "कसे कार्य करते",
                 "nav-test": "चाचणी घ्या",
                 "nav-counselor": "एआय समुपदेशक",
@@ -2358,7 +2387,7 @@
                 "contact-company-placeholder": "कंपनी (पर्यायी)",
                 "contact-subject-placeholder": "विषय",
                 "contact-msg-placeholder": "तुमचा संदेश",
-                "contact-btn-text": "✈️ संदेश पाठवा",
+                "contact-btn-text": "संदेश पाठवा",
                 "hero-eyebrow": "व्यक्तिमत्त्व · एआय अंतर्दृष्टी · करिअर रोडमॅप",
                 "hero-title": "तुमच्या व्यक्तिमत्त्वाशी जुळणारा<br><span class=\"12\">करिअरचा मार्ग शोधा.</span>",
                 "hero-sub": "एक बुद्धिमान करिअर सोबती जो तुमच्या भविष्यासाठी वैयक्तिकृत रोडमॅप तयार करण्यासाठी तुमचे स्वारस्य, सामर्थ्य आणि उद्दिष्टे समजून घेतो.",
@@ -2396,12 +2425,12 @@
                 "option-select-class": "तुमची इयत्ता निवडा",
                 "label-stream": "शिक्षण शाखा/क्षेत्र",
                 "placeholder-stream": "उदा. विज्ञान, वाणिज्य, कला, अभियांत्रिकी",
-                "heading-learning-profile": "📚 तुमचे शिकण्याचे प्रोफाइल",
+                "heading-learning-profile": "तुमचे शिकण्याचे प्रोफाइल",
                 "label-subjects": "तुम्हाला शिकायला आवडणारे विषय",
                 "placeholder-subjects": "उदा. गणित, भौतिकशास्त्र, इंग्रजी, जीवशास्त्र, इतिहास",
                 "label-weak-subjects": "तुम्हाला कठीण वाटणारे विषय",
                 "placeholder-weak-subjects": "उदा. रसायनशास्त्र, सांख्यिकी, अर्थशास्त्र",
-                "heading-outside-academics": "🎯 अभ्यासाबाहेर तुम्हाला कशाने प्रेरणा मिळते?",
+                "heading-outside-academics": "अभ्यासाबाहेर तुम्हाला कशाने प्रेरणा मिळते?",
                 "label-interests": "तुमच्या आवडी",
                 "placeholder-interests": "उदा. तंत्रज्ञान, संशोधन, कला, क्रीडा, समाजसेवा",
                 "label-hobbies": "तुमचे छंद",
@@ -2770,7 +2799,7 @@
             // Navbar brand & links
             const brandEl = document.querySelector('.brand');
             if (brandEl) {
-                brandEl.innerHTML = `<img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo" style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;"> SkillSense`;
+                brandEl.innerHTML = `<img src="/static/logo.png" alt="SkillSense Logo" class="brand-logo"> SkillSense`;
             }
             const navLinks = document.querySelectorAll('.nav-links a');
             if (navLinks.length >= 3) {
@@ -3981,25 +4010,26 @@ ${careersText}
                                 width: 380px;
                                 padding: 24px;
                                 border-radius: 16px;
-                                background: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'radial-gradient(135deg, #120e36 0%, #070913 100%)' : 'radial-gradient(135deg, #ffffff 0%, #f0f4f8 100%)'};
-                                border: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(0, 212, 255, 0.2)' : 'rgba(0, 212, 255, 0.4)'};
-                                box-shadow: 0 15px 30px ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)'};
+                                background-color: #0b0f24;
+                                background: linear-gradient(135deg, #120e36 0%, #070913 100%);
+                                border: 1px solid rgba(0, 212, 255, 0.2);
+                                box-shadow: 0 15px 30px rgba(0,0,0,0.4);
                                 font-family: 'Inter', system-ui, sans-serif;
-                                color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#fff' : '#1a202c'};
+                                color: #fff;
                                 position: relative;
                                 overflow: hidden;
                                 box-sizing: border-box;
                             ">
-                                <!-- Glowing backgrounds -->
-                                <div style="position: absolute; top: -10%; left: -10%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(109, 74, 255, 0.2) 0%, transparent 70%); pointer-events: none;"></div>
-                                <div style="position: absolute; bottom: -10%; right: -10%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(0, 212, 255, 0.12) 0%, transparent 70%); pointer-events: none;"></div>
+                                <!-- Glowing backgrounds (html2canvas safe) -->
+                                <div style="position: absolute; top: -10%; left: -10%; width: 180px; height: 180px; background: rgba(109, 74, 255, 0.15); border-radius: 50%; filter: blur(40px); pointer-events: none;"></div>
+                                <div style="position: absolute; bottom: -10%; right: -10%; width: 180px; height: 180px; background: rgba(0, 212, 255, 0.1); border-radius: 50%; filter: blur(40px); pointer-events: none;"></div>
 
                                 <!-- Card Header -->
-                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}; padding-bottom: 12px; margin-bottom: 16px; position: relative; z-index: 2;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 16px; position: relative; z-index: 2;">
                                     <div style="display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.05rem; color: #00D4FF; letter-spacing: 0.02em;">
                                         🚀 SkillSense
                                     </div>
-                                    <div style="font-size: 0.65rem; letter-spacing: 0.08em; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}; text-transform: uppercase; font-weight: 600;">
+                                    <div style="font-size: 0.65rem; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 600;">
                                         AI Career Assessment
                                     </div>
                                 </div>
@@ -4010,38 +4040,38 @@ ${careersText}
                                         ${studentName.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h4 style="margin: 0; font-size: 1.12rem; font-weight: 700; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#fff' : '#1a202c'}; letter-spacing: -0.01em;">${studentName}</h4>
-                                        <div style="font-size: 0.78rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#9AA6CC' : '#4a5568'}; margin-top: 2px; display: flex; gap: 8px;">
+                                        <h4 style="margin: 0; font-size: 1.12rem; font-weight: 700; color: #fff; letter-spacing: -0.01em;">${studentName}</h4>
+                                        <div style="font-size: 0.78rem; color: #9AA6CC; margin-top: 2px; display: flex; gap: 8px;">
                                             <span>🧠 Code: <b>${profile.riasec_code || '---'}</b></span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Hobbies & Interests Row -->
-                                <div style="display: flex; gap: 16px; margin-bottom: 14px; border-top: 1px solid ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}; padding-top: 12px; position: relative; z-index: 2;">
+                                <div style="display: flex; gap: 16px; margin-bottom: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; position: relative; z-index: 2;">
                                     <div style="flex: 1;">
-                                        <div style="font-size: 0.62rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}; text-transform: uppercase; font-weight: 700; margin-bottom: 3px;">Hobbies</div>
-                                        <div style="color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)'}; font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${student.hobbies || '---'}</div>
+                                        <div style="font-size: 0.62rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700; margin-bottom: 3px;">Hobbies</div>
+                                        <div style="color: rgba(255,255,255,0.85); font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${student.hobbies || '---'}</div>
                                     </div>
                                     <div style="flex: 1;">
-                                        <div style="font-size: 0.62rem; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}; text-transform: uppercase; font-weight: 700; margin-bottom: 3px;">Interests</div>
-                                        <div style="color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)'}; font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${student.interests || '---'}</div>
+                                        <div style="font-size: 0.62rem; color: rgba(255,255,255,0.4); text-transform: uppercase; font-weight: 700; margin-bottom: 3px;">Interests</div>
+                                        <div style="color: rgba(255,255,255,0.85); font-size: 0.75rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${student.interests || '---'}</div>
                                     </div>
                                 </div>
 
                                 <!-- Traits list -->
                                 <div style="margin-bottom: 16px; position: relative; z-index: 2;">
-                                    <div style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'}; font-weight: 700; margin-bottom: 8px;">Key Personality Traits</div>
+                                    <div style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.45); font-weight: 700; margin-bottom: 8px;">Key Personality Traits</div>
                                     <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                        ${traits.slice(0, 3).map(t => '<span style="background: rgba(109, 74, 255, 0.1); border: 1px solid rgba(109, 74, 255, 0.2); color: ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? '#9AA6CC' : '#4a5568') + '; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 12px; white-space: nowrap;">' + t + '</span>').join('')}
+                                        ${traits.slice(0, 3).map(t => '<span style="background: rgba(109, 74, 255, 0.1); border: 1px solid rgba(109, 74, 255, 0.2); color: #9AA6CC; font-size: 0.72rem; font-weight: 600; padding: 4px 8px; border-radius: 12px; white-space: nowrap;">' + t + '</span>').join('')}
                                     </div>
                                 </div>
 
                                 <!-- Top careers lists -->
                                 <div style="margin-bottom: 20px; position: relative; z-index: 2;">
-                                    <div style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: ${window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)'}; font-weight: 700; margin-bottom: 8px;">Top Career Mappings</div>
+                                    <div style="font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.45); font-weight: 700; margin-bottom: 8px;">Top Career Mappings</div>
                                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                        ${topCareers.slice(0, 6).map((c, idx) => '<div style="background: ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)') + '; border: 1px solid ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)') + '; padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: flex-start; gap: 4px;"><span style="font-size: 0.78rem; font-weight: 600; color: ' + (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)') + '; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">' + (idx + 1) + '. ' + c.name + '</span></div>').join('')}
+                                        ${topCareers.slice(0, 6).map((c, idx) => '<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; justify-content: flex-start; gap: 4px;"><span style="font-size: 0.78rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">' + (idx + 1) + '. ' + c.name + '</span></div>').join('')}
                                     </div>
                                 </div>
 
@@ -4095,7 +4125,7 @@ ${careersText}
                 downloadBtn.disabled = true;
                 
                 html2canvas(card, {
-                    backgroundColor: null,
+                    backgroundColor: '#0b0f24',
                     scale: 2,
                     logging: false,
                     useCORS: true
@@ -4147,7 +4177,7 @@ ${careersText}
                 goBtn.disabled = true;
 
                 html2canvas(card, {
-                    backgroundColor: null,
+                    backgroundColor: '#0b0f24',
                     scale: 2,
                     logging: false,
                     useCORS: true
@@ -5660,10 +5690,10 @@ ${careersText}
                         </h3>
                         <button class="modal-close" onclick="this.closest('.trait-modal-overlay').remove();" style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer;">✕</button>
                     </div>
-                    <div style="font-size: 0.95rem; color: #fff; line-height: 1.6; margin-bottom: 16px;">
+                    <div style="font-size: 0.95rem; color: var(--ink); line-height: 1.6; margin-bottom: 16px;">
                         ${info.desc}
                     </div>
-                    <div style="font-size: 0.9rem; color: #9AA6CC; background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px;">
+                    <div style="font-size: 0.9rem; color: var(--muted); background: rgba(0,0,0,0.03); padding: 12px; border-radius: 8px;">
                         <strong>Examples:</strong><br>
                         ${info.example}
                     </div>
@@ -5677,8 +5707,8 @@ ${careersText}
             if (window.location.pathname === '/take-test') {
                 const wrap = document.querySelector('.wrap');
                 if (wrap) {
-                    sessionStorage.setItem('testWrapHTML', wrap.innerHTML);
-                    sessionStorage.setItem('testVars', JSON.stringify({
+                    sessionStorage.setItem('testWrapHTML_v2', wrap.innerHTML);
+                    sessionStorage.setItem('testVars_v2', JSON.stringify({
                         currentQuestion: typeof currentQuestion !== 'undefined' ? currentQuestion : 0,
                         answers: typeof answers !== 'undefined' ? answers : [],
                         topCareers: typeof topCareers !== 'undefined' ? topCareers : [],
@@ -5695,13 +5725,13 @@ ${careersText}
             if (window.location.pathname === '/take-test') {
                 const navEntries = performance.getEntriesByType("navigation");
                 if (navEntries.length > 0 && navEntries[0].type === "reload") {
-                    sessionStorage.removeItem('testWrapHTML');
-                    sessionStorage.removeItem('testVars');
+                    sessionStorage.removeItem('testWrapHTML_v2');
+                    sessionStorage.removeItem('testVars_v2');
                     return;
                 }
 
-                const savedHTML = sessionStorage.getItem('testWrapHTML');
-                const savedVarsStr = sessionStorage.getItem('testVars');
+                const savedHTML = sessionStorage.getItem('testWrapHTML_v2');
+                const savedVarsStr = sessionStorage.getItem('testVars_v2');
                 
                 if (savedHTML && savedVarsStr) {
                     const wrap = document.querySelector('.wrap');

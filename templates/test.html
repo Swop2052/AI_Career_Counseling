@@ -49,7 +49,7 @@
 </div>
 </div>
 <!-- Academic Profile -->
-<h4 style="color:var(--cyan);margin:20px 0 12px 0">📚 Your Learning Profile</h4>
+<h4 style="color:var(--cyan);margin:20px 0 12px 0">Your Learning Profile</h4>
 <div class="form-group">
 <label for="studentSubjects">Subjects you enjoy learning</label>
 <input id="studentSubjects" placeholder="e.g., Mathematics, Physics, English, Biology, History" type="text"/>
@@ -63,7 +63,7 @@
 
 <div id="step2" style="display:none">
 <!-- Interests & Hobbies -->
-<h4 style="color:var(--cyan);margin:20px 0 12px 0">🎯 What inspires you outside academics?</h4>
+<h4 style="color:var(--cyan);margin:20px 0 12px 0">What inspires you outside academics?</h4>
 <div class="form-group">
 <label for="studentInterests">Your Interests</label>
 <input id="studentInterests" placeholder="e.g., Technology, Research, Art, Sports, Social Work" type="text"/>
@@ -88,7 +88,7 @@
 
 <div id="step3" style="display:none">
 <!-- Career Preferences - Only 3 fields as requested -->
-<h4 style="color:var(--cyan);margin:20px 0 12px 0">💼 Career Preferences</h4>
+<h4 style="color:var(--cyan);margin:20px 0 12px 0">Career Ambitions & Preferences</h4>
 <div class="form-group">
 <label for="learningMode">Preferred Learning Mode</label>
 <select id="learningMode">
@@ -186,11 +186,8 @@ function validateStep(step) {
 </div>
 </div>
 <!-- Results Container -->
-
-</div>
-</section>
 <div class="results-container" id="resultsContainer">
-<div class="glass" style="padding:30px">
+<div class="student-profile-wrapper">
 <!-- Student Profile Card -->
 <div class="student-profile-card" id="studentProfileCard">
 <div class="profile-header">
@@ -202,7 +199,7 @@ function validateStep(step) {
 <span id="profileClass">Class: --</span>
 <span id="profileEducation">Stream: --</span>
 </div>
-<div class="details" style="font-size:0.85rem;color:var(--faint)">
+<div class="details" style="font-size:0.85rem;color:var(--muted)">
 <span id="profileHobbies">Hobbies: --</span>
 <span id="profileSubjects">Subjects: --</span>
 </div>
@@ -274,5 +271,5 @@ function validateStep(step) {
 </div>
 </div>
 </div>
-</div>
+</section>
 {% endblock %}

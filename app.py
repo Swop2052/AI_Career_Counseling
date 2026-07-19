@@ -338,12 +338,26 @@ def how_it_works():
 @app.route('/take-test')
 def take_test():
     """Render the Take Test page."""
-    return render_template('test.html')
+    from flask import make_response
+    response = make_response(render_template('test.html'))
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.route('/ai-counselor')
 def ai_counselor():
     """Render the AI Counselor page."""
     return render_template('counselor.html')
+
+# Disable HTML caching so the latest UI changes are always served
+@app.after_request
+def add_header(response):
+    if 'text/html' in response.headers.get('Content-Type', ''):
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 @app.route('/contact')
 def contact():
