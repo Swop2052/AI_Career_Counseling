@@ -1970,6 +1970,24 @@
             .riasec-scores {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .splash-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .splash-text {
+                font-size: 2rem;
+                transform: translateY(20px);
+                animation: slideUpFade 0.8s ease-out 0.4s forwards;
+            }
+
+            @keyframes slideUpFade {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1985,10 +2003,76 @@
                 animation: none;
             }
         }
+
+        /* SPLASH SCREEN STYLES */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #03050F;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        .splash-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .splash-logo {
+            width: 60px;
+            height: 60px;
+            background: conic-gradient(from 0deg, #00D4FF, #0055FF, #00D4FF);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite, scaleUp 0.8s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+        .splash-logo::after {
+            content: '';
+            width: 44px;
+            height: 44px;
+            background: #03050F;
+            border-radius: 50%;
+        }
+        .splash-text {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #FFF;
+            opacity: 0;
+            transform: translateX(30px);
+            animation: slideInFade 0.8s ease-out 0.4s forwards;
+            letter-spacing: -1px;
+            background: linear-gradient(90deg, #00D4FF, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        @keyframes slideInFade {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes scaleUp {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- SPLASH SCREEN START -->
+    <div id="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo"></div>
+            <div class="splash-text">SkillSense</div>
+        </div>
+    </div>
+    <!-- SPLASH SCREEN END -->
 
     <div class="aura"></div>
     <div class="grain"></div>
@@ -2001,18 +2085,9 @@
                     style="height: 34px; width: 34px; object-fit: contain; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4)); margin-right: 8px;">
                 SkillSense</div>
             <div class="nav-links">
-                <<<<<<< Updated upstream <a
-                    onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</a>
-                    <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})">Take
-                        Test</a>
-                    <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})">AI
-                        Counselor</a>
-                    =======
-                    <a href="#how">How it works</a>
-                    <a href="#quiz-section">Take Test</a>
-                    <a href="#counselor">AI Counselor</a>
-                    <a href="#contact-section">Contact</a>
-                    >>>>>>> Stashed changes
+                <a onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})" style="cursor: pointer;">How it works</a>
+                <a onclick="document.getElementById('quiz-section').scrollIntoView({behavior:'smooth'})" style="cursor: pointer;">Take Test</a>
+                <a onclick="document.getElementById('counselor').scrollIntoView({behavior:'smooth'})" style="cursor: pointer;">AI Counselor</a>
             </div>
             <div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
                 <button class="btn nav-cta" onclick="startQuiz()">Start Career Test</button>
@@ -5687,6 +5762,17 @@
             `;
             document.body.appendChild(modalOverlay);
         };
+        // SPLASH SCREEN LOGIC
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                if (splash) {
+                    splash.style.opacity = '0';
+                    splash.style.visibility = 'hidden';
+                    setTimeout(() => splash.remove(), 800); // Remove from DOM after fade out
+                }
+            }, 2500); // Wait 2.5s before fading out
+        });
     </script>
 </body>
 
