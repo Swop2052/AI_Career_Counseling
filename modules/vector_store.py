@@ -41,63 +41,6 @@ class VectorStore:
         self.is_initializing = False
         
         if CHROMA_AVAILABLE:
-            try:
-                # Store ChromaDB SQLite files inside the data directory
-                base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                db_path = os.path.join(base_dir, "data", "chroma_db")
-                
-                self.client = chromadb.PersistentClient(path=db_path)
-                
-                # Setup embedding function (Cloud API if HF_TOKEN is provided, otherwise Local SentenceTransformer)
-                hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_API_KEY")
-                is_local = True
-                
-                if hf_token:
-                    print("[INFO] Initializing Hugging Face Cloud Embedding API (sentence-transformers/all-MiniLM-L6-v2)...")
-                    self.emb_fn = embedding_functions.HuggingFaceEmbeddingFunction(
-                        api_key=hf_token,
-                        model_name="sentence-transformers/all-MiniLM-L6-v2"
-                    )
-                    is_local = False
-                else:
-                    print("[INFO] No HF_TOKEN found. Initializing local SentenceTransformerEmbeddingFunction...")
-                    self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-                        model_name="all-MiniLM-L6-v2"
-                    )
-                
-                # Get or create collection using cosine similarity metric
-                try:
-                    self.collection = self.client.get_or_create_collection(
-                        name="careers",
-                        embedding_function=self.emb_fn,
-                        metadata={"hnsw:space": "cosine"}
-                    )
-                except ValueError as val_err:
-                    if "Embedding function conflict" in str(val_err):
-                        print("[WARNING] Embedding function conflict detected. Rebuilding collection 'careers'...")
-                        try:
-                            self.client.delete_collection(name="careers")
-                        except Exception:
-                            pass
-                        self.collection = self.client.get_or_create_collection(
-                            name="careers",
-                            embedding_function=self.emb_fn,
-                            metadata={"hnsw:space": "cosine"}
-                        )
-                    else:
-                        raise val_err
-                
-                # Warm load the model on the main thread if local to prevent thread conflicts with Werkzeug on Windows
-                if is_local:
-                    print("[INFO] Warm loading SentenceTransformer model weights on the main thread...")
-                    self.emb_fn(["warmup"])
-                
-                self.enabled = True
-                print("[SUCCESS] ChromaDB Vector Store successfully initialized.")
-            except BaseException as e:
-                print(f"[WARNING] Failed to initialize ChromaDB Vector Store (running on fallback): {e}")
-                traceback.print_exc()
-=======
             self.is_initializing = True
             # Start background initialization so app boots instantly
             threading.Thread(target=self._async_init, daemon=True).start()
@@ -112,20 +55,48 @@ class VectorStore:
             
             self.client = chromadb.PersistentClient(path=db_path)
             
-            # Setup embedding function with sentence-transformers all-MiniLM-L6-v2
-            self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-                model_name="all-MiniLM-L6-v2"
-            )
+            # Setup embedding function (Cloud API if HF_TOKEN is provided, otherwise Local SentenceTransformer)
+            hf_token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_API_KEY")
+            is_local = True
+            
+            if hf_token:
+                print("[INFO] Initializing Hugging Face Cloud Embedding API (sentence-transformers/all-MiniLM-L6-v2)...")
+                self.emb_fn = embedding_functions.HuggingFaceEmbeddingFunction(
+                    api_key=hf_token,
+                    model_name="sentence-transformers/all-MiniLM-L6-v2"
+                )
+                is_local = False
+            else:
+                print("[INFO] No HF_TOKEN found. Initializing local SentenceTransformerEmbeddingFunction...")
+                self.emb_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+                    model_name="all-MiniLM-L6-v2"
+                )
             
             # Get or create collection using cosine similarity metric
-            self.collection = self.client.get_or_create_collection(
-                name="careers",
-                embedding_function=self.emb_fn,
-                metadata={"hnsw:space": "cosine"}
-            )
+            try:
+                self.collection = self.client.get_or_create_collection(
+                    name="careers",
+                    embedding_function=self.emb_fn,
+                    metadata={"hnsw:space": "cosine"}
+                )
+            except ValueError as val_err:
+                if "Embedding function conflict" in str(val_err):
+                    print("[WARNING] Embedding function conflict detected. Rebuilding collection 'careers'...")
+                    try:
+                        self.client.delete_collection(name="careers")
+                    except Exception:
+                        pass
+                    self.collection = self.client.get_or_create_collection(
+                        name="careers",
+                        embedding_function=self.emb_fn,
+                        metadata={"hnsw:space": "cosine"}
+                    )
+                else:
+                    raise val_err
             
-            # Warm load the model
-            self.emb_fn(["warmup"])
+            if is_local:
+                print("[INFO] Warm loading SentenceTransformer model weights...")
+                self.emb_fn(["warmup"])
             
             self.enabled = True
             self.is_initializing = False
@@ -134,7 +105,6 @@ class VectorStore:
             self.is_initializing = False
             print(f"[WARNING] Failed to initialize ChromaDB Vector Store (running on fallback): {e}")
             traceback.print_exc()
->>>>>>> Master
                 
     def add_careers(self, careers: List[Dict[str, Any]]):
         """Add careers to ChromaDB."""
