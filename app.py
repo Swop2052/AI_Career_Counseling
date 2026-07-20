@@ -837,17 +837,26 @@ def upload_image():
         return jsonify({'status': 'error', 'message': 'No selected file'}), 400
         
     try:
-        # catbox.moe provides permanent free anonymous hosting
-        response = requests.post(
-            'https://catbox.moe/user/api.php',
-            data={'reqtype': 'fileupload'},
-            files={'fileToUpload': (file.filename, file.read(), file.content_type)}
-        )
-        if response.status_code == 200:
-            return jsonify({'status': 'success', 'data': {'url': response.text.strip()}})
-        else:
-            return jsonify({'status': 'error', 'message': f'Upload failed: {response.status_code}'}), 500
+        # Instead of third-party APIs that block VPS IPs, host it locally.
+        # Ensure static/uploads directory exists
+        upload_folder = os.path.join(app.root_path, 'static', 'uploads')
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # Generate a unique secure filename
+        import uuid
+        ext = os.path.splitext(file.filename)[1] or '.png'
+        unique_filename = f"career_card_{uuid.uuid4().hex}{ext}"
+        
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+        
+        # Generate the absolute public URL for the image
+        file_url = request.host_url.rstrip('/') + f"/static/uploads/{unique_filename}"
+        
+        return jsonify({'status': 'success', 'data': {'url': file_url}})
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # ============================================================

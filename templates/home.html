@@ -1,92 +1,95 @@
 {% extends 'base.html' %}
 {% block content %}
 <header class="hero">
-<div class="wrap hero-grid">
-<div class="hero-copy">
-<div class="eyebrow">PERSONALITY · AI INSIGHTS · CAREER ROADMAPS</div>
-<h1>Find a career path<br/><span class="12">that matches who you are.</span></h1>
-<p class="sub">An intelligent career companion that understands your interests, strengths, and goals to
-                    create a personalized roadmap for your future.</p>
-<div class="hero-cta">
-<button class="btn btn-primary" onclick="window.location.href='/take-test'">Start Career Test <span class="arr">→</span></button>
-<button class="btn btn-ghost" onclick="window.location.href='/ai-counselor'">Chat with
-                        AI</button>
-</div>
-<div class="hero-stats">
-<div class="hstat">
-<div class="n">6</div>
-<div class="l">Personality Dimensions</div>
-</div>
-<div class="hstat">
-<div class="n">500+</div>
-<div class="l">Career Paths</div>
-</div>
-<div class="hstat">
-<div class="n">24/7</div>
-<div class="l">AI Guidance</div>
-</div>
-</div>
-</div>
-<div class="hero-card-stack">
-    <div class="stack-card" onclick="openCardModal('card-1')">
-        <div class="sc-icon">✨</div>
-        <div class="sc-title">Find Your Calling</div>
-        <div class="sc-desc">AI deeply analyzes your personality, interests, and skills to reveal your perfect career path.</div>
+    <div class="wrap hero-grid">
+        <div class="hero-copy">
+            <div class="eyebrow">PERSONALITY · AI INSIGHTS · CAREER ROADMAPS</div>
+            <h1>Find a career path<br /><span class="12">that matches who you are.</span></h1>
+            <p class="sub">An intelligent career companion that understands your interests, strengths, and goals to
+                create a personalized roadmap for your future.</p>
+            <div class="hero-cta">
+                <button class="btn btn-primary" onclick="window.location.href='/take-test'">Start Career Test <span
+                        class="arr">→</span></button>
+                <button class="btn btn-ghost" onclick="window.location.href='/ai-counselor'">Chat with
+                    AI</button>
+            </div>
+            <div class="hero-stats">
+                <div class="hstat">
+                    <div class="n">6</div>
+                    <div class="l">Personality Dimensions</div>
+                </div>
+                <div class="hstat">
+                    <div class="n">500+</div>
+                    <div class="l">Career Paths</div>
+                </div>
+                <div class="hstat">
+                    <div class="n">24/7</div>
+                    <div class="l">AI Guidance</div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-card-stack">
+            <div class="stack-card" onclick="openCardModal('card-1')">
+                <div class="sc-icon">✨</div>
+                <div class="sc-title">Find Your Calling</div>
+                <div class="sc-desc">AI deeply analyzes your personality, interests, and skills to reveal your perfect
+                    career path.</div>
+            </div>
+            <div class="stack-card" onclick="openCardModal('card-2')">
+                <div class="sc-icon">🧭</div>
+                <div class="sc-title">Personalized Roadmap</div>
+                <div class="sc-desc">Get a step-by-step guide with colleges, courses, and skills needed to reach your
+                    goal.</div>
+            </div>
+            <div class="stack-card" onclick="openCardModal('card-3')">
+                <div class="sc-icon">📈</div>
+                <div class="sc-title">Track Your Growth</div>
+                <div class="sc-desc">Level up your skills, earn XP, and stay motivated on your journey to success.</div>
+            </div>
+        </div>
+
+        <div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal()">
+            <div class="card-modal" id="cardModal" onclick="event.stopPropagation()">
+                <button class="close-btn" onclick="closeCardModal()">×</button>
+                <div class="cm-icon" id="cmIcon">✨</div>
+                <h3 class="cm-title" id="cmTitle">Title</h3>
+                <p class="cm-desc" id="cmDesc">Content</p>
+                <button class="cm-action" onclick="closeCardModal()">Got it!</button>
+            </div>
+        </div>
+
+        <script>
+            const modalData = {
+                'card-1': {
+                    icon: '✨',
+                    title: 'Unlock Your True Potential',
+                    desc: "Every great journey begins with a single step. You have a unique combination of talents, passions, and dreams that the world needs. Our AI doesn't just analyze data it uncovers the hidden genius within you. Don't settle for ordinary—discover the career that will make you excited to wake up every morning and change the world!"
+                },
+                'card-2': {
+                    icon: '🧭',
+                    title: 'Your Path to Greatness',
+                    desc: "A goal without a plan is just a wish. We provide you with a crystal-clear, step-by-step roadmap to turn your biggest dreams into reality. Whether it's the right college, the critical skills, or the key experiences—you will know exactly what to do next. Stop guessing and start progressing. Your future starts now."
+                },
+                'card-3': {
+                    icon: '📈',
+                    title: 'Level Up Your Life',
+                    desc: "Success is not an accident it's the result of continuous growth. Treat your career like the ultimate game where you are the hero. Earn experience points, master new skills, and conquer challenges. Every small victory brings you closer to your ultimate calling. Stay motivated, stay hungry, and watch yourself become unstoppable."
+                }
+            };
+
+            function openCardModal(cardId) {
+                const data = modalData[cardId];
+                document.getElementById('cmIcon').innerText = data.icon;
+                document.getElementById('cmTitle').innerText = data.title;
+                document.getElementById('cmDesc').innerText = data.desc;
+                document.getElementById('cardModalOverlay').classList.add('active');
+            }
+
+            function closeCardModal() {
+                document.getElementById('cardModalOverlay').classList.remove('active');
+            }
+        </script>
+
     </div>
-    <div class="stack-card" onclick="openCardModal('card-2')">
-        <div class="sc-icon">🧭</div>
-        <div class="sc-title">Personalized Roadmap</div>
-        <div class="sc-desc">Get a step-by-step guide with colleges, courses, and skills needed to reach your goal.</div>
-    </div>
-    <div class="stack-card" onclick="openCardModal('card-3')">
-        <div class="sc-icon">📈</div>
-        <div class="sc-title">Track Your Growth</div>
-        <div class="sc-desc">Level up your skills, earn XP, and stay motivated on your journey to success.</div>
-    </div>
-</div>
-
-<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeCardModal()">
-    <div class="card-modal" id="cardModal" onclick="event.stopPropagation()">
-        <button class="close-btn" onclick="closeCardModal()">×</button>
-        <div class="cm-icon" id="cmIcon">✨</div>
-        <h3 class="cm-title" id="cmTitle">Title</h3>
-        <p class="cm-desc" id="cmDesc">Content</p>
-        <button class="cm-action" onclick="closeCardModal()">Got it!</button>
-    </div>
-</div>
-
-<script>
-    const modalData = {
-        'card-1': {
-            icon: '✨',
-            title: 'Unlock Your True Potential',
-            desc: "Every great journey begins with a single step. You have a unique combination of talents, passions, and dreams that the world needs. Our AI doesn't just analyze data; it uncovers the hidden genius within you. Don't settle for ordinary—discover the career that will make you excited to wake up every morning and change the world!"
-        },
-        'card-2': {
-            icon: '🧭',
-            title: 'Your Path to Greatness',
-            desc: "A goal without a plan is just a wish. We provide you with a crystal-clear, step-by-step roadmap to turn your biggest dreams into reality. Whether it's the right college, the critical skills, or the key experiences—you will know exactly what to do next. Stop guessing and start progressing. Your future starts now."
-        },
-        'card-3': {
-            icon: '📈',
-            title: 'Level Up Your Life',
-            desc: "Success is not an accident; it's the result of continuous growth. Treat your career like the ultimate game where you are the hero. Earn experience points, master new skills, and conquer challenges. Every small victory brings you closer to your ultimate calling. Stay motivated, stay hungry, and watch yourself become unstoppable."
-        }
-    };
-
-    function openCardModal(cardId) {
-        const data = modalData[cardId];
-        document.getElementById('cmIcon').innerText = data.icon;
-        document.getElementById('cmTitle').innerText = data.title;
-        document.getElementById('cmDesc').innerText = data.desc;
-        document.getElementById('cardModalOverlay').classList.add('active');
-    }
-
-    function closeCardModal() {
-        document.getElementById('cardModalOverlay').classList.remove('active');
-    }
-</script>
-
-</div>
 </header>
 {% endblock %}
