@@ -1,0 +1,457 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Account Setup — SkillSense</title>
+    <meta name="description" content="Set up your SkillSense developer account by creating a secure password.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #00A86B;
+            --primary-dark: #008755;
+            --primary-light: #f0fdf4;
+            --primary-border: #bbf7d0;
+            --ink: #0f172a;
+            --ink-muted: #52525b;
+            --surface: #ffffff;
+            --bg: #f4fbf7;
+            --stroke: #e2e8f0;
+            --coral: #e53e3e;
+            --coral-bg: #fff5f5;
+            --coral-border: #feb2b2;
+            --radius: 16px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--ink);
+        }
+
+        .setup-card {
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 460px;
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .brand-dot { color: var(--ink); }
+
+        .badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border: 1px solid var(--primary-border);
+            border-radius: 999px;
+            padding: 4px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 28px;
+        }
+
+        .setup-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .setup-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--ink);
+            line-height: 1.25;
+            margin-bottom: 10px;
+        }
+
+        .setup-subtitle {
+            font-size: 0.9rem;
+            color: var(--ink-muted);
+            line-height: 1.6;
+        }
+
+        .ss-field {
+            margin-bottom: 20px;
+        }
+
+        .ss-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ss-input-wrap {
+            position: relative;
+        }
+
+        .ss-input {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1.5px solid var(--stroke);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--ink);
+            background: #fafafa;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            outline: none;
+        }
+
+        .ss-input:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.12);
+        }
+
+        .ss-input.error {
+            border-color: var(--coral);
+            background: var(--coral-bg);
+        }
+
+        .ss-input-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--ink-muted);
+            display: flex;
+            align-items: center;
+        }
+
+        .ss-hint {
+            font-size: 0.78rem;
+            color: var(--ink-muted);
+            margin-top: 6px;
+        }
+
+        .ss-error-msg {
+            font-size: 0.78rem;
+            color: var(--coral);
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .strength-bar {
+            height: 4px;
+            border-radius: 4px;
+            background: var(--stroke);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s, background 0.3s;
+            width: 0%;
+        }
+
+        .strength-text {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 15px 24px;
+            background: linear-gradient(135deg, #00A86B 0%, #00c47d 100%);
+            color: #fff;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+            box-shadow: 0 4px 14px rgba(0, 168, 107, 0.3);
+            letter-spacing: -0.01em;
+            margin-top: 8px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0, 168, 107, 0.4);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .alert {
+            padding: 14px 16px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            margin-bottom: 20px;
+            display: none;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .alert.error {
+            background: var(--coral-bg);
+            border: 1px solid var(--coral-border);
+            color: var(--coral);
+            display: block;
+        }
+
+        .alert.success {
+            background: var(--primary-light);
+            border: 1px solid var(--primary-border);
+            color: var(--primary-dark);
+            display: block;
+        }
+
+        .divider { border: none; border-top: 1px solid var(--stroke); margin: 28px 0; }
+
+        .token-expired-state, .token-invalid-state, .setup-success-state { display: none; text-align: center; }
+
+        .big-icon { font-size: 3rem; margin-bottom: 16px; }
+
+        .state-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+        .state-msg { font-size: 0.92rem; color: var(--ink-muted); line-height: 1.6; }
+
+        .login-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.88rem;
+            color: var(--ink-muted);
+        }
+        .login-link a { color: var(--primary); font-weight: 700; text-decoration: none; }
+
+        @media (max-width: 500px) {
+            .setup-card { padding: 32px 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="setup-card">
+    <!-- Brand -->
+    <div class="brand">SkillSense<span class="brand-dot">.</span></div>
+    <div style="text-align:center">
+        <span class="badge">Developer Account Setup</span>
+    </div>
+
+    <!-- Setup Form (default state) -->
+    <div id="setupForm">
+        <div class="setup-header">
+            <div class="setup-title">Create your password</div>
+            <div class="setup-subtitle">Choose a strong password to activate your SkillSense developer account.</div>
+        </div>
+
+        <div id="alertBox" class="alert"></div>
+
+        <div class="ss-field">
+            <label class="ss-label" for="newPassword">New Password</label>
+            <div class="ss-input-wrap">
+                <input type="password" id="newPassword" class="ss-input" placeholder="Minimum 8 characters" autocomplete="new-password">
+                <button type="button" class="ss-input-toggle" onclick="toggleVisibility('newPassword', this)" title="Show/hide password">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="strength-text" id="strengthText" style="color:var(--ink-muted)"></div>
+            <div id="pwError" class="ss-error-msg" style="display:none"></div>
+        </div>
+
+        <div class="ss-field">
+            <label class="ss-label" for="confirmPassword">Confirm Password</label>
+            <div class="ss-input-wrap">
+                <input type="password" id="confirmPassword" class="ss-input" placeholder="Re-enter your password" autocomplete="new-password">
+                <button type="button" class="ss-input-toggle" onclick="toggleVisibility('confirmPassword', this)" title="Show/hide password">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+            </div>
+            <div id="confirmError" class="ss-error-msg" style="display:none"></div>
+        </div>
+
+        <button class="btn-primary" id="setupBtn" onclick="handleSetup()">Activate My Account →</button>
+
+        <div class="login-link">Already set up? <a href="/login">Log in</a></div>
+    </div>
+
+    <!-- Success State -->
+    <div id="successState" class="setup-success-state">
+        <div class="big-icon">🎉</div>
+        <div class="state-title" style="color:var(--primary)">Account Activated!</div>
+        <p class="state-msg" id="successEmail" style="margin-bottom:24px"></p>
+        <a href="/login" class="btn-primary" style="display:block;text-align:center;text-decoration:none;padding:15px">Go to Login →</a>
+    </div>
+
+    <!-- Expired State -->
+    <div id="expiredState" class="token-expired-state">
+        <div class="big-icon">⏰</div>
+        <div class="state-title" style="color:#d97706">Invitation Link Expired</div>
+        <p class="state-msg">This setup link has expired (setup links are valid for 24 hours). Please ask your SkillSense administrator to resend the invitation.</p>
+    </div>
+
+    <!-- Invalid State -->
+    <div id="invalidState" class="token-invalid-state">
+        <div class="big-icon">🔗</div>
+        <div class="state-title" style="color:var(--coral)">Invalid Setup Link</div>
+        <p class="state-msg">This invitation link is invalid or has already been used. Please ask your SkillSense administrator to send a new invitation.</p>
+    </div>
+</div>
+
+<script>
+    // Extract token from URL
+    const urlToken = new URLSearchParams(window.location.search).get('token') || '';
+    if (!urlToken) {
+        document.getElementById('setupForm').style.display = 'none';
+        document.getElementById('invalidState').style.display = 'block';
+    }
+
+    function toggleVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const isText = input.type === 'text';
+        input.type = isText ? 'password' : 'text';
+        btn.innerHTML = isText
+            ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    }
+
+    function checkStrength(pw) {
+        let score = 0;
+        if (pw.length >= 8) score++;
+        if (pw.length >= 12) score++;
+        if (/[A-Z]/.test(pw)) score++;
+        if (/[0-9]/.test(pw)) score++;
+        if (/[^A-Za-z0-9]/.test(pw)) score++;
+        return score;
+    }
+
+    document.getElementById('newPassword').addEventListener('input', function() {
+        const pw = this.value;
+        const score = checkStrength(pw);
+        const fill = document.getElementById('strengthFill');
+        const txt = document.getElementById('strengthText');
+        const pct = Math.min(100, score * 20);
+        fill.style.width = pct + '%';
+        if (score <= 1) { fill.style.background = '#ef4444'; txt.textContent = pw ? 'Weak' : ''; txt.style.color = '#ef4444'; }
+        else if (score <= 3) { fill.style.background = '#f59e0b'; txt.textContent = 'Fair'; txt.style.color = '#f59e0b'; }
+        else if (score === 4) { fill.style.background = '#00A86B'; txt.textContent = 'Good'; txt.style.color = '#00A86B'; }
+        else { fill.style.background = '#00A86B'; txt.textContent = 'Strong'; txt.style.color = '#00A86B'; }
+    });
+
+    async function handleSetup() {
+        const pw = document.getElementById('newPassword').value;
+        const cpw = document.getElementById('confirmPassword').value;
+        const pwErr = document.getElementById('pwError');
+        const cpwErr = document.getElementById('confirmError');
+        const alert = document.getElementById('alertBox');
+        const btn = document.getElementById('setupBtn');
+
+        // Reset errors
+        pwErr.style.display = 'none';
+        cpwErr.style.display = 'none';
+        alert.className = 'alert';
+        alert.textContent = '';
+
+        let valid = true;
+
+        if (!pw || pw.length < 8) {
+            pwErr.textContent = 'Password must be at least 8 characters.';
+            pwErr.style.display = 'block';
+            document.getElementById('newPassword').classList.add('error');
+            valid = false;
+        } else {
+            document.getElementById('newPassword').classList.remove('error');
+        }
+
+        if (pw !== cpw) {
+            cpwErr.textContent = 'Passwords do not match.';
+            cpwErr.style.display = 'block';
+            document.getElementById('confirmPassword').classList.add('error');
+            valid = false;
+        } else {
+            document.getElementById('confirmPassword').classList.remove('error');
+        }
+
+        if (!valid) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Activating account…';
+
+        try {
+            const res = await fetch('/api/auth/setup-account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: urlToken, password: pw, confirm_password: cpw })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                document.getElementById('setupForm').style.display = 'none';
+                const s = document.getElementById('successState');
+                s.style.display = 'block';
+                document.getElementById('successEmail').textContent = `Your account (${data.email}) is ready. You can now log in with your email and password.`;
+            } else {
+                const msg = data.error || 'Failed to activate account.';
+                if (msg.toLowerCase().includes('expired')) {
+                    document.getElementById('setupForm').style.display = 'none';
+                    document.getElementById('expiredState').style.display = 'block';
+                } else if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('not found')) {
+                    document.getElementById('setupForm').style.display = 'none';
+                    document.getElementById('invalidState').style.display = 'block';
+                } else {
+                    alert.textContent = msg;
+                    alert.className = 'alert error';
+                    btn.disabled = false;
+                    btn.textContent = 'Activate My Account →';
+                }
+            }
+        } catch (err) {
+            alert.textContent = 'Network error. Please try again.';
+            alert.className = 'alert error';
+            btn.disabled = false;
+            btn.textContent = 'Activate My Account →';
+        }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !document.getElementById('setupBtn').disabled) {
+            handleSetup();
+        }
+    });
+</script>
+
+</body>
+</html>

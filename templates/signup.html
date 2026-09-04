@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section" style="padding:48px 0">
+    <div class="wrap" style="max-width:440px">
+        <div class="sec-head reveal" style="text-align:center;margin-bottom:24px">
+            <div class="eyebrow" style="justify-content:center">CREATE SKILLSENSE ACCOUNT</div>
+            <h2 class="h-sec">Save Your <span class="grad">Roadmap</span></h2>
+            <p class="lead" style="text-align:center;margin:6px auto;font-size:0.92rem">Create a free account to link your assessment results and access your student dashboard.</p>
+        </div>
+
+        <div class="glass" style="padding:32px;border-radius:20px;border:1px solid var(--stroke);box-shadow:0 8px 30px rgba(0,0,0,0.03)">
+            <div id="signupAlert" style="display:none;padding:12px 16px;margin-bottom:20px;border-radius:12px;font-size:0.88rem;font-weight:600"></div>
+
+            <form id="signupForm" onsubmit="handleSignup(event)">
+                <div class="form-group" style="margin-bottom:16px">
+                    <label for="fullName" style="display:block;font-weight:600;margin-bottom:6px;font-size:0.88rem">Full Name *</label>
+                    <input type="text" id="fullName" required placeholder="Alex Johnson" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--stroke);background:#fff;font-size:0.95rem;color:var(--ink)">
+                </div>
+
+                <div class="form-group" style="margin-bottom:16px">
+                    <label for="email" style="display:block;font-weight:600;margin-bottom:6px;font-size:0.88rem">Email Address *</label>
+                    <input type="email" id="email" required autocomplete="email" placeholder="name@example.com" style="width:100%;padding:12px 16px;border-radius:12px;border:1px solid var(--stroke);background:#fff;font-size:0.95rem;color:var(--ink)">
+                </div>
+
+                <div class="form-group" style="margin-bottom:16px">
+                    <label for="password" style="display:block;font-weight:600;margin-bottom:6px;font-size:0.88rem">Password *</label>
+                    <div style="position:relative">
+                        <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password" placeholder="Create password (min 6 chars)" style="width:100%;padding:12px 42px 12px 16px;border-radius:12px;border:1px solid var(--stroke);background:#fff;font-size:0.95rem;color:var(--ink)">
+                        <button type="button" onclick="togglePasswordVisibility('password', this)" title="Toggle visibility" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;align-items:center;justify-content:center">
+                            <svg class="pwd-eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom:22px">
+                    <label for="confirmPassword" style="display:block;font-weight:600;margin-bottom:6px;font-size:0.88rem">Confirm Password *</label>
+                    <div style="position:relative">
+                        <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6" autocomplete="new-password" placeholder="Re-enter password" style="width:100%;padding:12px 42px 12px 16px;border-radius:12px;border:1px solid var(--stroke);background:#fff;font-size:0.95rem;color:var(--ink)">
+                        <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)" title="Toggle visibility" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;display:flex;align-items:center;justify-content:center">
+                            <svg class="pwd-eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="signupBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-weight:700">
+                    Create Account & Continue →
+                </button>
+            </form>
+
+            <div style="text-align:center;margin-top:20px;font-size:0.9rem;color:var(--muted)">
+                Already have an account? <a id="loginLink" href="/login" style="color:var(--cyan);font-weight:700;text-decoration:none">Sign In Here</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+// Preserve query string next parameter on links
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const next = urlParams.get('next');
+    if (next) {
+        document.getElementById('loginLink').href = `/login?next=${encodeURIComponent(next)}`;
+    }
+});
+
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isPass = input.type === 'password';
+    input.type = isPass ? 'text' : 'password';
+    
+    // SVG Icons (Eye vs Eye-Off)
+    btn.innerHTML = isPass ? 
+        `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"/></svg>` : 
+        `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+}
+
+async function handleSignup(e) {
+    e.preventDefault();
+    const btn = document.getElementById('signupBtn');
+    const alertDiv = document.getElementById('signupAlert');
+    alertDiv.style.display = 'none';
+
+    const full_name = document.getElementById('fullName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    if (password !== confirmPassword) {
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+        alertDiv.style.color = 'var(--coral)';
+        alertDiv.innerText = "Passwords do not match. Please re-enter.";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Creating Account...";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const nextParam = urlParams.get('next') || '/account';
+
+    try {
+        const res = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({full_name, email, password, next: nextParam})
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+            alertDiv.style.display = 'block';
+            alertDiv.style.background = 'rgba(0, 168, 107, 0.1)';
+            alertDiv.style.color = 'var(--primary)';
+            alertDiv.innerText = "Account created successfully! Loading your student dashboard...";
+
+            const targetUrl = data.redirect || nextParam || '/account';
+            setTimeout(() => { window.location.href = targetUrl; }, 400);
+        } else {
+            alertDiv.style.display = 'block';
+            alertDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+            alertDiv.style.color = 'var(--coral)';
+            alertDiv.innerText = data.error || "Failed to create account.";
+            btn.disabled = false;
+            btn.innerText = "Create Account & Continue →";
+        }
+    } catch (err) {
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = 'rgba(255, 59, 48, 0.1)';
+        alertDiv.style.color = 'var(--coral)';
+        alertDiv.innerText = "Network error. Please try again.";
+        btn.disabled = false;
+        btn.innerText = "Create Account & Continue →";
+    }
+}
+</script>
+{% endblock %}

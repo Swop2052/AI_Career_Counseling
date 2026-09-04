@@ -1,0 +1,1062 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="section pricing-page-section">
+    <div class="wrap">
+        <!-- Section Header (Centered & Proportionally Aligned) -->
+        <div class="pricing-header reveal">
+            <div class="eyebrow">ACCESSIBLE PRICING</div>
+            <h1 class="pricing-main-title">Unlock Your <span class="grad">Career Roadmap</span></h1>
+            <p class="pricing-main-lead">
+                Purchase assessment credits to permanently unlock comprehensive career roadmaps, personalized AI counseling, and subject pathways.
+            </p>
+        </div>
+
+        <!-- Unified Responsive Pricing Container (Holds Banner + Cards in Visual Harmony) -->
+        <div id="pricingContentWrap" class="pricing-content-wrap">
+            <!-- Assessment Readiness Context Banner (Shown when attempt_id is in URL) -->
+            <div id="assessmentContextBanner" class="ss-pending-banner" style="display:none">
+                <div class="banner-icon-compact">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+                <div class="banner-text-compact">
+                    <div class="banner-title-compact">Your Assessment is Ready to Unlock!</div>
+                    <div class="banner-sub-compact">Select an assessment credit pack below to reveal your complete roadmap.</div>
+                </div>
+                <span class="ss-badge ss-badge-active banner-badge-compact">Attempt Saved</span>
+            </div>
+
+            <!-- Dynamic Pricing Cards Grid -->
+            <div id="pricingGrid" class="pricing-grid-dynamic">
+                <div class="pricing-loading-box">Loading pricing plans...</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- IN-APP CHECKOUT / CONFIRMATION MODAL -->
+<div id="checkoutModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.65);z-index:300;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);box-sizing:border-box">
+    <div class="glass" style="background:var(--card-bg, #ffffff);padding:24px 22px;border-radius:20px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.18);border:1px solid var(--stroke);animation:fadeIn 0.2s ease;margin:auto">
+        <!-- Close Button -->
+        <button onclick="closeCheckoutModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--muted);padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.15s" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="eyebrow" style="margin-bottom:4px;font-size:0.72rem">ORDER CONFIRMATION</div>
+        <h3 style="font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:14px" id="checkoutModalPlanTitle">Complete Your Purchase</h3>
+
+        <!-- Plan Summary Banner -->
+        <div style="background:rgba(0,168,107,0.06);border:1px solid rgba(0,168,107,0.25);border-radius:12px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+                <div style="font-weight:800;font-size:0.92rem;color:var(--ink)" id="checkoutPlanNameDisplay">1 Assessment Credit</div>
+                <div style="font-size:0.8rem;color:var(--muted)" id="checkoutPlanCreditsDisplay">Permanent roadmap & AI insights</div>
+            </div>
+            <span class="tag tag-cyan" id="checkoutCreditBadge" style="font-weight:800;padding:4px 10px;border-radius:999px;font-size:0.78rem">1 Credit</span>
+        </div>
+
+        <!-- Referral Code Form Inside Modal -->
+        <div style="margin-bottom:16px">
+            <label style="display:block;font-size:0.82rem;font-weight:700;color:var(--ink);margin-bottom:5px">
+                Referral / Discount Code <span style="font-weight:400;color:var(--muted)">(Optional)</span>
+            </label>
+            <div style="display:flex;gap:8px">
+                <input id="modalReferralInput" type="text" placeholder="e.g. TEST20 or SCHOOL20" style="flex:1;padding:8px 12px;border:1px solid var(--stroke);border-radius:9px;text-transform:uppercase;font-weight:700;font-size:0.85rem;background:var(--bg, #f8fafc);color:var(--ink)">
+                <button id="modalApplyBtn" onclick="applyModalReferralCode()" class="btn btn-ghost" style="padding:8px 14px;font-weight:700;font-size:0.82rem;border:1px solid var(--stroke);white-space:nowrap">
+                    Apply
+                </button>
+            </div>
+            <div id="modalReferralFeedback" style="margin-top:6px;font-size:0.8rem;display:none;line-height:1.4"></div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div style="background:var(--bg, #f8fafc);border:1px solid var(--stroke);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.86rem;color:var(--muted)">
+                <span>Original Price</span>
+                <span id="breakdownOriginalPrice" style="font-weight:700;color:var(--ink)">₹19.00</span>
+            </div>
+            <div id="breakdownDiscountRow" style="display:none;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.86rem;color:var(--primary)">
+                <span id="breakdownDiscountLabel">Referral Discount</span>
+                <span id="breakdownDiscountAmount" style="font-weight:800">-₹0.00</span>
+            </div>
+            <div style="border-top:1px solid var(--stroke);margin-top:10px;padding-top:10px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-weight:800;font-size:0.95rem;color:var(--ink)">Total Amount</span>
+                <span id="breakdownFinalPrice" style="font-size:1.35rem;font-weight:900;color:var(--primary)">₹19.00</span>
+            </div>
+        </div>
+
+        <!-- Consent Note & PDF Link -->
+        <div style="font-size:0.73rem;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.4">
+            By proceeding, you agree to our <a href="/static/docs/SkillSense_Payment_and_Credit_Policy_Consent.pdf" target="_blank" style="color:var(--primary);font-weight:700;text-decoration:underline">Payment, No-Refund &amp; Credit Policy (PDF)</a>.
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button onclick="closeCheckoutModal()" class="btn btn-ghost" style="padding:10px 16px;font-weight:700;font-size:0.86rem;border:1px solid var(--stroke);color:var(--muted)">Cancel</button>
+            <button id="checkoutActionBtn" onclick="executeCheckoutAction()" class="btn btn-primary" style="flex:1;justify-content:center;padding:10px 18px;font-weight:800;font-size:0.88rem">
+                Pay ₹19.00 →
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Pricing Alert Modal (Login / Generic Alerts) -->
+<div id="pricingModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:350;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(5px);box-sizing:border-box">
+    <div class="glass" style="background:#fff;padding:26px 22px;border-radius:18px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 12px 40px rgba(0,0,0,0.12);border:1px solid var(--stroke);margin:auto">
+        <button onclick="closePricingModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+
+        <div class="eyebrow" style="margin-bottom:4px;font-size:0.72rem">ACCOUNT NOTICE</div>
+        <h3 style="font-size:1.2rem;font-weight:800;color:var(--ink);margin-bottom:6px" id="pricingModalTitle">Sign In Required</h3>
+        <p style="font-size:0.86rem;color:var(--muted);margin-bottom:20px;line-height:1.45" id="pricingModalBody">
+            Please create an account or sign in to purchase assessment credits.
+        </p>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end" id="pricingModalActions">
+            <button onclick="closePricingModal()" class="btn btn-ghost" style="padding:9px 16px;font-weight:600;font-size:0.85rem">Cancel</button>
+            <a href="/login?next=/pricing" class="btn btn-primary" style="padding:9px 18px;font-weight:700;font-size:0.85rem">Sign In →</a>
+        </div>
+    </div>
+</div>
+
+<!-- POST-PURCHASE UNLOCK CONFIRMATION MODAL -->
+<div id="postPurchaseUnlockModal" class="modal-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.68);z-index:360;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px);box-sizing:border-box">
+    <div class="glass" style="background:#fff;padding:34px 28px;border-radius:22px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 18px 50px rgba(0,0,0,0.18);border:1px solid var(--stroke);margin:auto;text-align:center;box-sizing:border-box">
+        <div style="width:62px;height:62px;border-radius:50%;background:rgba(0,168,107,0.12);color:var(--primary);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+        </div>
+        <div class="eyebrow" style="margin-bottom:6px;font-size:0.75rem;justify-content:center">ASSESSMENT READY</div>
+        <h3 style="font-size:1.4rem;font-weight:800;color:var(--ink);margin-bottom:8px;line-height:1.3">
+            Your Assessment Roadmap is Ready
+        </h3>
+        <p style="font-size:0.92rem;color:var(--ink);line-height:1.55;margin:0 0 6px">
+            Your credit has been added successfully.
+        </p>
+        <p style="font-size:0.92rem;color:var(--ink);line-height:1.55;margin:0 0 24px" id="postPurchaseModalPromptText">
+            You now have <strong id="postPurchaseBalanceNum" style="color:var(--primary)">1</strong> Assessment Credit<span id="postPurchaseBalancePlural"></span>. Would you like to use 1 credit to unlock your recently completed assessment?
+        </p>
+
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+            <button type="button" onclick="handlePostPurchaseNotNow()" class="btn btn-ghost" style="padding:11px 20px;font-weight:600;font-size:0.9rem;min-height:44px;flex:1 1 110px;text-align:center;box-sizing:border-box">
+                Not Now
+            </button>
+            <button type="button" id="postPurchaseUnlockBtn" onclick="handlePostPurchaseUnlock()" class="btn btn-primary" style="padding:11px 22px;font-weight:700;font-size:0.9rem;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 1 170px;text-align:center;box-sizing:border-box;box-shadow:0 4px 14px rgba(0,168,107,0.25)">
+                <span>Unlock Assessment</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* --- PRICING PAGE STYLING (GLOBAL SKILLSENSE SYSTEM) --- */
+.pricing-page-section {
+    padding-top: 88px !important;
+    padding-bottom: 64px !important;
+}
+
+.pricing-header {
+    text-align: center;
+    margin: 0 auto 32px auto !important;
+    max-width: 680px !important;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+}
+.pricing-header .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 auto 12px auto;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--cyan);
+    text-transform: uppercase;
+}
+.pricing-header .eyebrow::before,
+.pricing-header .eyebrow::after {
+    content: "";
+    width: 22px;
+    height: 1.5px;
+    background: var(--cyan);
+    opacity: 0.65;
+    border-radius: 1px;
+}
+.pricing-main-title {
+    font-size: clamp(2rem, 3.8vw, 2.6rem);
+    font-weight: 900;
+    margin: 0 auto 12px auto;
+    letter-spacing: -0.025em;
+    line-height: 1.16;
+    color: var(--ink);
+    text-align: center;
+    max-width: 680px;
+    width: 100%;
+}
+.pricing-main-title .grad {
+    background: linear-gradient(100deg, var(--primary, #00a86b), var(--cyan, #00c6ff));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.pricing-main-lead {
+    text-align: center;
+    margin: 0 auto;
+    max-width: 580px;
+    width: 100%;
+    font-size: 0.98rem;
+    color: var(--muted);
+    line-height: 1.55;
+}
+
+/* Dynamic Pricing Content Container */
+.pricing-content-wrap {
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    transition: max-width 0.25s ease;
+}
+
+/* Sizing presets applied dynamically by plan count */
+.pricing-wrap-1plan {
+    max-width: 520px;
+}
+.pricing-wrap-2plans {
+    max-width: 880px;
+}
+.pricing-wrap-3plans {
+    max-width: 1140px;
+}
+.pricing-wrap-multi {
+    max-width: 1180px;
+}
+
+/* Assessment Context Banner */
+.ss-pending-banner {
+    background: rgba(0, 168, 107, 0.05);
+    border: 1.5px solid rgba(0, 168, 107, 0.32);
+    border-radius: 14px;
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 0 24px 0;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 4px 16px rgba(0, 168, 107, 0.06);
+    flex-wrap: wrap;
+}
+.banner-icon-compact {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 168, 107, 0.14);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.banner-text-compact {
+    flex: 1;
+    min-width: 200px;
+}
+.banner-title-compact {
+    font-weight: 800;
+    font-size: 0.94rem;
+    color: var(--ink);
+    line-height: 1.3;
+}
+.banner-sub-compact {
+    font-size: 0.83rem;
+    color: var(--muted);
+    line-height: 1.4;
+    margin-top: 2px;
+}
+.banner-badge-compact {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+/* Dynamic Grid */
+.pricing-grid-dynamic {
+    display: grid;
+    gap: 24px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.pricing-loading-box {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--muted);
+    grid-column: 1 / -1;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Pricing Card Component */
+.pricing-card {
+    background: var(--card-bg, #ffffff);
+    padding: 32px 28px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid var(--stroke);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.pricing-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.08);
+}
+.pricing-card-featured {
+    border: 2px solid var(--primary) !important;
+    box-shadow: 0 12px 36px rgba(0, 168, 107, 0.14) !important;
+}
+.pricing-card-featured:hover {
+    box-shadow: 0 18px 46px rgba(0, 168, 107, 0.22) !important;
+}
+
+/* Recommended Badge */
+.plan-recommended-badge {
+    position: absolute;
+    top: -12px;
+    right: 28px;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 999px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 168, 107, 0.28);
+    z-index: 2;
+}
+
+/* Price Box */
+.pricing-price-box {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin: 16px 0 20px 0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--stroke);
+}
+.pricing-price-main {
+    display: flex;
+    align-items: baseline;
+    line-height: 1;
+}
+.pricing-currency {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin-right: 2px;
+}
+.pricing-amount {
+    font-size: 2.75rem;
+    font-weight: 900;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+.pricing-unit {
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+/* Features List */
+.pricing-features-list {
+    list-style: none;
+    margin: 0 0 26px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.pricing-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.92rem;
+    color: var(--ink);
+    line-height: 1.4;
+}
+.feature-icon-wrap {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0, 168, 107, 0.12);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Card CTA Button */
+.pricing-cta-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 999px;
+    min-height: 48px;
+    box-shadow: 0 4px 16px rgba(0, 168, 107, 0.22);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    box-sizing: border-box;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.pricing-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 168, 107, 0.32);
+}
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 960px) {
+    .pricing-wrap-3plans #pricingGrid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .pricing-page-section {
+        padding-top: 76px !important;
+        padding-bottom: 40px !important;
+    }
+    .pricing-content-wrap {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    .pricing-grid-dynamic {
+        grid-template-columns: 1fr !important;
+        gap: 18px !important;
+    }
+    .pricing-card {
+        padding: 26px 22px;
+    }
+    .pricing-amount {
+        font-size: 2.35rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pricing-page-section {
+        padding-top: 68px !important;
+        padding-bottom: 32px !important;
+    }
+    .pricing-card {
+        padding: 24px 18px;
+        border-radius: 18px;
+    }
+    .plan-recommended-badge {
+        right: 18px;
+        padding: 3px 10px;
+        font-size: 0.65rem;
+    }
+    .pricing-amount {
+        font-size: 2.1rem;
+    }
+    .ss-pending-banner {
+        padding: 10px 14px;
+        gap: 10px;
+    }
+    .banner-text-compact {
+        min-width: 140px;
+    }
+    #checkoutModal .glass,
+    #pricingModal .glass {
+        padding: 20px 16px;
+        border-radius: 16px;
+    }
+}
+</style>
+
+<!-- Razorpay Checkout JS -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+var loadedPlans = [];
+var activePlan = null;          // Currently selected plan for checkout modal
+var modalDiscount = null;       // Validated discount for modal checkout { code, discount_amount, final_price, ... }
+
+function showPricingModal(title, body, actionUrl, actionText) {
+    document.getElementById('pricingModalTitle').innerText = title;
+    document.getElementById('pricingModalBody').innerText = body;
+    const actionsBox = document.getElementById('pricingModalActions');
+    if (actionUrl) {
+        actionsBox.innerHTML = `
+            <button onclick="closePricingModal()" class="btn btn-ghost" style="padding:9px 16px;font-weight:600;font-size:0.85rem">Cancel</button>
+            <a href="${actionUrl}" class="btn btn-primary" style="padding:9px 18px;font-weight:700;font-size:0.85rem">${actionText} →</a>
+        `;
+    } else {
+        actionsBox.innerHTML = `
+            <button onclick="closePricingModal()" class="btn btn-primary" style="padding:9px 18px;font-weight:700;font-size:0.85rem">OK</button>
+        `;
+    }
+    document.getElementById('pricingModal').style.display = 'flex';
+}
+
+function closePricingModal() {
+    document.getElementById('pricingModal').style.display = 'none';
+}
+
+async function loadPricingPlans() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const attemptId = urlParams.get('attempt_id');
+    if (attemptId) {
+        try {
+            const checkRes = await fetch(`/api/assessment/${encodeURIComponent(attemptId)}/teaser`);
+            if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.is_unlocked) {
+                    showToast("Your Career Roadmap is already unlocked!");
+                    setTimeout(() => {
+                        window.location.href = `/take-test?attempt_id=${encodeURIComponent(attemptId)}`;
+                    }, 500);
+                    return;
+                }
+            }
+        } catch(e) {
+            console.warn("Could not verify attempt status on load:", e);
+        }
+        const banner = document.getElementById('assessmentContextBanner');
+        if (banner) banner.style.display = 'flex';
+    }
+
+    const grid = document.getElementById('pricingGrid');
+    try {
+        const res = await fetch('/api/pricing-plans');
+        const data = await res.json();
+        loadedPlans = data.plans || [];
+
+        if (loadedPlans.length === 0) {
+            grid.innerHTML = `<div class="pricing-loading-box" style="color:var(--muted)">No active pricing plans available. Please check back later.</div>`;
+            return;
+        }
+
+        renderPlanCards();
+    } catch (err) {
+        grid.innerHTML = `<div class="pricing-loading-box" style="color:var(--coral)">Failed to load pricing plans. Please refresh the page.</div>`;
+    }
+}
+
+function renderPlanCards() {
+    const wrap = document.getElementById('pricingContentWrap');
+    const grid = document.getElementById('pricingGrid');
+    const planCount = loadedPlans.length;
+
+    // Apply dynamic container preset based on plan count
+    if (wrap) {
+        wrap.className = 'pricing-content-wrap';
+        if (planCount === 1) {
+            wrap.classList.add('pricing-wrap-1plan');
+            grid.style.gridTemplateColumns = '1fr';
+        } else if (planCount === 2) {
+            wrap.classList.add('pricing-wrap-2plans');
+            grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+        } else if (planCount === 3) {
+            wrap.classList.add('pricing-wrap-3plans');
+            grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+        } else {
+            wrap.classList.add('pricing-wrap-multi');
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+        }
+    }
+
+    let html = '';
+    loadedPlans.forEach((plan) => {
+        // Backend DB source of truth for recommendation:
+        const isRecommended = Boolean(plan.is_recommended);
+        const originalPrice = Number(plan.price);
+        const formattedPrice = (typeof formatPriceINR === 'function') 
+            ? formatPriceINR(originalPrice).replace('₹', '') 
+            : (Number.isInteger(originalPrice) ? originalPrice.toString() : originalPrice.toFixed(2));
+
+        const creditText = plan.credits === 1 ? '1 credit' : `${plan.credits} credits`;
+        const planTagline = plan.credits === 1 ? '1 Full Career Assessment' : `${plan.credits} Assessments Pack`;
+
+        html += `
+            <div class="glass pricing-card ${isRecommended ? 'pricing-card-featured' : ''}">
+                ${isRecommended ? '<div class="plan-recommended-badge">RECOMMENDED</div>' : ''}
+                <div>
+                    <div style="margin-bottom:6px">
+                        <h3 style="font-size:1.3rem;margin:0 0 4px 0;color:var(--ink);font-weight:800;line-height:1.3">${plan.name}</h3>
+                        <div style="font-size:0.86rem;color:var(--muted);font-weight:500">${planTagline}</div>
+                    </div>
+
+                    <div class="pricing-price-box">
+                        <div class="pricing-price-main">
+                            <span class="pricing-currency">₹</span><span class="pricing-amount">${formattedPrice}</span>
+                        </div>
+                        <span class="pricing-unit">/ ${creditText}</span>
+                    </div>
+
+                    <ul class="pricing-features-list">
+                        <li class="pricing-feature-item">
+                            <div class="feature-icon-wrap">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <span><strong>${plan.credits}</strong> Assessment Credit${plan.credits > 1 ? 's' : ''}</span>
+                        </li>
+                        <li class="pricing-feature-item">
+                            <div class="feature-icon-wrap">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <span>Full Permanent Career Roadmap</span>
+                        </li>
+                        <li class="pricing-feature-item">
+                            <div class="feature-icon-wrap">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <span>Never Expires (Re-visit Anytime)</span>
+                        </li>
+                        <li class="pricing-feature-item">
+                            <div class="feature-icon-wrap">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <span>AI Counselor & Subject Roadmaps</span>
+                        </li>
+                        ${plan.credits > 1 ? `
+                        <li class="pricing-feature-item">
+                            <div class="feature-icon-wrap">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <span>Unlock Multiple Career Assessments</span>
+                        </li>
+                        ` : ''}
+                    </ul>
+                </div>
+
+                <div>
+                    <button onclick="openCheckoutModal('${plan.id}')" class="btn btn-primary pricing-cta-btn">
+                        Buy ${plan.credits} Credit${plan.credits > 1 ? 's' : ''} (₹${formattedPrice}) →
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = html;
+}
+
+// IN-APP CHECKOUT CONFIRMATION MODAL LOGIC
+// ---------------------------------------------------------------------------
+function openCheckoutModal(planId) {
+    activePlan = loadedPlans.find(p => p.id === planId);
+    if (!activePlan) return;
+
+    const modalInput = document.getElementById('modalReferralInput');
+    const feedback = document.getElementById('modalReferralFeedback');
+
+    document.getElementById('checkoutPlanNameDisplay').innerText = activePlan.name;
+    document.getElementById('checkoutPlanCreditsDisplay').innerText = `${activePlan.credits} Assessment Credit${activePlan.credits > 1 ? 's' : ''} • Permanent Unlock`;
+    document.getElementById('checkoutCreditBadge').innerText = `${activePlan.credits} Credit${activePlan.credits > 1 ? 's' : ''}`;
+
+    feedback.style.display = 'none';
+    feedback.innerText = '';
+    modalInput.value = '';
+    modalDiscount = null;
+    updateModalBreakdown();
+
+    document.getElementById('checkoutModal').style.display = 'flex';
+}
+
+function closeCheckoutModal() {
+    document.getElementById('checkoutModal').style.display = 'none';
+    activePlan = null;
+}
+
+function updateModalBreakdown() {
+    if (!activePlan) return;
+
+    const originalPrice = Number(activePlan.price);
+    const origDisplay = document.getElementById('breakdownOriginalPrice');
+    const discRow = document.getElementById('breakdownDiscountRow');
+    const discLabel = document.getElementById('breakdownDiscountLabel');
+    const discAmount = document.getElementById('breakdownDiscountAmount');
+    const finalDisplay = document.getElementById('breakdownFinalPrice');
+    const actionBtn = document.getElementById('checkoutActionBtn');
+    const applyBtn = document.getElementById('modalApplyBtn');
+
+    origDisplay.innerText = `₹${originalPrice.toFixed(2)}`;
+
+    if (modalDiscount && modalDiscount.valid) {
+        discRow.style.display = 'flex';
+        discLabel.innerText = `Referral Discount (${modalDiscount.code})`;
+        discAmount.innerText = `-₹${modalDiscount.discount_amount.toFixed(2)}`;
+        finalDisplay.innerText = `₹${modalDiscount.final_price.toFixed(2)}`;
+
+        // Switch apply button to Remove
+        applyBtn.innerText = 'Remove';
+        applyBtn.onclick = removeModalReferralCode;
+        applyBtn.className = 'btn btn-ghost';
+        applyBtn.style.color = 'var(--coral)';
+        applyBtn.style.borderColor = 'var(--coral)';
+
+        if (modalDiscount.final_price === 0.0) {
+            actionBtn.innerText = `Redeem ${activePlan.credits} Credit${activePlan.credits > 1 ? 's' : ''} (₹0) →`;
+            actionBtn.className = 'btn btn-primary';
+        } else {
+            actionBtn.innerText = `Pay ₹${modalDiscount.final_price.toFixed(2)} →`;
+            actionBtn.className = 'btn btn-primary';
+        }
+    } else {
+        discRow.style.display = 'none';
+        finalDisplay.innerText = `₹${originalPrice.toFixed(2)}`;
+
+        // Switch back to Apply button
+        applyBtn.innerText = 'Apply';
+        applyBtn.onclick = applyModalReferralCode;
+        applyBtn.className = 'btn btn-ghost';
+        applyBtn.style.color = '';
+        applyBtn.style.borderColor = 'var(--stroke)';
+
+        actionBtn.innerText = `Pay ₹${originalPrice.toFixed(2)} →`;
+        actionBtn.className = 'btn btn-primary';
+    }
+}
+
+async function applyModalReferralCode() {
+    if (!activePlan) return;
+
+    const input = document.getElementById('modalReferralInput');
+    const code = input.value.trim();
+    const feedback = document.getElementById('modalReferralFeedback');
+    const applyBtn = document.getElementById('modalApplyBtn');
+
+    if (!code) {
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--coral)';
+        feedback.innerText = 'Please enter a referral code.';
+        return;
+    }
+
+    applyBtn.disabled = true;
+    applyBtn.innerText = 'Checking...';
+
+    try {
+        const res = await fetch('/api/campaigns/validate-discount', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                plan_id: activePlan.id,
+                code: code
+            })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.valid) {
+            modalDiscount = data;
+            feedback.style.display = 'block';
+            feedback.style.color = 'var(--primary)';
+            feedback.innerHTML = `✓ <strong>${data.code}</strong> applied! Save ₹${data.discount_amount.toFixed(2)} (${data.campaign_name}).`;
+            updateModalBreakdown();
+        } else {
+            modalDiscount = null;
+            feedback.style.display = 'block';
+            feedback.style.color = 'var(--coral)';
+            feedback.innerText = data.error || 'This referral code is invalid or expired.';
+            updateModalBreakdown();
+        }
+    } catch (err) {
+        modalDiscount = null;
+        feedback.style.display = 'block';
+        feedback.style.color = 'var(--coral)';
+        feedback.innerText = 'Error validating referral code.';
+        updateModalBreakdown();
+    } finally {
+        applyBtn.disabled = false;
+    }
+}
+
+function removeModalReferralCode() {
+    modalDiscount = null;
+    document.getElementById('modalReferralInput').value = '';
+    const feedback = document.getElementById('modalReferralFeedback');
+    feedback.style.display = 'block';
+    feedback.style.color = 'var(--muted)';
+    feedback.innerText = 'Referral discount removed.';
+    updateModalBreakdown();
+}
+
+// ---------------------------------------------------------------------------
+// EXECUTE CHECKOUT (PAID VIA RAZORPAY OR ZERO-RUPEE REDEMPTION)
+// ---------------------------------------------------------------------------
+async function executeCheckoutAction() {
+    if (!activePlan) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const attemptId = urlParams.get('attempt_id') || '';
+    const nextParam = urlParams.get('next') || (attemptId ? `/take-test?attempt_id=${attemptId}` : '/account');
+
+    const referralCode = (modalDiscount && modalDiscount.valid) ? modalDiscount.code : null;
+    const finalPrice = (modalDiscount && modalDiscount.valid) ? modalDiscount.final_price : Number(activePlan.price);
+
+    const actionBtn = document.getElementById('checkoutActionBtn');
+    actionBtn.disabled = true;
+    actionBtn.innerText = 'Processing...';
+
+    // SCENARIO A: 100% DISCOUNT / ZERO-RUPEE REDEMPTION
+    if (finalPrice === 0.0) {
+        try {
+            const res = await fetch('/api/payments/redeem-zero', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    plan_id: activePlan.id,
+                    referral_code: referralCode,
+                    attempt_id: attemptId || null
+                })
+            });
+
+            if (res.status === 401) {
+                closeCheckoutModal();
+                showPricingModal("Sign In Required", "Please sign in to redeem your free credit.", `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`, "Sign In");
+                return;
+            }
+
+            const data = await res.json();
+            if (res.ok && data.status === 'success') {
+                handlePaymentCompletion(data, attemptId);
+            } else {
+                actionBtn.disabled = false;
+                updateModalBreakdown();
+                showPricingModal("Redemption Failed", data.error || "Could not redeem zero-rupee plan.", null, "OK");
+            }
+        } catch (err) {
+            actionBtn.disabled = false;
+            updateModalBreakdown();
+            showPricingModal("Error", "Error processing zero-rupee redemption.", null, "OK");
+        }
+        return;
+    }
+
+    // SCENARIO B: PAID ORDER VIA RAZORPAY TEST MODE
+    try {
+        const orderRes = await fetch('/api/payments/create-order', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                plan_id: activePlan.id,
+                referral_code: referralCode,
+                attempt_id: attemptId || null
+            })
+        });
+
+        if (orderRes.status === 401) {
+            closeCheckoutModal();
+            showPricingModal("Sign In Required", "Please create an account or sign in to purchase credits.", `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`, "Sign In");
+            return;
+        }
+
+        const orderData = await orderRes.json();
+        if (!orderRes.ok || !orderData.order_id) {
+            actionBtn.disabled = false;
+            updateModalBreakdown();
+            showPricingModal("Payment Error", orderData.error || "Could not create payment order.", null, "OK");
+            return;
+        }
+
+        const options = {
+            "key": orderData.key_id,
+            "amount": orderData.amount, // Exact server-calculated paise integer
+            "currency": orderData.currency,
+            "name": "SkillSense Career Guidance",
+            "description": `${orderData.plan.name} Purchase`,
+            "image": "/static/logo.png",
+            "order_id": orderData.order_id,
+            "prefill": {
+                "name": orderData.user_name || "",
+                "email": orderData.user_email || ""
+            },
+            "handler": async function (response) {
+                try {
+                    const verifyRes = await fetch('/api/payments/verify', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            attempt_id: attemptId || null
+                        })
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyRes.ok && (verifyData.status === 'success' || verifyData.status === 'already_processed')) {
+                        handlePaymentCompletion(verifyData, attemptId);
+                    } else {
+                        showPricingModal("Verification Failed", verifyData.error || "Payment verification failed.", null, "OK");
+                    }
+                } catch (e) {
+                    showPricingModal("Verification Error", "Error verifying payment signature.", null, "OK");
+                }
+            },
+            "theme": {
+                "color": "#00A86B"
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+            actionBtn.disabled = false;
+            updateModalBreakdown();
+            const desc = (response.error && response.error.description) ? response.error.description : "Payment could not be completed. No credit was added.";
+            showPricingModal("Payment Incomplete", desc, null, "OK");
+        });
+        rzp.open();
+    } catch (err) {
+        actionBtn.disabled = false;
+        updateModalBreakdown();
+        showPricingModal("Payment Error", "Error initiating payment checkout.", null, "OK");
+    }
+}
+
+
+// ---------------------------------------------------------------------------
+// POST-PURCHASE UNLOCK CONFIRMATION LOGIC
+// ---------------------------------------------------------------------------
+let pendingUnlockAttemptId = null;
+
+async function showPostPurchaseUnlockModal(attemptId, balance) {
+    pendingUnlockAttemptId = attemptId;
+    const modal = document.getElementById('postPurchaseUnlockModal');
+    if (!modal) return;
+
+    const balNum = document.getElementById('postPurchaseBalanceNum');
+    const balPlural = document.getElementById('postPurchaseBalancePlural');
+    if (balNum && balance !== undefined && balance !== null) {
+        balNum.innerText = balance;
+        if (balPlural) balPlural.innerText = (balance === 1 ? '' : 's');
+    }
+
+    modal.style.display = 'flex';
+
+    // Synchronize authoritative live wallet balance from backend
+    try {
+        const balRes = await fetch('/api/credits/balance');
+        if (balRes.ok) {
+            const balData = await balRes.json();
+            const liveBal = balData.credits_balance ?? balData.balance;
+            if (liveBal !== undefined && balNum) {
+                balNum.innerText = liveBal;
+                if (balPlural) balPlural.innerText = (liveBal === 1 ? '' : 's');
+            }
+        }
+    } catch(e) {
+        console.warn('Could not refresh live balance:', e);
+    }
+}
+
+function handlePostPurchaseNotNow() {
+    const modal = document.getElementById('postPurchaseUnlockModal');
+    if (modal) modal.style.display = 'none';
+    showToast("Credit saved in your wallet. You can unlock your roadmap anytime from your dashboard.");
+    setTimeout(() => {
+        window.location.href = '/account';
+    }, 500);
+}
+
+async function handlePostPurchaseUnlock() {
+    if (!pendingUnlockAttemptId) {
+        window.location.href = '/account';
+        return;
+    }
+
+    const btn = document.getElementById('postPurchaseUnlockBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span>Unlocking...</span>`;
+    }
+
+    try {
+        const res = await fetch(`/api/assessment/${encodeURIComponent(pendingUnlockAttemptId)}/unlock`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await res.json();
+
+        if (res.ok && (data.status === 'success' || data.status === 'already_unlocked')) {
+            showToast("Career Roadmap unlocked successfully!");
+            const modal = document.getElementById('postPurchaseUnlockModal');
+            if (modal) modal.style.display = 'none';
+            setTimeout(() => {
+                window.location.href = `/take-test?attempt_id=${encodeURIComponent(pendingUnlockAttemptId)}`;
+            }, 500);
+        } else {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `<span>Unlock Assessment</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+            }
+            showPricingModal("Unlock Notice", data.error || "Failed to unlock assessment. Please visit your dashboard.", "/account", "Dashboard");
+        }
+    } catch (e) {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<span>Unlock Assessment</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+        }
+        showPricingModal("Unlock Error", "Error connecting to server. Your credit remains safe in your account.", "/account", "Dashboard");
+    }
+}
+
+async function handlePaymentCompletion(resultData, attemptId) {
+    closeCheckoutModal();
+    const creditsGranted = resultData.credits_granted || 1;
+    const newBalance = (resultData.new_balance !== undefined) ? resultData.new_balance : creditsGranted;
+
+    // SCENARIO 1: Valid attemptId provided from an assessment context
+    if (attemptId) {
+        try {
+            const checkRes = await fetch(`/api/assessment/${encodeURIComponent(attemptId)}/teaser`);
+            if (checkRes.ok) {
+                const checkData = await checkRes.json();
+                if (checkData.is_unlocked) {
+                    showToast("Your Career Roadmap is already unlocked!");
+                    setTimeout(() => {
+                        window.location.href = `/take-test?attempt_id=${encodeURIComponent(attemptId)}`;
+                    }, 600);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn("Could not verify attempt status:", e);
+        }
+
+        // Show Post-Purchase Unlock Confirmation Modal with real wallet balance
+        showPostPurchaseUnlockModal(attemptId, newBalance);
+        return;
+    }
+
+    // SCENARIO 2: Generic Buy Credits purchase (no assessment context)
+    showToast(`Payment Successful! ${creditsGranted} credit(s) added.`);
+    setTimeout(() => {
+        window.location.href = '/account';
+    }, 700);
+}
+
+document.addEventListener('DOMContentLoaded', loadPricingPlans);
+</script>
+{% endblock %}

@@ -261,7 +261,7 @@ function validateStep(step) {
 </div>
 <div class="result-header">
 <div class="eyebrow" style="justify-content:center">Your Career Matches</div>
-<p id="profileDescription" style="color:var(--muted);font-size:1.05rem">Top 6 careers based on
+<p id="profileDescription" style="color:var(--muted);font-size:1.05rem">Personalized careers based on
                             your personality</p>
 </div>
 <div id="careerResults">
@@ -271,5 +271,83 @@ function validateStep(step) {
 </div>
 </div>
 </div>
+</div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const attemptId = urlParams.get('attempt_id');
+
+    if (attemptId) {
+        try {
+            const res = await fetch(`/api/assessment/${attemptId}/teaser`);
+            if (!res.ok) {
+                console.warn("Assessment attempt not found:", attemptId);
+                return;
+            }
+            const data = await res.json();
+
+            document.getElementById('profileFormContainer').classList.remove('active');
+            document.getElementById('quizContainer').classList.remove('active');
+            document.getElementById('resultsContainer').classList.add('active');
+
+            if (data.is_unlocked) {
+                // Fetch full report from secure full API endpoint
+                const fullRes = await fetch(`/api/assessment/${attemptId}/full`);
+                if (fullRes.ok) {
+                    const fullData = await fullRes.json();
+                    displayResults({
+                        is_unlocked: true,
+                        profile: fullData.full_report.student_profile || {},
+                        scores: fullData.full_report.riasec_scores || {},
+                        top_careers: fullData.full_report.top_careers || []
+                    });
+                } else {
+                    // Render locked teaser if full report cannot be fetched
+                    renderLockedTeaserView({
+                        attempt_id: attemptId,
+                        is_unlocked: false,
+                        profile: {},
+                        scores: {},
+                        teaser: data.teaser
+                    });
+                }
+            } else {
+                // Render locked teaser
+                renderLockedTeaserView({
+                    attempt_id: attemptId,
+                    is_unlocked: false,
+                    profile: {},
+                    scores: {},
+                    teaser: data.teaser
+                });
+            }
+        } catch (e) {
+            console.error("Error loading assessment from query string:", e);
+        }
+    } else {
+        // Fresh assessment attempt: pre-fill profile info if student is logged in
+        try {
+            const authRes = await fetch('/api/auth/me');
+            const authData = await authRes.json();
+            if (authData.authenticated && authData.user) {
+                const u = authData.user;
+                if (u.full_name && document.getElementById('studentName') && !document.getElementById('studentName').value) {
+                    document.getElementById('studentName').value = u.full_name;
+                }
+                if (u.education_level && document.getElementById('studentClass') && !document.getElementById('studentClass').value) {
+                    const select = document.getElementById('studentClass');
+                    for (let opt of select.options) {
+                        if (opt.value && u.education_level.toLowerCase().includes(opt.value.toLowerCase())) {
+                            select.value = opt.value;
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch(e) {}
+    }
+});
+</script>
 {% endblock %}

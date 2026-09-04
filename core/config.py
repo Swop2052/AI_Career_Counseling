@@ -13,6 +13,8 @@ class Config:
     
     # API Keys
     anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+    razorpay_key_id: str = os.getenv("RAZORPAY_KEY_ID", "rzp_test_51234567890123")
+    razorpay_key_secret: str = os.getenv("RAZORPAY_KEY_SECRET", "test_secret_12345678901234567890")
     
     # Flask
     secret_key: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")

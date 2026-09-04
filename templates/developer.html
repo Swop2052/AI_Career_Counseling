@@ -1,0 +1,2079 @@
+{% extends 'base.html' %}
+{% block content %}
+<!-- Flatpickr date/time picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+/* Developer Dashboard Design Tokens */
+.dev-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 32px;
+}
+@media (max-width: 960px) {
+    .dev-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 580px) {
+    .dev-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dev-metric-card {
+    padding: 20px 22px;
+    border-radius: 16px;
+    border: 1px solid var(--stroke, #e2e8f0);
+    background: var(--card-bg, #ffffff);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dev-metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+.dev-metric-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--muted, #64748b);
+}
+.dev-metric-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--ink, #0f172a);
+    margin-top: 4px;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+.dev-metric-sub {
+    font-size: 0.78rem;
+    color: var(--muted, #64748b);
+    margin-top: 5px;
+}
+.text-emerald { color: var(--primary, #00A86B) !important; }
+.text-cyan { color: var(--cyan, #0284c7) !important; }
+.text-coral { color: var(--coral, #ef4444) !important; }
+
+/* Segmented Internal Tab Bar */
+.dev-tab-nav {
+    display: flex;
+    gap: 6px;
+    background: var(--bg, #f8fafc);
+    padding: 5px;
+    border-radius: 12px;
+    border: 1px solid var(--stroke, #e2e8f0);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    width: fit-content;
+    max-width: 100%;
+}
+.dev-tab-btn {
+    padding: 8px 16px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--muted, #64748b);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+.dev-tab-btn:hover {
+    color: var(--ink, #0f172a);
+    background: rgba(0,0,0,0.03);
+}
+.dev-tab-btn.active {
+    background: #ffffff;
+    color: var(--primary, #00A86B);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* Grouped Form Styles */
+.form-group-box {
+    background: var(--bg, #f8fafc);
+    border: 1px solid var(--stroke, #e2e8f0);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+.form-group-header {
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary, #00A86B);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.form-label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--ink, #0f172a);
+    margin-bottom: 5px;
+}
+.form-control-input {
+    width: 100%;
+    height: 40px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--stroke, #cbd5e1);
+    background: #ffffff;
+    font-size: 0.88rem;
+    color: var(--ink, #0f172a);
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+.form-control-input:focus {
+    outline: none;
+    border-color: var(--primary, #00A86B);
+    box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.12);
+}
+.input-with-suffix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-with-suffix input {
+    padding-right: 46px;
+}
+.input-suffix-tag {
+    position: absolute;
+    right: 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--muted, #64748b);
+    pointer-events: none;
+}
+
+/* Clean Single Status Select Dropdown */
+.status-select-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+.status-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+    padding: 4px 24px 4px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--stroke, #cbd5e1);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.15s ease;
+    display: inline-block;
+    min-width: 92px;
+}
+.status-select.is-active {
+    color: #008755;
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+}
+.status-select.is-inactive {
+    color: #64748b;
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+}
+.status-select:focus {
+    border-color: var(--primary, #00A86B);
+    box-shadow: 0 0 0 2px rgba(0, 168, 107, 0.15);
+}
+.status-select:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+.status-subtext {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-top: 3px;
+    letter-spacing: 0.02em;
+}
+.status-scheduled { color: #0284c7; }
+.status-expired { color: #dc2626; }
+.status-limit { color: #d97706; }
+
+.spinner-inline {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(0, 168, 107, 0.25);
+    border-top-color: var(--primary, #00A86B);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.btn-sm-action {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid var(--stroke, #cbd5e1);
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--ink, #0f172a);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.btn-sm-action:hover {
+    background: var(--bg, #f8fafc);
+    border-color: #94a3b8;
+}
+.btn-sm-delete {
+    color: var(--coral, #ef4444);
+}
+.btn-sm-delete:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Role badges */
+.role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.role-super-admin {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+.role-developer {
+    background: rgba(0,168,107,0.1);
+    color: var(--primary, #00A86B);
+    border: 1px solid rgba(0,168,107,0.25);
+}
+
+/* ---- MODAL ARCHITECTURE: 3-TIER SCROLL-SAFE CONTAINER ---- */
+.ss-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.6);
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: overlayFadeIn 0.18s ease;
+}
+.ss-modal-overlay.open {
+    display: flex;
+}
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+.ss-modal-card {
+    background: var(--card-bg, #ffffff);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 540px;
+    max-height: min(88vh, 700px);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--stroke, #e2e8f0);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+    animation: cardSlideUp 0.22s cubic-bezier(0.22,1,0.36,1);
+    overflow: hidden;
+    margin: auto;
+}
+@keyframes cardSlideUp {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ss-modal-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    margin: 0;
+}
+.ss-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--stroke, #e2e8f0);
+    flex-shrink: 0;
+    background: #ffffff;
+}
+.ss-modal-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--ink, #0f172a);
+    margin: 0;
+}
+.ss-modal-close-btn {
+    background: none;
+    border: none;
+    color: var(--muted, #64748b);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s, color 0.15s;
+}
+.ss-modal-close-btn:hover {
+    background: rgba(0,0,0,0.06);
+    color: var(--ink, #0f172a);
+}
+.ss-modal-body {
+    padding: 18px 22px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+.ss-modal-footer {
+    display: flex;
+    gap: 10px;
+    padding: 14px 22px;
+    border-top: 1px solid var(--stroke, #e2e8f0);
+    flex-shrink: 0;
+    background: #f8fafc;
+}
+
+/* Balanced Desktop Table Styles (No empty gaps) */
+.dev-table-container {
+    max-width: 1080px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid var(--stroke, #e2e8f0);
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    overflow-x: auto;
+}
+.dev-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.dev-table th {
+    padding: 10px 14px;
+    color: var(--muted, #64748b);
+    font-size: 0.76rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--stroke, #e2e8f0);
+    font-weight: 700;
+    background: #fafbfc;
+    white-space: nowrap;
+}
+.dev-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--stroke, #f1f5f9);
+    font-size: 0.86rem;
+    vertical-align: middle;
+}
+.dev-table tr:hover td {
+    background: #fbfcfe;
+}
+.dev-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Mobile Responsive Cards for Tables (< 768px) */
+@media (max-width: 768px) {
+    .dev-table-container {
+        border: none;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
+    }
+    .dev-table thead {
+        display: none;
+    }
+    .dev-table, .dev-table tbody, .dev-table tr, .dev-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .dev-table tr {
+        background: #ffffff;
+        border: 1px solid var(--stroke, #e2e8f0);
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 14px 16px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .dev-table td {
+        padding: 6px 0 !important;
+        border: none !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.86rem;
+    }
+    .dev-table td:before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--muted, #64748b);
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    .dev-table td.cell-actions {
+        margin-top: 8px;
+        padding-top: 8px !important;
+        border-top: 1px dashed var(--stroke, #e2e8f0) !important;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+    .dev-table td.cell-actions:before {
+        display: none;
+    }
+}
+
+/* Flatpickr SkillSense Theme Customization */
+.flatpickr-calendar .flatpickr-day.selected,
+.flatpickr-calendar .flatpickr-day.selected:hover {
+    background: var(--primary, #00A86B) !important;
+    border-color: var(--primary, #00A86B) !important;
+}
+.flatpickr-calendar .flatpickr-day:hover {
+    background: rgba(0,168,107,0.12) !important;
+}
+.flatpickr-calendar .numInputWrapper:hover,
+.flatpickr-calendar .numInputWrapper span:hover {
+    background: rgba(0,168,107,0.08) !important;
+}
+.flatpickr-input {
+    cursor: pointer;
+    background-color: #ffffff !important;
+}
+</style>
+
+<section class="section" style="padding:36px 0">
+    <div class="wrap" style="max-width:1120px;margin:0 auto">
+        <!-- Top Title & Quick Refresh -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:18px">
+            <div>
+                <div class="eyebrow">DEVELOPER &amp; ADMIN CONTROL CENTER</div>
+                <h2 class="h-sec" style="margin-bottom:4px">Platform <span class="grad">Dashboard</span></h2>
+                <p class="lead" style="margin:0;font-size:0.9rem">Manage pricing plans, referral campaigns, wallet credits, user access, and audit trail.</p>
+            </div>
+            <div>
+                <button id="refreshDataBtn" class="btn btn-ghost" onclick="refreshAllDevData()" style="padding:8px 16px;display:flex;align-items:center;gap:6px;font-weight:700;font-size:0.84rem;border:1px solid var(--stroke)">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+
+        <!-- API Failure Alert Banner with Retry (Strict No-Fake-Fallback Rule) -->
+        <div id="devStatsErrorBanner" style="display:none;background:rgba(239,68,68,0.08);border:1.5px solid rgba(239,68,68,0.3);color:#b91c1c;padding:12px 18px;border-radius:12px;margin-bottom:22px;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 4px 12px rgba(239,68,68,0.05)">
+            <div style="display:flex;align-items:center;gap:10px;font-size:0.88rem;font-weight:700">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Unable to load dashboard data from authoritative database.
+            </div>
+            <button class="btn btn-ghost" onclick="refreshAllDevData()" style="padding:5px 14px;font-size:0.82rem;font-weight:800;border:1.5px solid currentColor;color:#b91c1c">
+                Retry
+            </button>
+        </div>
+
+        <!-- 6 Balanced Metric KPI Cards (Source of Truth) -->
+        <div class="dev-metrics-grid">
+            <div class="dev-metric-card">
+                <div class="dev-metric-label">Total Users</div>
+                <div class="dev-metric-value" id="kpiUsers">--</div>
+                <div class="dev-metric-sub">Registered student accounts</div>
+            </div>
+            <div class="dev-metric-card">
+                <div class="dev-metric-label">Assessments Completed</div>
+                <div class="dev-metric-value text-cyan" id="kpiAssessments">--</div>
+                <div class="dev-metric-sub">Completed 42-question quizzes</div>
+            </div>
+            <div class="dev-metric-card">
+                <div class="dev-metric-label">Unlocked Reports</div>
+                <div class="dev-metric-value text-emerald" id="kpiUnlocked">--</div>
+                <div class="dev-metric-sub">Permanent full roadmaps</div>
+            </div>
+            <div class="dev-metric-card">
+                <div class="dev-metric-label">Credits Sold</div>
+                <div class="dev-metric-value" id="kpiCreditsSold">--</div>
+                <div class="dev-metric-sub">Granted in purchase orders</div>
+            </div>
+            <div class="dev-metric-card">
+                <div class="dev-metric-label">Total Revenue</div>
+                <div class="dev-metric-value text-emerald" id="kpiRevenue">₹0.00</div>
+                <div class="dev-metric-sub">Verified payment transactions</div>
+            </div>
+            <div class="dev-metric-card">
+                <div class="dev-metric-label">Active Campaigns</div>
+                <div class="dev-metric-value text-cyan" id="kpiCampaigns">--</div>
+                <div class="dev-metric-sub">Live referral and workshop codes</div>
+            </div>
+        </div>
+
+        <!-- Segmented Internal Sub-tabs Navigation -->
+        <div class="dev-tab-nav">
+            <button class="dev-tab-btn active" onclick="switchDevTab('pricing')" id="tab-pricing">Pricing Plans</button>
+            <button class="dev-tab-btn" onclick="switchDevTab('campaigns')" id="tab-campaigns">Campaign Codes</button>
+            <button class="dev-tab-btn" onclick="switchDevTab('credits')" id="tab-credits">Credit Adjustment</button>
+            <button class="dev-tab-btn" onclick="switchDevTab('users')" id="tab-users">User Registry</button>
+            <button class="dev-tab-btn" onclick="switchDevTab('devaccounts')" id="tab-devaccounts" style="display:none">Developer Accounts</button>
+            <button class="dev-tab-btn" onclick="switchDevTab('auditlog')" id="tab-auditlog" style="display:none">Audit Log</button>
+        </div>
+
+        <!-- TAB 1: PRICING PLANS MANAGER -->
+        <div id="dev-sec-pricing" class="dev-section">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;max-width:1080px;margin-left:auto;margin-right:auto">
+                <div>
+                    <h3 style="font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:3px">Dynamic Pricing Plans</h3>
+                    <p style="font-size:0.85rem;color:var(--muted);margin:0">Change plan status directly via dropdown or click Edit for pricing details.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openNewPlanModal()" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:8px 16px;font-size:0.85rem">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create New Plan
+                </button>
+            </div>
+            <div class="dev-table-container">
+                <table class="dev-table">
+                    <thead>
+                        <tr>
+                            <th style="width:34%">Plan Name</th>
+                            <th style="width:16%">Type</th>
+                            <th style="width:14%">Price (INR)</th>
+                            <th style="width:10%">Credits</th>
+                            <th style="width:14%">Status</th>
+                            <th style="text-align:right;width:12%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="plansTableBody">
+                        <tr><td colspan="6" style="padding:24px;text-align:center;color:var(--muted)">Loading plans...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 2: CAMPAIGN CODES MANAGER -->
+        <div id="dev-sec-campaigns" class="dev-section" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;max-width:1080px;margin-left:auto;margin-right:auto">
+                <div>
+                    <h3 style="font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:3px">Campaign &amp; Referral Codes</h3>
+                    <p style="font-size:0.85rem;color:var(--muted);margin:0">Change manual status via dropdown or click Edit for full campaign configuration.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openNewCampaignModal()" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:8px 16px;font-size:0.85rem">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Create Campaign Code
+                </button>
+            </div>
+            <div class="dev-table-container">
+                <table class="dev-table">
+                    <thead>
+                        <tr>
+                            <th style="width:14%">Code</th>
+                            <th style="width:22%">Campaign Name</th>
+                            <th style="width:12%">Benefit</th>
+                            <th style="width:18%">Validity Window</th>
+                            <th style="width:10%">Used / Max</th>
+                            <th style="width:7%">1-Use</th>
+                            <th style="width:14%">Status</th>
+                            <th style="text-align:right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaignsTableBody">
+                        <tr><td colspan="8" style="padding:24px;text-align:center;color:var(--muted)">Loading campaign codes...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 3: MANUAL CREDIT ADJUSTMENT -->
+        <div id="dev-sec-credits" class="dev-section" style="display:none">
+            <div class="glass" style="padding:28px;border-radius:18px;max-width:540px;margin:0 auto;border:1px solid var(--stroke);background:#ffffff">
+                <h3 style="margin-bottom:6px;font-size:1.25rem;font-weight:800;color:var(--ink)">Manual Credit Adjustment (Audited)</h3>
+                <p style="font-size:0.86rem;color:var(--muted);margin-bottom:20px">Adjust a student wallet balance with an audit trail logged to the database.</p>
+                <form onsubmit="handleManualCreditAdjustment(event)">
+                    <div style="margin-bottom:14px">
+                        <label class="form-label">User Email *</label>
+                        <input type="email" id="adjEmail" required placeholder="student@example.com" class="form-control-input">
+                    </div>
+                    <div style="margin-bottom:14px">
+                        <label class="form-label">Credit Amount (+ to add, - to deduct) *</label>
+                        <input type="number" id="adjAmount" required placeholder="e.g. 1 or -1" class="form-control-input">
+                    </div>
+                    <div style="margin-bottom:20px">
+                        <label class="form-label">Audit Reason / Description *</label>
+                        <input type="text" id="adjReason" required placeholder="e.g., Workshop attendee manual grant / Support adjustment" class="form-control-input">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px 18px;font-weight:800;font-size:0.9rem">Apply Credit Adjustment →</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- TAB 4: USER REGISTRY -->
+        <div id="dev-sec-users" class="dev-section" style="display:none">
+            <h3 style="margin-bottom:16px;font-size:1.25rem;font-weight:800;color:var(--ink);max-width:1080px;margin-left:auto;margin-right:auto">User Accounts Registry</h3>
+            <div class="dev-table-container">
+                <table class="dev-table">
+                    <thead>
+                        <tr>
+                            <th style="width:32%">User</th>
+                            <th style="width:15%">Role</th>
+                            <th style="width:15%">Credits</th>
+                            <th style="width:20%">Assessments</th>
+                            <th style="width:18%">Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="5" style="padding:24px;text-align:center;color:var(--muted)">Loading user registry...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 5: DEVELOPER ACCOUNTS -->
+        <div id="dev-sec-devaccounts" class="dev-section" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;max-width:1080px;margin-left:auto;margin-right:auto">
+                <div>
+                    <h3 style="font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:3px">Developer Accounts</h3>
+                    <p style="font-size:0.85rem;color:var(--muted);margin:0">Manage developer and admin access. All actions are audit-logged.</p>
+                </div>
+                <button class="btn btn-primary" id="addDevBtn" onclick="openInviteDevModal()" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;padding:8px 16px;font-size:0.85rem">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    + Add Developer
+                </button>
+            </div>
+            <div class="dev-table-container">
+                <table class="dev-table">
+                    <thead>
+                        <tr>
+                            <th style="width:26%">Name / Email</th>
+                            <th style="width:15%">Role</th>
+                            <th style="width:14%">Status</th>
+                            <th style="width:15%">Last Login</th>
+                            <th style="width:15%">Manage Devs</th>
+                            <th style="text-align:right;width:15%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devAccountsTableBody">
+                        <tr><td colspan="6" style="padding:24px;text-align:center;color:var(--muted)">Loading developer accounts...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 6: AUDIT LOG -->
+        <div id="dev-sec-auditlog" class="dev-section" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;max-width:1080px;margin-left:auto;margin-right:auto">
+                <div>
+                    <h3 style="font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:3px">Security &amp; Management Audit Log</h3>
+                    <p style="font-size:0.85rem;color:var(--muted);margin:0">Immutable log of administrative actions, developer invitations, and status changes.</p>
+                </div>
+                <button class="btn btn-ghost" onclick="loadAuditLog()" style="padding:6px 14px;border:1px solid var(--stroke);font-weight:700;font-size:0.82rem">Refresh Log</button>
+            </div>
+            <div class="dev-table-container">
+                <table class="dev-table">
+                    <thead>
+                        <tr>
+                            <th style="width:18%">Timestamp</th>
+                            <th style="width:22%">Actor</th>
+                            <th style="width:20%">Action</th>
+                            <th style="width:20%">Target User</th>
+                            <th style="width:20%">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditLogTableBody">
+                        <tr><td colspan="5" style="padding:24px;text-align:center;color:var(--muted)">Loading audit log...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODAL: CREATE / EDIT PRICING PLAN -->
+<div id="planModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'planModal')">
+    <div class="ss-modal-card">
+        <div class="ss-modal-header">
+            <h3 id="planModalTitle" class="ss-modal-title">Pricing Plan</h3>
+            <button type="button" class="ss-modal-close-btn" onclick="closePlanModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form onsubmit="savePlan(event)" class="ss-modal-form">
+            <div class="ss-modal-body">
+                <input type="hidden" id="planId">
+                <div style="margin-bottom:14px">
+                    <label class="form-label">Plan Name *</label>
+                    <input type="text" id="planName" required placeholder="e.g. Single Assessment" class="form-control-input">
+                </div>
+                <div style="margin-bottom:14px">
+                    <label class="form-label">Price (INR) *</label>
+                    <input type="number" step="0.01" id="planPrice" required min="0" placeholder="19" class="form-control-input">
+                </div>
+                <div style="margin-bottom:14px">
+                    <label class="form-label">Credits Granted *</label>
+                    <input type="number" id="planCredits" required min="1" placeholder="1" class="form-control-input">
+                </div>
+                <div>
+                    <label class="form-label">Active Status</label>
+                    <select id="planActive" class="form-control-input">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="ss-modal-footer">
+                <button type="button" class="btn btn-ghost" style="flex:0 0 40%;justify-content:center;border:1px solid var(--stroke)" onclick="closePlanModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;font-weight:800">Save Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: SAFE DELETE PRICING PLAN CONFIRMATION -->
+<div id="deletePlanModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'deletePlanModal')">
+    <div class="ss-modal-card" style="max-width:440px">
+        <div class="ss-modal-header">
+            <h3 class="ss-modal-title" style="color:var(--coral, #ef4444)">Delete Pricing Plan?</h3>
+            <button type="button" class="ss-modal-close-btn" onclick="closeDeletePlanModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ss-modal-body">
+            <p style="font-size:0.88rem;color:var(--muted);line-height:1.6;margin:0">
+                Are you sure you want to delete <strong id="deletePlanNameDisplay" style="color:var(--ink)"></strong>?<br><br>
+                <span style="font-size:0.82rem">If this plan has historical transactions, it will be safely archived/deactivated.</span>
+            </p>
+            <input type="hidden" id="deletePlanId">
+        </div>
+        <div class="ss-modal-footer">
+            <button type="button" class="btn btn-ghost" onclick="closeDeletePlanModal()" style="flex:0 0 40%;justify-content:center;border:1px solid var(--stroke)">Cancel</button>
+            <button type="button" id="confirmDeletePlanBtn" class="btn" onclick="confirmDeletePlanExecute()" style="flex:1;justify-content:center;font-weight:800;background:var(--coral, #ef4444);color:#ffffff">Delete Plan</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: CREATE CAMPAIGN CODE -->
+<div id="campaignModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'campaignModal')">
+    <div class="ss-modal-card">
+        <div class="ss-modal-header">
+            <h3 class="ss-modal-title">Create Campaign Referral Code</h3>
+            <button type="button" class="ss-modal-close-btn" onclick="closeCampaignModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form onsubmit="saveCampaign(event)" class="ss-modal-form">
+            <div class="ss-modal-body">
+                <!-- Group 1: Basic Information -->
+                <div class="form-group-box">
+                    <div class="form-group-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Basic Information
+                    </div>
+                    <div style="margin-bottom:12px">
+                        <label class="form-label">Referral Code *</label>
+                        <input type="text" id="cmpCode" required placeholder="e.g. SCHOOL20" class="form-control-input" style="text-transform:uppercase;font-weight:800;letter-spacing:1px">
+                    </div>
+                    <div>
+                        <label class="form-label">Campaign Name *</label>
+                        <input type="text" id="cmpName" required placeholder="e.g. Partner School 20% Discount" class="form-control-input">
+                    </div>
+                </div>
+
+                <!-- Group 2: Validity Window (Flatpickr) -->
+                <div class="form-group-box">
+                    <div class="form-group-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Validity Window
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                            <label class="form-label">Valid From *</label>
+                            <input type="text" id="cmpFrom" required class="form-control-input flatpickr-input" placeholder="Select date & time" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label">Valid Until *</label>
+                            <input type="text" id="cmpUntil" required class="form-control-input flatpickr-input" placeholder="Select date & time" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 3: Discount & Benefits -->
+                <div class="form-group-box">
+                    <div class="form-group-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                        Discount &amp; Benefits
+                    </div>
+                    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px">
+                        <div>
+                            <label class="form-label">Discount Type *</label>
+                            <select id="cmpDiscountType" class="form-control-input" onchange="onDiscountTypeChange(this.value, 'cmp')">
+                                <option value="PERCENTAGE">Percentage</option>
+                                <option value="FIXED">Fixed Amount</option>
+                                <option value="FREE_CREDITS">Free Credits</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" id="cmpValueLabel">Discount (%) *</label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="cmpValue" value="20" step="0.1" required class="form-control-input">
+                                <span class="input-suffix-tag" id="cmpValueSuffix">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 4: Usage Controls -->
+                <div class="form-group-box">
+                    <div class="form-group-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Usage Limits
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                            <label class="form-label">Max Total Uses *</label>
+                            <input type="number" id="cmpMax" value="300" required min="1" class="form-control-input">
+                        </div>
+                        <div>
+                            <label class="form-label">One Use Per Account</label>
+                            <select id="cmpOneUse" class="form-control-input">
+                                <option value="1">Yes (1 per student)</option>
+                                <option value="0">No (Multiple uses)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ss-modal-footer">
+                <button type="button" class="btn btn-ghost" style="flex:0 0 40%;justify-content:center;border:1px solid var(--stroke)" onclick="closeCampaignModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;font-weight:800">Create Campaign →</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: EDIT CAMPAIGN CODE -->
+<div id="editCampaignModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'editCampaignModal')">
+    <div class="ss-modal-card">
+        <div class="ss-modal-header">
+            <h3 class="ss-modal-title">Edit Campaign: <span id="editCmpCodeDisplay" style="color:var(--primary, #00A86B)"></span></h3>
+            <button type="button" class="ss-modal-close-btn" onclick="closeEditCampaignModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form onsubmit="saveEditCampaign(event)" class="ss-modal-form">
+            <div class="ss-modal-body">
+                <input type="hidden" id="editCmpId">
+
+                <!-- Group 1: Basic Information -->
+                <div class="form-group-box">
+                    <div class="form-group-header">Basic Information</div>
+                    <div>
+                        <label class="form-label">Campaign Name *</label>
+                        <input type="text" id="editCmpName" required class="form-control-input">
+                    </div>
+                </div>
+
+                <!-- Group 2: Validity Window (Flatpickr) -->
+                <div class="form-group-box">
+                    <div class="form-group-header">Validity Window</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                            <label class="form-label">Valid From *</label>
+                            <input type="text" id="editCmpFrom" required class="form-control-input flatpickr-input" placeholder="Select date & time" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label">Valid Until *</label>
+                            <input type="text" id="editCmpUntil" required class="form-control-input flatpickr-input" placeholder="Select date & time" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 3: Discount & Benefits -->
+                <div class="form-group-box">
+                    <div class="form-group-header">Discount &amp; Benefits</div>
+                    <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px">
+                        <div>
+                            <label class="form-label">Discount Type *</label>
+                            <select id="editCmpDiscountType" class="form-control-input" onchange="onDiscountTypeChange(this.value, 'editCmp')">
+                                <option value="PERCENTAGE">Percentage</option>
+                                <option value="FIXED">Fixed Amount</option>
+                                <option value="FREE_CREDITS">Free Credits</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" id="editCmpValueLabel">Discount (%) *</label>
+                            <div class="input-with-suffix">
+                                <input type="number" id="editCmpValue" step="0.1" required class="form-control-input">
+                                <span class="input-suffix-tag" id="editCmpValueSuffix">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 4: Usage Limits -->
+                <div class="form-group-box">
+                    <div class="form-group-header">Usage Limits &amp; Rules</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                            <label class="form-label">Max Uses *</label>
+                            <input type="number" id="editCmpMax" required min="1" class="form-control-input">
+                        </div>
+                        <div>
+                            <label class="form-label">One Use Per Account</label>
+                            <select id="editCmpOneUse" class="form-control-input">
+                                <option value="1">Yes (1 per student)</option>
+                                <option value="0">No (Multiple uses)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="ss-modal-footer">
+                <button type="button" class="btn btn-ghost" style="flex:0 0 40%;justify-content:center;border:1px solid var(--stroke)" onclick="closeEditCampaignModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;font-weight:800">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: VIEW CAMPAIGN REDEMPTIONS -->
+<div id="redemptionsModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'redemptionsModal')">
+    <div class="ss-modal-card" style="max-width:680px">
+        <div class="ss-modal-header">
+            <div>
+                <h3 class="ss-modal-title">Redemptions: <span id="rdmModalCodeDisplay" style="color:var(--primary, #00A86B)"></span></h3>
+                <div style="font-size:0.82rem;color:var(--muted);margin-top:2px" id="rdmModalCampaignDesc"></div>
+            </div>
+            <button class="ss-modal-close-btn" onclick="closeRedemptionsModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ss-modal-body">
+            <table class="dev-table">
+                <thead>
+                    <tr>
+                        <th style="width:35%">Student</th>
+                        <th style="width:35%">Benefit / Discount</th>
+                        <th style="width:30%">Redeemed At</th>
+                    </tr>
+                </thead>
+                <tbody id="rdmTableBody">
+                    <tr><td colspan="3" style="padding:24px;text-align:center;color:var(--muted)">Loading redemptions...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="ss-modal-footer">
+            <button type="button" class="btn btn-ghost" style="width:100%;justify-content:center;border:1px solid var(--stroke)" onclick="closeRedemptionsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: INVITE DEVELOPER -->
+<div id="inviteDevModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'inviteDevModal')">
+    <div class="ss-modal-card" style="max-width:460px">
+        <div class="ss-modal-header">
+            <h3 class="ss-modal-title">Invite Developer</h3>
+            <button type="button" class="ss-modal-close-btn" onclick="closeInviteDevModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form onsubmit="sendInvitation(event)" class="ss-modal-form">
+            <div class="ss-modal-body">
+                <p style="font-size:0.85rem;color:var(--muted);margin-bottom:18px;line-height:1.5">
+                    A one-time account setup link (valid 24 hours) will be sent to the developer email. No password is included in the email.
+                </p>
+                <div style="margin-bottom:14px">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" id="inviteFullName" required placeholder="Developer full name" class="form-control-input">
+                </div>
+                <div style="margin-bottom:14px">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" id="inviteEmail" required placeholder="developer@example.com" class="form-control-input">
+                </div>
+                <div id="inviteRoleField">
+                    <label class="form-label">Role *</label>
+                    <select id="inviteRole" class="form-control-input">
+                        <option value="DEVELOPER">Developer</option>
+                        <option value="SUPER_ADMIN" id="optSuperAdmin" style="display:none">Super Admin</option>
+                    </select>
+                </div>
+                <div id="inviteAlertBox" style="display:none;margin-top:14px;padding:10px 14px;border-radius:8px;font-size:0.84rem;font-weight:600"></div>
+            </div>
+            <div class="ss-modal-footer">
+                <button type="button" class="btn btn-ghost" style="flex:0 0 40%;justify-content:center;border:1px solid var(--stroke)" onclick="closeInviteDevModal()">Cancel</button>
+                <button type="submit" id="sendInviteBtn" class="btn btn-primary" style="flex:1;justify-content:center;font-weight:800">Send Invitation →</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: CONFIRM DELETE DEVELOPER -->
+<div id="deleteDevModal" class="ss-modal-overlay" onclick="handleOverlayClick(event, 'deleteDevModal')">
+    <div class="ss-modal-card" style="max-width:440px">
+        <div class="ss-modal-header">
+            <h3 class="ss-modal-title" style="color:var(--coral, #ef4444);display:flex;align-items:center;gap:8px">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Delete Developer Account
+            </h3>
+            <button type="button" class="ss-modal-close-btn" onclick="closeDeleteDevModal()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ss-modal-body" style="padding-top:16px">
+            <input type="hidden" id="deleteDevId">
+            <p style="font-size:0.95rem;color:var(--ink);margin-bottom:14px;line-height:1.5">
+                Are you sure you want to delete this <strong id="deleteDevRoleDisplay" style="color:var(--primary, #00A86B)">Developer</strong> account (<strong id="deleteDevNameDisplay" style="color:var(--ink)"></strong>)?
+            </p>
+            <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;color:#92400e;font-size:0.84rem;line-height:1.45;margin-bottom:8px">
+                <strong>Preservation Notice:</strong> All created functionality like pricing models, referral campaign codes, and transaction records will <strong>not</strong> be deleted and will remain active on the platform.
+            </div>
+        </div>
+        <div class="ss-modal-footer">
+            <button type="button" class="btn btn-ghost" style="flex:0 0 40%;justify-content:center;border:1px solid var(--stroke)" onclick="closeDeleteDevModal()">Cancel</button>
+            <button type="button" id="confirmDeleteDevBtn" class="btn btn-primary" style="flex:1;justify-content:center;background:var(--coral, #ef4444);border-color:var(--coral, #ef4444);color:#fff;font-weight:800" onclick="confirmDeleteDevExecute()">Delete Account</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let allCampaigns = [];
+let allPlans = [];
+let callerRole = 'DEVELOPER';
+let callerCanManage = false;
+let currentUserId = '';
+const inFlightCampaignStatus = new Set();
+const inFlightPlanStatus = new Set();
+const inFlightDevStatus = new Set();
+
+function formatINR(val) {
+    const num = parseFloat(val) || 0;
+    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Modal Helpers (with body scroll lock)
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+}
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+}
+function handleOverlayClick(e, id) {
+    if (e.target === e.currentTarget) closeModal(id);
+}
+
+function closePlanModal() { closeModal('planModal'); }
+function closeDeletePlanModal() { closeModal('deletePlanModal'); }
+function closeCampaignModal() { closeModal('campaignModal'); }
+function closeEditCampaignModal() { closeModal('editCampaignModal'); }
+function closeRedemptionsModal() { closeModal('redemptionsModal'); }
+function closeInviteDevModal() { closeModal('inviteDevModal'); }
+
+function onDiscountTypeChange(type, prefix) {
+    const label = document.getElementById(`${prefix}ValueLabel`);
+    const suffix = document.getElementById(`${prefix}ValueSuffix`);
+    const input = document.getElementById(`${prefix}Value`);
+    if (!label || !suffix || !input) return;
+
+    if (type === 'PERCENTAGE') {
+        label.innerText = 'Discount (%) *';
+        suffix.innerText = '%';
+        input.placeholder = '20';
+        input.step = '0.1';
+        input.max = '100';
+    } else if (type === 'FIXED') {
+        label.innerText = 'Discount (₹) *';
+        suffix.innerText = '₹';
+        input.placeholder = '10';
+        input.step = '0.01';
+        input.removeAttribute('max');
+    } else if (type === 'FREE_CREDITS') {
+        label.innerText = 'Credits Granted *';
+        suffix.innerText = 'Credits';
+        input.placeholder = '1';
+        input.step = '1';
+        input.removeAttribute('max');
+    }
+}
+
+// Server-Authoritative Campaign Effective Status Subtext
+function getCampaignEffectiveSubtext(c) {
+    const now = new Date();
+    const from = new Date(c.valid_from);
+    const until = new Date(c.valid_until);
+    const isManualActive = (c.is_active === 1 || c.is_active === '1' || c.is_active === true);
+
+    if (!isManualActive) {
+        return '';
+    }
+    if (now < from) {
+        return '<span class="status-subtext status-scheduled">Scheduled</span>';
+    }
+    if (now > until) {
+        return '<span class="status-subtext status-expired">Expired</span>';
+    }
+    if (c.max_uses && c.used_count >= c.max_uses) {
+        return '<span class="status-subtext status-limit">Limit Reached</span>';
+    }
+    return '';
+}
+
+let currentDevTab = 'pricing';
+
+function switchDevTab(tab) {
+    currentDevTab = tab;
+    document.querySelectorAll('.dev-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.dev-section').forEach(s => s.style.display = 'none');
+    
+    const targetTabBtn = document.getElementById(`tab-${tab}`);
+    const targetSec = document.getElementById(`dev-sec-${tab}`);
+    if (targetTabBtn) targetTabBtn.classList.add('active');
+    if (targetSec) targetSec.style.display = 'block';
+
+    if (tab === 'pricing') loadPlans();
+    if (tab === 'campaigns') loadCampaigns();
+    if (tab === 'users') loadUsers();
+    if (tab === 'devaccounts') loadDeveloperAccounts();
+    if (tab === 'auditlog') loadAuditLog();
+}
+
+async function refreshAllDevData() {
+    const btn = document.getElementById('refreshDataBtn');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-inline" style="width:13px;height:13px;border-width:2px;margin-right:6px"></span> Refreshing...`;
+    }
+    try {
+        await loadDevStats();
+        if (currentDevTab === 'pricing') await loadPlans();
+        else if (currentDevTab === 'campaigns') await loadCampaigns();
+        else if (currentDevTab === 'users') await loadUsers();
+        else if (currentDevTab === 'devaccounts') await loadDeveloperAccounts();
+        else if (currentDevTab === 'auditlog') await loadAuditLog();
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// KPI STATS & INITIAL LOAD (Real Database Queries - No Fake Fallbacks)
+// -------------------------------------------------------------
+async function loadDevStats() {
+    const errorBanner = document.getElementById('devStatsErrorBanner');
+    if (errorBanner) errorBanner.style.display = 'none';
+
+    try {
+        const res = await fetch('/api/developer/stats');
+        if (res.status === 403 || res.status === 401) {
+            alert('Developer access restricted.');
+            window.location.href = '/login?next=/developer';
+            return;
+        }
+        if (!res.ok) {
+            throw new Error(`Server returned HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        if (typeof data.total_users !== 'undefined') document.getElementById('kpiUsers').innerText = data.total_users;
+        if (typeof data.total_assessments !== 'undefined') document.getElementById('kpiAssessments').innerText = data.total_assessments;
+        if (typeof data.unlocked_assessments !== 'undefined') document.getElementById('kpiUnlocked').innerText = data.unlocked_assessments;
+        if (typeof data.credits_sold !== 'undefined') document.getElementById('kpiCreditsSold').innerText = data.credits_sold;
+        if (typeof data.total_revenue !== 'undefined') {
+            document.getElementById('kpiRevenue').innerText = data.total_revenue_formatted || formatINR(data.total_revenue);
+        }
+        if (typeof data.active_campaigns !== 'undefined') document.getElementById('kpiCampaigns').innerText = data.active_campaigns;
+
+        callerRole = data.caller_role || 'DEVELOPER';
+        callerCanManage = !!data.caller_can_manage;
+
+        const tabDevAccounts = document.getElementById('tab-devaccounts');
+        const tabAuditLog = document.getElementById('tab-auditlog');
+        if (tabDevAccounts) tabDevAccounts.style.display = callerCanManage ? '' : 'none';
+        if (tabAuditLog) tabAuditLog.style.display = callerCanManage ? '' : 'none';
+
+        const optSuperAdmin = document.getElementById('optSuperAdmin');
+        if (optSuperAdmin) {
+            optSuperAdmin.style.display = (callerRole === 'SUPER_ADMIN') ? '' : 'none';
+        }
+
+        if (currentDevTab === 'pricing') {
+            loadPlans();
+        }
+    } catch (err) {
+        console.error('Failed to load developer stats from source of truth:', err);
+        if (errorBanner) {
+            errorBanner.style.display = 'flex';
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// PRICING PLANS & COMPACT STATUS DROPDOWN (NO DUPLICATE BADGE)
+// -------------------------------------------------------------
+async function loadPlans() {
+    const tbody = document.getElementById('plansTableBody');
+    try {
+        const res = await fetch('/api/developer/plans');
+        const data = await res.json();
+        allPlans = data.plans || [];
+
+        if (allPlans.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="padding:32px 20px;text-align:center;color:var(--muted)">
+                        <div style="font-weight:700;font-size:1rem;color:var(--ink);margin-bottom:4px">No pricing plans configured.</div>
+                        <p style="font-size:0.85rem;margin-bottom:14px">Create a pricing plan to offer assessment unlock credits to students.</p>
+                        <button class="btn btn-primary" onclick="openNewPlanModal()">+ Create New Plan</button>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        allPlans.forEach(p => {
+            const escapedName = (p.name || '').replace(/'/g, "\\'");
+            const isPlanActive = (p.is_active === 1 || p.is_active === '1' || p.is_active === true);
+            html += `
+                <tr>
+                    <td data-label="Plan Name" style="font-weight:700;color:var(--ink)">${p.name}</td>
+                    <td data-label="Type" style="font-size:0.82rem;color:var(--muted)">${p.type}</td>
+                    <td data-label="Price" style="font-weight:800;color:var(--primary, #00A86B)">${formatINR(p.price)}</td>
+                    <td data-label="Credits" style="font-weight:700">${p.credits}</td>
+                    <td data-label="Status">
+                        <div class="status-select-wrap">
+                            <select class="status-select ${isPlanActive ? 'is-active' : 'is-inactive'}" id="plan-select-${p.id}" onchange="changePlanStatus('${p.id}', this.value, this)">
+                                <option value="1" ${isPlanActive ? 'selected' : ''}>Active</option>
+                                <option value="0" ${!isPlanActive ? 'selected' : ''}>Inactive</option>
+                            </select>
+                            <span id="spinner-plan-${p.id}" style="display:none"><span class="spinner-inline"></span></span>
+                        </div>
+                    </td>
+                    <td data-label="Actions" class="cell-actions" style="text-align:right">
+                        <div style="display:flex;gap:6px;justify-content:flex-end">
+                            <button class="btn-sm-action" onclick="editPlan('${p.id}', '${escapedName}', ${p.price}, ${p.credits}, ${isPlanActive ? 1 : 0})">Edit</button>
+                            <button class="btn-sm-action btn-sm-delete" onclick="openDeletePlanModal('${p.id}', '${escapedName}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Failed loading plans.</td></tr>`;
+    }
+}
+
+async function changePlanStatus(planId, newStatusVal, selectEl) {
+    if (inFlightPlanStatus.has(planId)) return;
+    inFlightPlanStatus.add(planId);
+
+    const spinner = document.getElementById(`spinner-plan-${planId}`);
+    if (spinner) spinner.style.display = 'inline-block';
+    selectEl.disabled = true;
+
+    const newActiveState = parseInt(newStatusVal);
+    const prevActiveState = newActiveState === 1 ? 0 : 1;
+
+    try {
+        const res = await fetch(`/api/developer/plans/${planId}/toggle`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ is_active: newActiveState })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+            const plan = allPlans.find(p => p.id === planId);
+            if (plan) plan.is_active = newActiveState;
+            
+            // Update select styling class
+            selectEl.className = `status-select ${newActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+            loadDevStats();
+        } else {
+            selectEl.value = prevActiveState.toString();
+            selectEl.className = `status-select ${prevActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+            alert(data.error || 'Failed to update pricing plan status.');
+        }
+    } catch (err) {
+        selectEl.value = prevActiveState.toString();
+        selectEl.className = `status-select ${prevActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+        alert('Network error while updating pricing plan status.');
+    } finally {
+        inFlightPlanStatus.delete(planId);
+        selectEl.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+function openNewPlanModal() {
+    document.getElementById('planId').value = '';
+    document.getElementById('planName').value = '';
+    document.getElementById('planPrice').value = '';
+    document.getElementById('planCredits').value = '1';
+    document.getElementById('planActive').value = '1';
+    document.getElementById('planModalTitle').innerText = 'Create Pricing Plan';
+    openModal('planModal');
+}
+
+function editPlan(id, name, price, credits, active) {
+    document.getElementById('planId').value = id;
+    document.getElementById('planName').value = name;
+    document.getElementById('planPrice').value = price;
+    document.getElementById('planCredits').value = credits;
+    document.getElementById('planActive').value = active ? '1' : '0';
+    document.getElementById('planModalTitle').innerText = 'Edit Pricing Plan';
+    openModal('planModal');
+}
+
+async function savePlan(e) {
+    e.preventDefault();
+    const id = document.getElementById('planId').value;
+    const name = document.getElementById('planName').value.trim();
+    const price = parseFloat(document.getElementById('planPrice').value);
+    const credits = parseInt(document.getElementById('planCredits').value);
+    const is_active = parseInt(document.getElementById('planActive').value);
+
+    if (isNaN(price) || price < 0) {
+        alert('Please enter a valid non-negative price.');
+        return;
+    }
+    if (isNaN(credits) || credits < 1) {
+        alert('Credits granted must be at least 1.');
+        return;
+    }
+
+    const url = id ? `/api/developer/plans/${id}` : '/api/developer/plans';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+        method,
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name, price, credits, is_active, type: 'CREDIT_PACK'})
+    });
+    if (res.ok) {
+        closePlanModal();
+        loadPlans();
+    } else {
+        const err = await res.json();
+        alert(err.error || 'Failed saving plan.');
+    }
+}
+
+function openDeletePlanModal(id, name) {
+    document.getElementById('deletePlanId').value = id;
+    document.getElementById('deletePlanNameDisplay').innerText = `"${name}"`;
+    openModal('deletePlanModal');
+}
+
+async function confirmDeletePlanExecute() {
+    const planId = document.getElementById('deletePlanId').value;
+    const btn = document.getElementById('confirmDeletePlanBtn');
+    btn.disabled = true;
+    btn.innerText = 'Deleting...';
+
+    try {
+        const res = await fetch(`/api/developer/plans/${planId}`, { method: 'DELETE' });
+        const data = await res.json();
+        closeDeletePlanModal();
+        if (res.ok && data.status === 'success') {
+            loadPlans();
+        } else {
+            alert(data.error || 'Failed to delete pricing plan.');
+        }
+    } catch (err) {
+        alert('Error processing plan deletion.');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'Delete Plan';
+    }
+}
+
+// -------------------------------------------------------------
+// CAMPAIGN CODES & COMPACT STATUS DROPDOWN (NO DUPLICATE BADGE)
+// -------------------------------------------------------------
+async function loadCampaigns() {
+    const tbody = document.getElementById('campaignsTableBody');
+    try {
+        const res = await fetch('/api/developer/campaigns');
+        const data = await res.json();
+        allCampaigns = data.campaigns || [];
+        
+        if (allCampaigns.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="padding:32px;text-align:center;color:var(--muted)">No campaign codes found. Click <strong>Create Campaign Code</strong> above.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        allCampaigns.forEach(c => {
+            let discountDesc = '';
+            const dType = c.discount_type || c.benefit_type;
+            const dVal = c.discount_value !== undefined ? c.discount_value : c.benefit_value;
+            if (dType === 'PERCENTAGE') discountDesc = `${dVal}% OFF`;
+            else if (dType === 'FIXED') discountDesc = `${formatINR(dVal)} OFF`;
+            else discountDesc = `${dVal} Free Credit(s)`;
+
+            const isOneUse = (c.one_use_per_user === 1 || c.one_use_per_user === '1');
+            const isManualActive = (c.is_active === 1 || c.is_active === '1' || c.is_active === true);
+            const effSubtext = getCampaignEffectiveSubtext(c);
+
+            html += `
+                <tr>
+                    <td data-label="Code" style="font-weight:800;color:var(--primary, #00A86B);letter-spacing:0.6px">${c.code}</td>
+                    <td data-label="Campaign" style="font-weight:600;color:var(--ink)">${c.campaign_name}</td>
+                    <td data-label="Benefit" style="font-weight:700;color:var(--primary, #00A86B)">${discountDesc}</td>
+                    <td data-label="Validity" style="font-size:0.82rem;color:var(--muted)">${new Date(c.valid_from).toLocaleDateString()} – ${new Date(c.valid_until).toLocaleDateString()}</td>
+                    <td data-label="Usage" style="font-weight:700">${c.used_count} / ${c.max_uses}</td>
+                    <td data-label="1-Use" style="font-size:0.82rem">${isOneUse ? 'Yes' : 'No'}</td>
+                    <td data-label="Status">
+                        <div class="status-select-wrap">
+                            <select class="status-select ${isManualActive ? 'is-active' : 'is-inactive'}" id="status-select-${c.id}" onchange="changeCampaignStatus('${c.id}', this.value, this)">
+                                <option value="1" ${isManualActive ? 'selected' : ''}>Active</option>
+                                <option value="0" ${!isManualActive ? 'selected' : ''}>Inactive</option>
+                            </select>
+                            <span id="spinner-cmp-${c.id}" style="display:none"><span class="spinner-inline"></span></span>
+                            <div id="subtext-cmp-${c.id}">${effSubtext}</div>
+                        </div>
+                    </td>
+                    <td data-label="Actions" class="cell-actions" style="text-align:right">
+                        <div style="display:flex;gap:6px;justify-content:flex-end">
+                            <button class="btn-sm-action" onclick="openEditCampaignModal('${c.id}')">Edit</button>
+                            <button class="btn-sm-action" onclick="viewRedemptions('${c.id}')">Redemptions</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Failed loading campaigns.</td></tr>`;
+    }
+}
+
+async function changeCampaignStatus(id, newStatusVal, selectEl) {
+    if (inFlightCampaignStatus.has(id)) return;
+    inFlightCampaignStatus.add(id);
+
+    const spinner = document.getElementById(`spinner-cmp-${id}`);
+    if (spinner) spinner.style.display = 'inline-block';
+    selectEl.disabled = true;
+
+    const newActiveState = parseInt(newStatusVal);
+    const prevActiveState = newActiveState === 1 ? 0 : 1;
+
+    try {
+        const res = await fetch(`/api/developer/campaigns/${id}/toggle`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ is_active: newActiveState })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+            const cmp = allCampaigns.find(c => c.id === id);
+            if (cmp) {
+                cmp.is_active = newActiveState;
+                selectEl.className = `status-select ${newActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+                const subtextEl = document.getElementById(`subtext-cmp-${id}`);
+                if (subtextEl) {
+                    subtextEl.innerHTML = getCampaignEffectiveSubtext(cmp);
+                }
+            }
+            loadDevStats();
+        } else {
+            selectEl.value = prevActiveState.toString();
+            selectEl.className = `status-select ${prevActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+            alert(data.error || 'Failed to update campaign status.');
+        }
+    } catch (err) {
+        selectEl.value = prevActiveState.toString();
+        selectEl.className = `status-select ${prevActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+        alert('Network error while updating campaign status.');
+    } finally {
+        inFlightCampaignStatus.delete(id);
+        selectEl.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+function openNewCampaignModal() {
+    const now = new Date();
+    const future = new Date(now.getTime() + 30*24*60*60*1000);
+    document.getElementById('cmpCode').value = '';
+    document.getElementById('cmpName').value = '';
+    if (window._fpCmpFrom) window._fpCmpFrom.setDate(now, true);
+    if (window._fpCmpUntil) window._fpCmpUntil.setDate(future, true);
+    document.getElementById('cmpDiscountType').value = 'PERCENTAGE';
+    onDiscountTypeChange('PERCENTAGE', 'cmp');
+    document.getElementById('cmpValue').value = '20';
+    document.getElementById('cmpMax').value = '300';
+    document.getElementById('cmpOneUse').value = '1';
+    openModal('campaignModal');
+}
+
+async function saveCampaign(e) {
+    e.preventDefault();
+    const code = document.getElementById('cmpCode').value.trim().toUpperCase();
+    const campaign_name = document.getElementById('cmpName').value.trim();
+    const fromRaw = document.getElementById('cmpFrom').value;
+    const untilRaw = document.getElementById('cmpUntil').value;
+    const valid_from = fromRaw ? new Date(fromRaw).toISOString() : null;
+    const valid_until = untilRaw ? new Date(untilRaw).toISOString() : null;
+    if (!valid_from || !valid_until) { alert('Please select valid start and end dates.'); return; }
+    const discount_type = document.getElementById('cmpDiscountType').value;
+    const discount_value = parseFloat(document.getElementById('cmpValue').value);
+    const max_uses = parseInt(document.getElementById('cmpMax').value);
+    const one_use_per_user = parseInt(document.getElementById('cmpOneUse').value);
+
+    const res = await fetch('/api/developer/campaigns', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            code,
+            campaign_name,
+            valid_from,
+            valid_until,
+            discount_type,
+            discount_value,
+            benefit_type: discount_type,
+            benefit_value: discount_value,
+            max_uses,
+            one_use_per_user
+        })
+    });
+    if (res.ok) {
+        closeCampaignModal();
+        loadCampaigns();
+        loadDevStats();
+    } else {
+        const errData = await res.json();
+        alert(errData.error || 'Failed creating campaign code.');
+    }
+}
+
+function openEditCampaignModal(id) {
+    const cmp = allCampaigns.find(c => c.id === id);
+    if (!cmp) return;
+
+    document.getElementById('editCmpId').value = cmp.id;
+    document.getElementById('editCmpCodeDisplay').innerText = cmp.code;
+    document.getElementById('editCmpName').value = cmp.campaign_name;
+    if (window._fpEditCmpFrom) window._fpEditCmpFrom.setDate(new Date(cmp.valid_from), true);
+    if (window._fpEditCmpUntil) window._fpEditCmpUntil.setDate(new Date(cmp.valid_until), true);
+    const dType = cmp.discount_type || cmp.benefit_type || 'PERCENTAGE';
+    document.getElementById('editCmpDiscountType').value = dType;
+    onDiscountTypeChange(dType, 'editCmp');
+    document.getElementById('editCmpValue').value = cmp.discount_value !== undefined ? cmp.discount_value : cmp.benefit_value;
+    document.getElementById('editCmpMax').value = cmp.max_uses;
+    document.getElementById('editCmpOneUse').value = cmp.one_use_per_user ? '1' : '0';
+
+    openModal('editCampaignModal');
+}
+
+async function saveEditCampaign(e) {
+    e.preventDefault();
+    const id = document.getElementById('editCmpId').value;
+    const campaign_name = document.getElementById('editCmpName').value.trim();
+    const fromRaw = document.getElementById('editCmpFrom').value;
+    const untilRaw = document.getElementById('editCmpUntil').value;
+    const valid_from = fromRaw ? new Date(fromRaw).toISOString() : null;
+    const valid_until = untilRaw ? new Date(untilRaw).toISOString() : null;
+    if (!valid_from || !valid_until) { alert('Please select valid dates.'); return; }
+    const discount_type = document.getElementById('editCmpDiscountType').value;
+    const discount_value = parseFloat(document.getElementById('editCmpValue').value);
+    const max_uses = parseInt(document.getElementById('editCmpMax').value);
+    const one_use_per_user = parseInt(document.getElementById('editCmpOneUse').value);
+
+    // Keep existing is_active state intact; Edit does not override status
+    const currentCmp = allCampaigns.find(c => c.id === id);
+    const is_active = currentCmp ? (currentCmp.is_active ? 1 : 0) : 1;
+
+    const res = await fetch(`/api/developer/campaigns/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            campaign_name,
+            valid_from,
+            valid_until,
+            discount_type,
+            discount_value,
+            max_uses,
+            one_use_per_user,
+            is_active
+        })
+    });
+
+    if (res.ok) {
+        closeEditCampaignModal();
+        loadCampaigns();
+        loadDevStats();
+    } else {
+        const errData = await res.json();
+        alert(errData.error || 'Failed updating campaign code.');
+    }
+}
+
+async function viewRedemptions(codeId) {
+    const tableBody = document.getElementById('rdmTableBody');
+    tableBody.innerHTML = `<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--muted)">Loading redemptions...</td></tr>`;
+    openModal('redemptionsModal');
+
+    try {
+        const res = await fetch(`/api/developer/campaigns/${codeId}/redemptions`);
+        const data = await res.json();
+
+        if (res.ok) {
+            document.getElementById('rdmModalCodeDisplay').innerText = data.campaign.code;
+            document.getElementById('rdmModalCampaignDesc').innerText = `${data.campaign.campaign_name} (${data.total} total redemption${data.total === 1 ? '' : 's'})`;
+
+            if (!data.redemptions || data.redemptions.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="3" style="padding:24px;text-align:center;color:var(--muted)">No redemptions recorded yet for this code.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.redemptions.forEach(r => {
+                html += `
+                    <tr>
+                        <td data-label="Student">
+                            <div style="font-weight:700;color:var(--ink)">${r.full_name || 'Student'}</div>
+                            <div style="font-size:0.82rem;color:var(--muted)">${r.email}</div>
+                        </td>
+                        <td data-label="Benefit" style="font-weight:700;color:var(--primary, #00A86B)">
+                            ${r.benefit_granted || `Save ${formatINR(r.discount_applied)}`}
+                        </td>
+                        <td data-label="Redeemed At" style="font-size:0.82rem;color:var(--muted)">
+                            ${new Date(r.redeemed_at).toLocaleString()}
+                        </td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = html;
+        } else {
+            tableBody.innerHTML = `<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Failed loading redemptions.</td></tr>`;
+        }
+    } catch (err) {
+        tableBody.innerHTML = `<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Error fetching redemptions.</td></tr>`;
+    }
+}
+
+// -------------------------------------------------------------
+// MANUAL CREDIT ADJUSTMENT
+// -------------------------------------------------------------
+async function handleManualCreditAdjustment(e) {
+    e.preventDefault();
+    const email = document.getElementById('adjEmail').value.trim();
+    const amount = parseInt(document.getElementById('adjAmount').value);
+    const description = document.getElementById('adjReason').value.trim();
+
+    const res = await fetch('/api/developer/credits/adjust', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({email, amount, description})
+    });
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+        alert(data.message || 'Credit adjustment applied successfully.');
+        document.getElementById('adjEmail').value = '';
+        document.getElementById('adjAmount').value = '';
+        document.getElementById('adjReason').value = '';
+        loadDevStats();
+    } else {
+        alert(data.error || 'Adjustment failed.');
+    }
+}
+
+// -------------------------------------------------------------
+// USER REGISTRY
+// -------------------------------------------------------------
+async function loadUsers() {
+    const tbody = document.getElementById('usersTableBody');
+    try {
+        const res = await fetch('/api/developer/users');
+        const data = await res.json();
+        let html = '';
+        (data.users || []).forEach(u => {
+            html += `
+                <tr>
+                    <td data-label="User">
+                        <div style="font-weight:700;color:var(--ink)">${u.full_name || 'Student'}</div>
+                        <div style="font-size:0.82rem;color:var(--muted)">${u.email}</div>
+                    </td>
+                    <td data-label="Role" style="font-size:0.82rem"><span style="background:rgba(0,0,0,0.05);padding:3px 7px;border-radius:6px;font-weight:700">${u.role}</span></td>
+                    <td data-label="Credits" style="font-weight:800;color:var(--primary, #00A86B)">${u.balance || 0}</td>
+                    <td data-label="Assessments" style="font-size:0.82rem">${u.unlocked_attempts} unlocked / ${u.total_attempts} total</td>
+                    <td data-label="Joined" style="font-size:0.82rem;color:var(--muted)">${new Date(u.created_at).toLocaleDateString()}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Failed loading user registry.</td></tr>`;
+    }
+}
+
+// -------------------------------------------------------------
+// DEVELOPER ACCOUNTS
+// -------------------------------------------------------------
+async function loadDeveloperAccounts() {
+    const tbody = document.getElementById('devAccountsTableBody');
+    try {
+        const res = await fetch('/api/developer/accounts');
+        if (res.status === 403) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--coral, #ef4444);font-weight:600">Developer management unavailable. Authorization check returned 403.</td></tr>`;
+            return;
+        }
+        const data = await res.json();
+        callerRole = data.caller_role || 'DEVELOPER';
+        callerCanManage = !!data.caller_can_manage;
+        currentUserId = data.current_user_id || '';
+
+        const addBtn = document.getElementById('addDevBtn');
+        if (addBtn) addBtn.style.display = callerCanManage ? 'inline-flex' : 'none';
+
+        const accounts = data.accounts || [];
+        if (accounts.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--muted)">No developer accounts found.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        accounts.forEach(acc => {
+            const roleBadge = acc.role === 'SUPER_ADMIN'
+                ? `<span class="role-badge role-super-admin">Super Admin</span>`
+                : `<span class="role-badge role-developer">Developer</span>`;
+
+            const isSelf = (acc.id === currentUserId);
+            const isDevActive = (acc.is_active === 1 || acc.is_active === '1' || acc.is_active === true);
+            const isPending = (acc.invitation_status === 'PENDING');
+            const escapedName = (acc.full_name || acc.email || '').replace(/'/g, "\'");
+
+            const statusSelectHtml = `
+                <div class="status-select-wrap">
+                    <select class="status-select ${isDevActive ? 'is-active' : 'is-inactive'}" 
+                            id="status-select-dev-${acc.id}" 
+                            onchange="changeDevStatus('${acc.id}', this.value, this)"
+                            ${isSelf ? 'disabled title="You cannot change your own account status"' : ''}>
+                        <option value="1" ${isDevActive ? 'selected' : ''}>Active</option>
+                        <option value="0" ${!isDevActive ? 'selected' : ''}>Inactive</option>
+                    </select>
+                    <span id="spinner-dev-${acc.id}" style="display:none"><span class="spinner-inline"></span></span>
+                    ${isPending ? '<div style="font-size:0.72rem;color:#d97706;margin-top:2px;font-weight:700">Pending Setup</div>' : ''}
+                </div>
+            `;
+
+            const lastLogin = acc.last_login_at 
+                ? new Date(acc.last_login_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                : `<span style="color:var(--muted);font-size:0.8rem">Never</span>`;
+
+            const managePerm = acc.role === 'SUPER_ADMIN'
+                ? `<span style="font-size:0.8rem;color:var(--muted)">Always</span>`
+                : (callerRole === 'SUPER_ADMIN' 
+                    ? `<label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                        <input type="checkbox" ${acc.can_manage_developers ? 'checked' : ''} 
+                            onchange="toggleManagePerm('${acc.id}', this.checked)"
+                            style="accent-color:var(--primary, #00A86B);width:15px;height:15px">
+                        <span style="font-size:0.8rem">${acc.can_manage_developers ? 'Yes' : 'No'}</span>
+                       </label>`
+                    : `<span style="font-size:0.8rem">${acc.can_manage_developers ? '✓ Yes' : 'No'}</span>`);
+
+            let actions = '';
+            if (callerRole === 'SUPER_ADMIN') {
+                if (!isSelf) {
+                    actions += `<button class="btn-sm-action btn-sm-delete" onclick="openDeleteDevModal('${acc.id}', '${escapedName}', '${acc.role}')">Delete</button>`;
+                } else {
+                    actions += `<span style="font-size:0.78rem;color:var(--muted);font-weight:600">(Your Account)</span>`;
+                }
+            }
+            if (callerCanManage && (!acc.is_active || isPending)) {
+                actions += `<button class="btn-sm-action" onclick="resendInvite('${acc.id}')">Resend Invite</button>`;
+            }
+
+            html += `
+                <tr>
+                    <td data-label="Name / Email">
+                        <div style="font-weight:700;color:var(--ink)">${acc.full_name || '—'}</div>
+                        <div style="font-size:0.82rem;color:var(--muted)">${acc.email}</div>
+                    </td>
+                    <td data-label="Role">${roleBadge}</td>
+                    <td data-label="Status">${statusSelectHtml}</td>
+                    <td data-label="Last Login" style="font-size:0.82rem">${lastLogin}</td>
+                    <td data-label="Manage Devs">${managePerm}</td>
+                    <td data-label="Actions" class="cell-actions" style="text-align:right">
+                        <div style="display:flex;gap:6px;justify-content:flex-end">${actions || '<span style="font-size:0.8rem;color:var(--muted)">—</span>'}</div>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Failed to load developer accounts.</td></tr>`;
+    }
+}
+
+async function changeDevStatus(targetId, newStatusVal, selectEl) {
+    if (inFlightDevStatus.has(targetId)) return;
+    inFlightDevStatus.add(targetId);
+
+    const spinner = document.getElementById(`spinner-dev-${targetId}`);
+    if (spinner) spinner.style.display = 'inline-block';
+    selectEl.disabled = true;
+
+    const newActiveState = parseInt(newStatusVal);
+    const prevActiveState = newActiveState === 1 ? 0 : 1;
+
+    try {
+        const res = await fetch(`/api/developer/accounts/${targetId}/status`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ is_active: newActiveState })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+            selectEl.className = `status-select ${newActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+        } else {
+            selectEl.value = prevActiveState.toString();
+            selectEl.className = `status-select ${prevActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+            alert(data.error || 'Failed to update developer status.');
+        }
+    } catch (err) {
+        selectEl.value = prevActiveState.toString();
+        selectEl.className = `status-select ${prevActiveState === 1 ? 'is-active' : 'is-inactive'}`;
+        alert('Network error while updating developer status.');
+    } finally {
+        inFlightDevStatus.delete(targetId);
+        selectEl.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+    }
+}
+
+function openDeleteDevModal(id, name, role) {
+    document.getElementById('deleteDevId').value = id;
+    document.getElementById('deleteDevNameDisplay').innerText = name ? `"${name}"` : `ID: ${id}`;
+    document.getElementById('deleteDevRoleDisplay').innerText = role === 'SUPER_ADMIN' ? 'Super Admin' : 'Developer';
+    openModal('deleteDevModal');
+}
+
+function closeDeleteDevModal() {
+    closeModal('deleteDevModal');
+}
+
+async function confirmDeleteDevExecute() {
+    const devId = document.getElementById('deleteDevId').value;
+    const btn = document.getElementById('confirmDeleteDevBtn');
+    btn.disabled = true;
+    btn.innerText = 'Deleting...';
+
+    try {
+        const res = await fetch(`/api/developer/accounts/${devId}`, { method: 'DELETE' });
+        const data = await res.json();
+        closeDeleteDevModal();
+        if (res.ok && data.status === 'success') {
+            loadDeveloperAccounts();
+            loadDevStats();
+        } else {
+            alert(data.error || 'Failed to delete developer account.');
+        }
+    } catch (err) {
+        alert('Error processing account deletion.');
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'Delete Account';
+    }
+}
+
+function openInviteDevModal() {
+    document.getElementById('inviteFullName').value = '';
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteRole').value = 'DEVELOPER';
+    const alertBox = document.getElementById('inviteAlertBox');
+    alertBox.style.display = 'none';
+    alertBox.textContent = '';
+    const btn = document.getElementById('sendInviteBtn');
+    btn.disabled = false;
+    btn.textContent = 'Send Invitation →';
+    openModal('inviteDevModal');
+}
+
+async function sendInvitation(e) {
+    e.preventDefault();
+    const alertBox = document.getElementById('inviteAlertBox');
+    const btn = document.getElementById('sendInviteBtn');
+    const fullName = document.getElementById('inviteFullName').value.trim();
+    const email = document.getElementById('inviteEmail').value.trim();
+    const role = document.getElementById('inviteRole').value;
+
+    alertBox.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    try {
+        const res = await fetch('/api/developer/accounts/invite', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ full_name: fullName, email, role })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alertBox.textContent = data.message || 'Invitation sent!';
+            alertBox.style.background = '#f0fdf4';
+            alertBox.style.border = '1px solid #bbf7d0';
+            alertBox.style.color = 'var(--primary, #00A86B)';
+            alertBox.style.display = 'block';
+            btn.textContent = 'Invitation Sent ✓';
+            setTimeout(() => { closeModal('inviteDevModal'); loadDeveloperAccounts(); }, 1800);
+        } else {
+            alertBox.textContent = data.error || 'Failed to send invitation.';
+            alertBox.style.background = '#fff5f5';
+            alertBox.style.border = '1px solid #feb2b2';
+            alertBox.style.color = 'var(--coral, #ef4444)';
+            alertBox.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Send Invitation →';
+        }
+    } catch (err) {
+        alertBox.textContent = 'Network error. Please try again.';
+        alertBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Send Invitation →';
+    }
+}
+
+async function disableDev(targetId) {
+    if (!confirm('Disable this developer account? They will not be able to log in.')) return;
+    try {
+        const res = await fetch(`/api/developer/accounts/${targetId}/disable`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) { loadDeveloperAccounts(); }
+        else alert(data.error || 'Failed to disable account.');
+    } catch { alert('Network error.'); }
+}
+
+async function reactivateDev(targetId) {
+    try {
+        const res = await fetch(`/api/developer/accounts/${targetId}/reactivate`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) { loadDeveloperAccounts(); }
+        else alert(data.error || 'Failed to reactivate account.');
+    } catch { alert('Network error.'); }
+}
+
+async function resendInvite(targetId) {
+    if (!confirm('Resend invitation email to this account?')) return;
+    try {
+        const res = await fetch(`/api/developer/accounts/${targetId}/resend-invitation`, { method: 'POST' });
+        const data = await res.json();
+        alert(res.ok ? (data.message || 'Invitation resent.') : (data.error || 'Failed to resend.'));
+        if (res.ok) loadDeveloperAccounts();
+    } catch { alert('Network error.'); }
+}
+
+async function toggleManagePerm(targetId, grant) {
+    try {
+        const res = await fetch(`/api/developer/accounts/${targetId}/permissions`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ can_manage_developers: grant })
+        });
+        const data = await res.json();
+        if (!res.ok) { alert(data.error || 'Failed to update permission.'); loadDeveloperAccounts(); }
+    } catch { alert('Network error.'); }
+}
+
+// -------------------------------------------------------------
+// AUDIT LOG
+// -------------------------------------------------------------
+async function loadAuditLog() {
+    const tbody = document.getElementById('auditLogTableBody');
+    try {
+        const res = await fetch('/api/developer/audit-log?limit=100');
+        const data = await res.json();
+        const logs = data.logs || [];
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--muted)">No audit log entries recorded yet.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        logs.forEach(l => {
+            html += `
+                <tr>
+                    <td data-label="Timestamp" style="font-size:0.8rem;color:var(--muted)">${new Date(l.created_at).toLocaleString()}</td>
+                    <td data-label="Actor" style="font-weight:700;font-size:0.82rem">${l.actor_email || 'System'}</td>
+                    <td data-label="Action"><span style="background:rgba(0,168,107,0.08);color:var(--primary, #00A86B);padding:2px 7px;border-radius:5px;font-weight:800;font-size:0.72rem">${l.action}</span></td>
+                    <td data-label="Target" style="font-size:0.82rem;color:var(--ink)">${l.target_email || '—'}</td>
+                    <td data-label="Details" style="font-size:0.8rem;color:var(--muted)">${l.details || '—'}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--coral, #ef4444)">Failed loading audit log.</td></tr>`;
+    }
+}
+
+// -------------------------------------------------------------
+// FLATPICKR INITIALIZATION
+// -------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const fpConfig = {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        altInput: true,
+        altFormat: 'd M Y, H:i',
+        time_24hr: true,
+        minuteIncrement: 15,
+        disableMobile: true
+    };
+    window._fpCmpFrom = flatpickr('#cmpFrom', { ...fpConfig });
+    window._fpCmpUntil = flatpickr('#cmpUntil', { ...fpConfig });
+    window._fpEditCmpFrom = flatpickr('#editCmpFrom', { ...fpConfig });
+    window._fpEditCmpUntil = flatpickr('#editCmpUntil', { ...fpConfig });
+    
+    loadDevStats();
+});
+</script>
+{% endblock %}

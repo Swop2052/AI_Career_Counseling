@@ -35,13 +35,6 @@
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
             --body: 'Inter', system-ui, sans-serif;
             --maxw: 1180px;
-            /* Design system container tokens */
-            --container-sm: 440px;
-            --container-md: 760px;
-            --container-lg: 1040px;
-            --card-bg: #ffffff;
-            --nav-height: 86px;
-            --nav-height-mobile: 66px;
         }
 
         /* Dark mode overrides are removed since the theme is now unified */
@@ -53,12 +46,6 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-        }
-
-        html, body {
-            overflow-x: hidden;
-            width: 100%;
-            max-width: 100%;
         }
 
         body {
@@ -190,369 +177,110 @@
             box-shadow: var(--shadow);
         }
 
-        /* ============================================================
-           NAVBAR & HERO STYLING (RESPONSIVE & CLEAN)
-           ============================================================ */
         .nav {
             position: fixed;
-            top: 16px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 94%;
-            max-width: 1200px;
-            z-index: 100;
-            transition: all 0.3s ease;
+            width: 95%;
+            max-width: var(--maxw);
+            z-index: 40;
+            transition: 0.3s;
             background: #E8EAE6;
             border-radius: 999px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .nav-in {
-            padding: 8px 20px;
+            padding: 12px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
-            min-height: 54px;
         }
 
         .nav.scrolled {
-            background: rgba(232, 234, 230, 0.96);
+            background: rgba(232, 234, 230, 0.95);
             backdrop-filter: blur(18px);
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            font-size: 1.15rem;
+            gap: 11px;
+            font-weight: 700;
+            font-size: 1.12rem;
             color: var(--primary);
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .brand-logo {
-            height: 38px !important;
-            width: 38px !important;
+            height: 48px !important;
+            width: 48px !important;
             object-fit: contain;
-            margin-right: 2px;
+            filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
+            margin-right: 8px;
+        }
+
+        .brand .orb {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            background: var(--primary);
+            color: #fff;
+            font-size: 1rem;
         }
 
         .nav-links {
             display: flex;
+            gap: 30px;
             align-items: center;
-            gap: 22px;
-            flex-wrap: nowrap;
-            white-space: nowrap;
         }
 
         .nav-links a {
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             color: var(--muted);
             font-weight: 600;
-            transition: color 0.2s ease;
+            transition: 0.2s;
             text-decoration: none;
-            white-space: nowrap;
+            cursor: pointer;
         }
 
         .nav-links a:hover {
             color: var(--primary);
         }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .nav-btn-login {
-            padding: 7px 16px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 999px;
-            text-decoration: none;
-            color: var(--ink);
-            background: rgba(0, 0, 0, 0.05);
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .nav-btn-login:hover {
-            background: rgba(0, 0, 0, 0.1);
-            color: var(--primary);
-        }
-
-        .nav-btn-signup {
-            padding: 7px 16px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: 999px;
-            text-decoration: none;
-            color: #fff;
-            background: var(--primary);
-            box-shadow: 0 3px 10px rgba(0, 168, 107, 0.25);
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .nav-btn-signup:hover {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        .nav-btn-dev {
-            padding: 7px 16px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: 999px;
-            text-decoration: none;
-            color: var(--cyan);
-            border: 1px solid var(--cyan);
-            background: transparent;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        /* Profile Dropdown Navigation Component */
-        .nav-profile-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .nav-profile-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 14px;
-            font-size: 0.86rem;
-            font-weight: 700;
-            color: var(--ink);
-            background: rgba(0, 168, 107, 0.08);
-            border: 1px solid rgba(0, 168, 107, 0.28);
-            border-radius: 999px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .nav-profile-btn:hover, .nav-profile-btn.active {
-            background: rgba(0, 168, 107, 0.16);
-            border-color: var(--primary);
-            transform: translateY(-1px);
-        }
-
-        .nav-avatar-icon {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.72rem;
-            font-weight: 800;
-            flex-shrink: 0;
-        }
-
-        .nav-profile-menu {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            min-width: 220px;
-            background: var(--card-bg, #ffffff);
-            border: 1px solid var(--stroke);
-            border-radius: 16px;
-            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.14);
-            padding: 8px;
-            z-index: 600;
-            display: none;
-            animation: menuFadeIn 0.15s ease-out;
-        }
-
-        @keyframes menuFadeIn {
-            from { opacity: 0; transform: translateY(-4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .nav-profile-header {
-            padding: 10px 12px 8px;
-            border-bottom: 1px solid var(--stroke);
-            margin-bottom: 6px;
-        }
-
-        .nav-profile-name {
-            font-weight: 800;
-            font-size: 0.9rem;
-            color: var(--ink);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .nav-profile-email {
-            font-size: 0.76rem;
-            color: var(--muted);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-weight: 500;
-        }
-
-        .nav-profile-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 10px;
-            color: var(--ink);
-            text-decoration: none;
-            font-size: 0.86rem;
-            font-weight: 600;
-            transition: all 0.15s ease;
-        }
-
-        .nav-profile-item:hover {
-            background: var(--bg, #f8fafc);
-            color: var(--primary);
-            transform: translateX(2px);
-        }
-
-        .nav-profile-item.active {
-            background: rgba(0, 168, 107, 0.09);
-            color: var(--primary);
-            font-weight: 800;
-        }
-
-        .nav-profile-item.active svg {
-            stroke: var(--primary);
-        }
-
-        .nav-profile-item.logout-item {
-            color: var(--coral, #ef4444);
-        }
-
-        .nav-profile-item.logout-item:hover {
-            background: rgba(239, 68, 68, 0.08);
-            color: var(--coral, #ef4444);
-        }
-
-        .nav-profile-divider {
-            height: 1px;
-            background: var(--stroke);
-            margin: 6px 0;
-        }
-
         .nav-cta {
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 8px 18px;
+            font-size: 0.88rem;
+            padding: 9px 20px;
             background: var(--primary);
             color: #fff;
             border: none;
             border-radius: 999px;
-            cursor: pointer;
-            white-space: nowrap;
-            box-shadow: 0 3px 10px rgba(0, 168, 107, 0.2);
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
         }
+
         .nav-cta:hover {
             background: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        .lang-select {
-            height: 34px;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--ink);
-            border: 1px solid rgba(0, 0, 0, 0.12);
-            border-radius: 999px;
-            padding: 4px 10px;
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            outline: none;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .nav-toggle-btn {
-            display: none;
-            flex-direction: column;
-            justify-content: space-around;
-            width: 32px;
-            height: 32px;
-            background: rgba(0, 0, 0, 0.05);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            padding: 6px;
-            z-index: 101;
-        }
-
-        .nav-toggle-btn span {
-            width: 100%;
-            height: 2px;
-            background: var(--ink);
-            border-radius: 2px;
-            transition: all 0.3s ease;
-        }
-
-        .nav-mobile-menu {
-            display: none;
-            flex-direction: column;
-            gap: 14px;
-            padding: 18px 24px 24px;
-            border-top: 1px solid rgba(0, 0, 0, 0.08);
-            background: #E8EAE6;
-            border-radius: 0 0 24px 24px;
-        }
-
-        .nav-mobile-menu.active {
-            display: flex;
-        }
-
-        .nav-mobile-menu a {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--ink);
-            text-decoration: none;
-        }
-
-        .mobile-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 8px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(0,0,0,0.08);
+            transform: translateY(-2px);
         }
 
         .hero {
             position: relative;
-            min-height: 88vh;
+            min-height: 100svh;
             display: flex;
             align-items: center;
-            padding-top: 110px;
-            padding-bottom: 40px;
+            padding-top: 90px;
             overflow: hidden;
         }
 
         .hero::before {
             content: '';
             position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 55%;
-            background: url('{{ url_for("static", filename="bg-hero-boy-watermark.png") }}') right 5% center / auto 85% no-repeat;
-            opacity: 0.18;
+            inset: 0;
+            background: url('{{ url_for("static", filename="bg-hero-boy-watermark.png") }}') center center / auto 85% no-repeat;
+            opacity: 0.25;
             z-index: 0;
             pointer-events: none;
             mix-blend-mode: multiply;
@@ -562,71 +290,66 @@
             position: relative;
             z-index: 1;
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
+            grid-template-columns: 1.05fr 0.95fr;
             gap: 40px;
             align-items: center;
         }
 
         .hero h1 {
-            font-size: clamp(2.1rem, 4.4vw, 3.2rem);
-            font-weight: 800;
-            line-height: 1.12;
-            letter-spacing: -0.02em;
-            color: var(--ink);
+            font-size: clamp(2.0rem, 4.6vw, 3.4rem);
+            font-weight: 700;
+            line-height: 1.08;
+            text-shadow: none;
         }
 
         .hero h1 .l2 {
-            background: linear-gradient(100deg, var(--primary) 10%, var(--cyan));
+            background: linear-gradient(100deg, var(--violet-2) 10%, var(--cyan));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            filter: drop-shadow(0 2px 10px rgba(123, 97, 255, 0.35));
+        }
+
+        .hero p.sub {
+            margin: 22px 0 30px;
+            color: var(--muted);
+            font-size: 1.13rem;
+            max-width: 42ch;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 26px;
+            margin-top: 38px;
+            flex-wrap: wrap;
+        }
+
+        .hstat .n {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(100deg, var(--cyan), var(--violet-2));
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
         }
 
-        .hero p.sub {
-            margin: 20px 0 28px;
-            color: var(--muted);
-            font-size: 1.08rem;
-            max-width: 48ch;
-            line-height: 1.6;
-        }
-
-        .hero-cta {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-            margin-bottom: 36px;
-        }
-
-        .hero-stats {
-            display: flex;
-            align-items: center;
-            gap: 32px;
-            flex-wrap: wrap;
-            border-top: 1px solid var(--stroke);
-            padding-top: 24px;
-            max-width: 520px;
-        }
-
-        .hstat .n {
-            font-size: 1.7rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
         .hstat .l {
             font-size: 0.78rem;
-            color: var(--muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--faint);
+            letter-spacing: 0.04em;
         }
 
         .hero-card-stack {
             position: relative;
             width: 100%;
             max-width: 380px;
-            height: 400px;
+            height: 420px;
             margin-left: auto;
             z-index: 2;
             perspective: 1000px;
@@ -2114,48 +1837,7 @@
             }
         }
 
-        @media (max-width: 1040px) {
-            .nav-links, .nav-actions {
-                display: none !important;
-            }
-            .nav-toggle-btn {
-                display: flex !important;
-            }
-            .nav {
-                width: calc(100% - 32px);
-                max-width: 100%;
-                border-radius: 16px;
-            }
-            .hero::before {
-                width: 100%;
-                opacity: 0.12;
-            }
-            .hero-grid {
-                grid-template-columns: 1fr;
-                gap: 36px;
-            }
-            .hero-card-stack {
-                margin: 0 auto;
-            }
-        }
-
         @media (max-width: 600px) {
-            .nav {
-                width: calc(100% - 20px);
-                top: 10px;
-                border-radius: 14px;
-            }
-            .nav-in {
-                padding: 6px 12px;
-                min-height: 46px;
-            }
-            .brand {
-                font-size: 1.02rem;
-            }
-            .brand-logo {
-                height: 30px !important;
-                width: 30px !important;
-            }
             .steps {
                 grid-template-columns: 1fr;
             }
@@ -2194,196 +1876,12 @@
                 animation: none;
             }
         }
-
-        /* ============================================================
-           DESIGN SYSTEM — Standardized Utility Classes
-           ============================================================ */
-
-        /* --- Page section spacing (clears fixed navbar) --- */
-        .section {
-            padding-top: var(--nav-height);
-        }
-
-        /* --- Standardized inputs --- */
-        .ss-input, .ss-select {
-            width: 100%;
-            padding: 11px 14px;
-            border-radius: var(--r-sm);
-            border: 1px solid var(--stroke);
-            background: #fff;
-            font-size: 0.92rem;
-            font-family: var(--body);
-            color: var(--ink);
-            transition: border-color 0.2s ease;
-            outline: none;
-        }
-        .ss-input:focus, .ss-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1);
-        }
-        .ss-input::placeholder {
-            color: var(--faint);
-        }
-        .ss-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 0.88rem;
-            color: var(--ink);
-        }
-
-        /* --- Standardized cards --- */
-        .ss-card {
-            padding: 24px;
-            border-radius: var(--r);
-            border: 1px solid var(--stroke);
-            background: var(--card-bg);
-            box-shadow: var(--shadow);
-        }
-
-        /* --- Standardized badges --- */
-        .ss-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 999px;
-            font-size: 0.76rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        .ss-badge-active {
-            background: rgba(0, 168, 107, 0.1);
-            color: var(--primary);
-        }
-        .ss-badge-inactive {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--muted);
-        }
-        .ss-badge-warning {
-            background: rgba(255, 149, 0, 0.1);
-            color: var(--amber);
-        }
-
-        /* --- Standardized tables --- */
-        .ss-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.92rem;
-        }
-        .ss-table thead tr {
-            border-bottom: 2px solid var(--stroke);
-            color: var(--muted);
-        }
-        .ss-table th, .ss-table td {
-            padding: 12px;
-        }
-        .ss-table tbody tr {
-            border-bottom: 1px solid var(--stroke);
-        }
-
-        /* --- Standardized modals --- */
-        .ss-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.6);
-            z-index: 300;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            backdrop-filter: blur(6px);
-            box-sizing: border-box;
-        }
-        .ss-modal {
-            background: var(--card-bg);
-            padding: 28px 24px;
-            border-radius: var(--r);
-            max-width: var(--container-sm);
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-            border: 1px solid var(--stroke);
-            animation: fadeIn 0.2s ease;
-            margin: auto;
-        }
-
-        /* --- Pending assessment banner --- */
-        .ss-pending-banner {
-            background: rgba(0, 168, 107, 0.06);
-            border: 1.5px solid var(--primary);
-            padding: 16px 20px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-        }
-        .ss-pending-banner .banner-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(0, 168, 107, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary);
-            flex-shrink: 0;
-        }
-        .ss-pending-banner .banner-text {
-            flex: 1;
-            min-width: 200px;
-        }
-        .ss-pending-banner .banner-title {
-            font-weight: 800;
-            font-size: 0.95rem;
-            color: var(--ink);
-        }
-        .ss-pending-banner .banner-sub {
-            font-size: 0.84rem;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        /* --- Mobile-first: Small screens (360px devices) --- */
-        @media (max-width: 480px) {
-            .wrap {
-                padding: 0 16px;
-            }
-            .section {
-                padding-top: var(--nav-height-mobile);
-            }
-            .h-sec {
-                font-size: clamp(1.5rem, 6vw, 2rem);
-            }
-            .btn {
-                padding: 12px 20px;
-                font-size: 0.9rem;
-                min-height: 44px;
-            }
-            .ss-card {
-                padding: 18px 16px;
-            }
-            .ss-modal {
-                padding: 22px 18px;
-                border-radius: 16px;
-            }
-            .glass {
-                border-radius: 16px;
-            }
-        }
     </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 <!-- Theme Toggle Floating Button -->
-<div class="theme-toggle-floating" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme" style="display:flex;align-items:center;justify-content:center">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-</div>
+<div class="theme-toggle-floating" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Theme">🌕</div>
 <div class="aura"></div>
 <div class="grain"></div>
 <!-- ============================== NAV ============================== -->
@@ -2394,79 +1892,26 @@
 <a href="/how-it-works">How it works</a>
 <a href="/take-test">Take Test</a>
 <a href="/ai-counselor">AI Counselor</a>
-<a href="/pricing">Pricing</a>
 <a href="/contact">Contact</a>
 </div>
-<div class="nav-actions">
-{% if session.get('user_id') %}
-    <!-- Profile Dropdown Component -->
-    <div class="nav-profile-dropdown" id="navProfileDropdown">
-        <button type="button" class="nav-profile-btn" onclick="toggleProfileMenu(event)" aria-haspopup="true" aria-expanded="false" id="navProfileTrigger">
-            <div class="nav-avatar-icon">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <span>Profile</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="nav-profile-menu" id="navProfileMenu">
-            <div class="nav-profile-header">
-                <div class="nav-profile-name">{{ session.get('full_name') or 'Student Account' }}</div>
-                <div class="nav-profile-email">{{ session.get('email') or '' }}</div>
-            </div>
-            <a href="/account" class="nav-profile-item" id="navItemMyProfile">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                My Profile
-            </a>
-            {% if session.get('role') in ('DEVELOPER', 'SUPER_ADMIN') %}
-            <a href="/developer" class="nav-profile-item" id="navItemDevDashboard">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-                Developer Dashboard
-            </a>
-            {% endif %}
-            <div class="nav-profile-divider"></div>
-            <a href="/logout" class="nav-profile-item logout-item" id="navItemLogout">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Logout
-            </a>
-        </div>
-    </div>
-{% else %}
-    <a href="/login" class="nav-btn-login">Login</a>
-    <a href="/signup" class="nav-btn-signup">Sign Up</a>
-{% endif %}
-<button class="nav-cta" onclick="window.location.href='/take-test'">Start Career Test</button>
-<select id="langSelect" class="lang-select" onchange="switchLanguage(this.value)">
-<option value="en">English</option>
-<option value="hi">हिंदी (Hindi)</option>
-<option value="mr">मराठी (Marathi)</option>
-</select>
-</div>
-<button class="nav-toggle-btn" id="navToggleBtn" onclick="toggleMobileNav()" aria-label="Toggle navigation">
-<span></span><span></span><span></span>
-</button>
-</div>
-<div class="nav-mobile-menu" id="navMobileMenu">
-<a href="/how-it-works">How it works</a>
-<a href="/take-test">Take Test</a>
-<a href="/ai-counselor">AI Counselor</a>
-<a href="/pricing">Pricing</a>
-<a href="/contact">Contact</a>
-<div class="mobile-actions">
-{% if session.get('user_id') %}
-    <a href="/account" class="nav-btn-login" style="text-align:center">My Profile</a>
-    {% if session.get('role') in ('DEVELOPER', 'SUPER_ADMIN') %}
-        <a href="/developer" class="nav-btn-dev" style="text-align:center">Developer Dashboard</a>
-    {% endif %}
-    <a href="/logout" class="nav-btn-login" style="text-align:center;color:var(--coral)">Logout</a>
-{% else %}
-    <a href="/login" class="nav-btn-login" style="text-align:center">Login</a>
-    <a href="/signup" class="nav-btn-signup" style="text-align:center">Sign Up</a>
-{% endif %}
-<button class="nav-cta" onclick="window.location.href='/take-test'" style="width:100%;margin-top:6px">Start Career Test</button>
-<select class="lang-select" onchange="switchLanguage(this.value)" style="width:100%;margin-top:6px">
-<option value="en">English</option>
-<option value="hi">हिंदी (Hindi)</option>
-<option value="mr">मराठी (Marathi)</option>
+<div class="nav-actions" style="display: flex; align-items: center; gap: 12px;">
+<button class="btn nav-cta" onclick="window.location.href='/take-test'">Start Career Test</button>
+<select id="langSelect" onchange="switchLanguage(this.value)" style="
+                    background: rgba(0, 0, 0, 0.06);
+                    color: #111827;
+                    border: 1px solid rgba(0, 0, 0, 0.1);
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    font-family: inherit;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    outline: none;
+                    transition: all 0.25s ease;
+                ">
+<option style="background:#ffffff; color:#111827;" value="en">English</option>
+<option style="background:#ffffff; color:#111827;" value="hi">हिंदी (Hindi)</option>
+<option style="background:#ffffff; color:#111827;" value="mr">मराठी (Marathi)</option>
 </select>
 </div>
 </div>
@@ -3965,9 +3410,8 @@
             }
 
             riasecScores = calculateRiasecScoresFromAnswers(finalAnswers);
-            const container = document.getElementById('qCard');
-            container.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p style="color:var(--muted)">Analyzing your answers...</p></div>`;
-            
+            const btn = document.getElementById('qCard');
+            btn.innerHTML = `<div class="loading-spinner"><div class="spinner"></div><p style="color:var(--muted)">Analyzing your answers...</p></div>`;
             try {
                 const response = await fetch('/api/submit-answers', {
                     method: 'POST',
@@ -3978,62 +3422,43 @@
                         student_info: studentInfo
                     })
                 });
-
-                let data;
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    throw new Error("Received an unexpected response from the server. Please try again.");
-                }
+                const data = await response.json();
 
                 if (!response.ok) {
                     const msg = data && data.error ? data.error : 'Failed to analyze answers. Please try again.';
                     throw new Error(msg);
                 }
 
-                rawResultsData = data;
-                userProfile = data.profile || {};
-                if (data.scores) riasecScores = data.scores;
-
-                // Contract handling: support both locked teaser & unlocked full report
-                if (data.is_unlocked === false || data.teaser) {
-                    // Valid locked teaser response
-                    displayResults(data);
-                } else if (data.top_careers && Array.isArray(data.top_careers)) {
-                    // Valid unlocked full report response
-                    topCareers = data.top_careers;
-                    const lightData = stripHeavyDetails(data);
-                    const translatedData = await translateObject(lightData, currentLanguage);
-                    displayResults(translatedData);
-                    prefetchCareerDetails(data.top_careers, currentLanguage);
-                } else {
-                    console.error('API response structure invalid:', data);
-                    throw new Error('Could not format career matches. Please click retry below.');
+                if (!Array.isArray(data.top_careers)) {
+                    throw new Error('Invalid server response: top_careers missing');
                 }
 
+                rawResultsData = data;
+                userProfile = data.profile;
+                topCareers = data.top_careers;
+                // Store scores from response
+                if (data.scores) {
+                    riasecScores = data.scores;
+                }
+
+                const lightData = stripHeavyDetails(data);
+                const translatedData = await translateObject(lightData, currentLanguage);
+                displayResults(translatedData);
+
+                // Prefetch and pre-translate full career details in background for 0ms loading time on clicks!
+                prefetchCareerDetails(data.top_careers, currentLanguage);
+
                 setTimeout(async () => {
-                    let botMsg = `🎉 Great job ${studentInfo.name || 'Student'}! I've analyzed your answers and generated your personalized career roadmap. Ask me anything about it!`;
+                    let botMsg = `🎉 Great job ${studentInfo.name || 'Student'}! I've analyzed your answers and found ${Math.min((data.top_careers || []).length, 6)} career matches for you. Ask me about any of them!`;
                     if (currentLanguage !== 'en') {
                         botMsg = await translateText(botMsg, currentLanguage);
                     }
                     addChatMessage('bot', botMsg);
                 }, 500);
-
             } catch (error) {
                 console.error('Error submitting answers:', error);
-                container.innerHTML = `
-                    <div style="text-align:center;padding:30px 20px">
-                        <div style="font-size:2.2rem;margin-bottom:10px">⚠️</div>
-                        <h4 style="font-size:1.15rem;font-weight:700;color:var(--ink);margin-bottom:8px">We couldn't generate your results right now</h4>
-                        <p style="color:var(--muted);font-size:0.9rem;max-width:440px;margin:0 auto 20px">${error.message || 'A temporary server error occurred. Your answers are safe.'}</p>
-                        <button class="btn btn-primary" onclick="retrySubmitQuiz()" style="padding:10px 28px">Retry Analysis →</button>
-                    </div>
-                `;
+                btn.innerHTML = `<div style="text-align:center;padding:20px"><p style="color:var(--coral)">${error.message || 'Error analyzing your answers. Please try again.'}</p><button class="btn btn-primary" onclick="startQuiz()">Retry</button></div>`;
             }
-        }
-
-        async function retrySubmitQuiz() {
-            await submitQuiz();
         }
 
         // ============================================================
@@ -4384,31 +3809,8 @@
             document.getElementById('quizContainer').classList.remove('active');
             document.getElementById('resultsContainer').classList.add('active');
 
-            // Handle Locked Teaser state
-            if (data.is_unlocked === false || data.teaser) {
-                const profile = data.profile || {};
-                const student = profile.student_info || {};
-
-                document.getElementById('studentProfileCard').classList.add('active');
-                document.getElementById('profileAvatar').textContent = student.name ? student.name.charAt(0).toUpperCase() : '🧑';
-                document.getElementById('profileName').textContent = student.name || 'Student';
-                document.getElementById('profileAge').textContent = student.age ? `Age: ${student.age}` : 'Age: --';
-                document.getElementById('profileClass').textContent = student.class ? `Class: ${student.class}` : 'Class: --';
-                document.getElementById('profileEducation').textContent = student.education ? `Stream: ${student.education}` : 'Stream: --';
-
-                document.getElementById('profileRiasecCode').textContent = profile.riasec_code || '---';
-
-                if (data.scores) updateScoreBars(data.scores);
-
-                renderLockedTeaserView(data);
-                return;
-            }
-
             const profile = data.profile;
             const student = profile.student_info || {};
-
-            const resHeader = document.querySelector('.result-header');
-            if (resHeader) resHeader.style.display = 'block';
 
             // Update Student Profile Card
             document.getElementById('studentProfileCard').classList.add('active');
@@ -6267,205 +5669,6 @@ ${careersText}
             }
         });
 
-        async function renderLockedTeaserView(data) {
-            const container = document.getElementById('careerResults');
-            const resHeader = document.querySelector('.result-header');
-            if (resHeader) resHeader.style.display = 'none';
-            const teaser = data.teaser || {};
-            const attemptId = data.attempt_id || '';
-
-            let authState = { authenticated: false };
-            try {
-                const meRes = await fetch('/api/auth/me');
-                authState = await meRes.json();
-            } catch (e) {}
-
-            let ctaHtml = '';
-            if (!authState.authenticated) {
-                ctaHtml = `
-                    <div style="display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:20px">
-                        <div style="display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap">
-                            <a href="/signup?next=/account" class="btn btn-primary" style="padding:14px 28px;font-size:0.98rem;font-weight:700">
-                                Create Account to Unlock Roadmap →
-                            </a>
-                            <a href="/login?next=/account" class="btn btn-ghost" style="padding:14px 24px;font-size:0.92rem;font-weight:600">
-                                Sign In
-                            </a>
-                        </div>
-                        <p style="font-size:0.85rem;color:var(--muted)">Your completed assessment is saved and links automatically upon sign in.</p>
-                    </div>
-                `;
-            } else {
-                const balance = authState.user ? (authState.user.balance || 0) : 0;
-                ctaHtml = `
-                    <div style="display:flex;flex-direction:column;gap:12px;align-items:center;margin-top:24px">
-                        <div style="text-align:center;margin-bottom:4px">
-                            <p style="font-size:0.96rem;font-weight:700;color:var(--ink);margin:0 0 4px">Your complete career roadmap is currently locked.</p>
-                            <p style="font-size:0.88rem;color:var(--muted);margin:0">Unlock it to explore your personalized recommendations.</p>
-                        </div>
-                        <button onclick="unlockAssessmentFromTeaser('${attemptId}')" class="btn btn-primary" style="padding:14px 34px;font-size:1.02rem;font-weight:700;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,168,107,0.25)">
-                            Unlock Career Roadmap
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                        </button>
-                        ${balance >= 1 ? `<p style="font-size:0.85rem;color:var(--primary);font-weight:600">You have ${balance} Assessment Credit${balance === 1 ? '' : 's'} available in your wallet.</p>` : `<p style="font-size:0.85rem;color:var(--muted);font-weight:500">1 assessment credit required</p>`}
-                        <a href="/account" style="font-size:0.85rem;color:var(--cyan);font-weight:600;text-decoration:none">
-                            Have a school workshop code? Redeem in Account Dashboard →
-                        </a>
-                    </div>
-                `;
-            }
-
-            container.innerHTML = `
-                <div class="locked-teaser-container" style="text-align:center;padding:20px;max-width:820px;margin:0 auto">
-                    <div class="glass" style="padding:40px 24px;border-radius:20px;border:2px solid var(--stroke)">
-                        <div class="eyebrow" style="justify-content:center">PERSONALIZED ROADMAP READY</div>
-                        <h3 style="font-size:1.75rem;font-weight:800;color:var(--ink);margin-bottom:10px;line-height:1.28">
-                            Your Personalized Career Roadmap Is Ready
-                        </h3>
-                        <p style="color:var(--muted);font-size:0.96rem;max-width:620px;margin:0 auto 28px;line-height:1.55">
-                            Our assessment engine analyzed your responses and identified career directions that align with your personality, interests, and preferences.
-                        </p>
-
-                        <!-- Value-Focused Highlight Badges (No numerical match percentages or path counts) -->
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:600px;margin:0 auto 28px">
-                            <div style="background:var(--bg);padding:18px 20px;border-radius:16px;border:1px solid var(--stroke);text-align:left;display:flex;align-items:center;gap:14px">
-                                <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,168,107,0.1);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.05em">Personalized Matches</div>
-                                    <div style="font-size:1.05rem;font-weight:800;color:var(--ink);margin-top:2px">Multiple Career Directions</div>
-                                </div>
-                            </div>
-                            <div style="background:var(--bg);padding:18px 20px;border-radius:16px;border:1px solid var(--stroke);text-align:left;display:flex;align-items:center;gap:14px">
-                                <div style="width:44px;height:44px;border-radius:12px;background:rgba(0,180,216,0.1);color:var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:0.05em">Analysis Status</div>
-                                    <div style="font-size:1.05rem;font-weight:800;color:var(--ink);margin-top:2px">Full Roadmap Ready</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Blurred Preview Visual (No numerical percentages) -->
-                        <div style="position:relative;margin:24px 0;overflow:hidden;border-radius:18px;border:1px solid var(--stroke)">
-                            <div style="filter:blur(9px);opacity:0.35;pointer-events:none;padding:24px;background:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
-                                <div style="padding:20px;border-radius:14px;background:var(--glass-2);text-align:left">
-                                    <div style="font-size:1.15rem;font-weight:800;color:var(--ink)">Primary Career Direction</div>
-                                    <div style="color:var(--primary);font-weight:700;font-size:0.88rem;margin-top:3px">Top Career Match</div>
-                                    <div style="margin-top:6px;font-size:0.82rem;color:var(--muted)">Education, Skill & Salary Analysis Ready</div>
-                                </div>
-                                <div style="padding:20px;border-radius:14px;background:var(--glass-2);text-align:left">
-                                    <div style="font-size:1.15rem;font-weight:800;color:var(--ink)">Alternative Pathway</div>
-                                    <div style="color:var(--cyan);font-weight:700;font-size:0.88rem;margin-top:3px">High Potential Direction</div>
-                                    <div style="margin-top:6px;font-size:0.82rem;color:var(--muted)">Growth Trajectory & Institution Guide</div>
-                                </div>
-                            </div>
-                            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.88);backdrop-filter:blur(3px);padding:20px;text-align:center">
-                                <div style="width:46px;height:46px;border-radius:50%;background:rgba(0,168,107,0.12);color:var(--primary);display:flex;align-items:center;justify-content:center;margin-bottom:10px">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                                </div>
-                                <h4 style="font-size:1.25rem;font-weight:800;color:var(--ink);margin-bottom:4px">Your Full Career Roadmap is Locked</h4>
-                                <p style="color:var(--muted);font-size:0.9rem;max-width:440px;margin:0 auto">Unlock to explore your personalized recommendations, salary insights, skills, and AI counselor guidance.</p>
-                            </div>
-                        </div>
-
-                        <!-- Value Checklist -->
-                        <div style="text-align:left;max-width:580px;margin:0 auto 24px;background:var(--bg);padding:24px 28px;border-radius:18px;border:1px solid var(--stroke)">
-                            <div style="font-size:0.78rem;font-weight:800;color:var(--cyan);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">YOUR ROADMAP INCLUDES</div>
-                            <ul style="list-style:none;line-height:2.2;font-size:0.92rem;color:var(--ink);padding:0;margin:0">
-                                <li style="display:flex;align-items:center;gap:10px">
-                                    <span style="color:var(--primary);font-weight:800;font-size:1.05rem">✓</span>
-                                    <span style="font-weight:600">Complete Career Matches</span>
-                                </li>
-                                <li style="display:flex;align-items:center;gap:10px">
-                                    <span style="color:var(--primary);font-weight:800;font-size:1.05rem">✓</span>
-                                    <span style="font-weight:600">Education Pathways</span>
-                                </li>
-                                <li style="display:flex;align-items:center;gap:10px">
-                                    <span style="color:var(--primary);font-weight:800;font-size:1.05rem">✓</span>
-                                    <span style="font-weight:600">Skills &amp; Development Guidance</span>
-                                </li>
-                                <li style="display:flex;align-items:center;gap:10px">
-                                    <span style="color:var(--primary);font-weight:800;font-size:1.05rem">✓</span>
-                                    <span style="font-weight:600">Career &amp; Salary Insights</span>
-                                </li>
-                                <li style="display:flex;align-items:center;gap:10px">
-                                    <span style="color:var(--primary);font-weight:800;font-size:1.05rem">✓</span>
-                                    <span style="font-weight:600">Personalized AI Guidance</span>
-                                </li>
-                            </ul>
-                        </div>
-
-                        ${ctaHtml}
-                    </div>
-                </div>
-            `;
-        }
-
-        async function unlockAssessmentFromTeaser(attemptId) {
-            openUnlockModal(attemptId);
-        }
-
-        function updateProfileMenuActiveState() {
-            const path = window.location.pathname;
-
-            const devDash = document.getElementById('navItemDevDashboard');
-            const myProf = document.getElementById('navItemMyProfile');
-
-            if (devDash) devDash.classList.remove('active');
-            if (myProf) myProf.classList.remove('active');
-
-            if (path.startsWith('/developer')) {
-                if (devDash) devDash.classList.add('active');
-            } else if (path.startsWith('/account')) {
-                if (myProf) myProf.classList.add('active');
-            }
-        }
-
-        function toggleProfileMenu(e) {
-            if (e) {
-                e.stopPropagation();
-                e.preventDefault();
-            }
-            updateProfileMenuActiveState();
-            const menu = document.getElementById('navProfileMenu');
-            const btn = document.getElementById('navProfileTrigger');
-            if (menu) {
-                const isOpen = menu.style.display === 'block';
-                menu.style.display = isOpen ? 'none' : 'block';
-                if (btn) {
-                    btn.classList.toggle('active', !isOpen);
-                    btn.setAttribute('aria-expanded', (!isOpen).toString());
-                }
-            }
-        }
-
-        document.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('navProfileDropdown');
-            const menu = document.getElementById('navProfileMenu');
-            const btn = document.getElementById('navProfileTrigger');
-            if (menu && dropdown && !dropdown.contains(e.target)) {
-                menu.style.display = 'none';
-                if (btn) {
-                    btn.classList.remove('active');
-                    btn.setAttribute('aria-expanded', 'false');
-                }
-            }
-        });
-
-        window.addEventListener('DOMContentLoaded', updateProfileMenuActiveState);
-        window.addEventListener('hashchange', updateProfileMenuActiveState);
-
-        function toggleMobileNav() {
-            const menu = document.getElementById('navMobileMenu');
-            if (menu) {
-                menu.classList.toggle('active');
-            }
-        }
-
-        window.toggleProfileMenu = toggleProfileMenu;
         window.startQuiz = startQuiz;
         window.answerQuestion = answerQuestion;
         window.goToPreviousQuestion = goToPreviousQuestion;
@@ -6475,9 +5678,6 @@ ${careersText}
         window.viewFullCareerDetail = viewFullCareerDetail;
         window.submitProfile = submitProfile;
         window.getEmojiForCareer = getEmojiForCareer;
-        window.unlockAssessmentFromTeaser = unlockAssessmentFromTeaser;
-        window.toggleMobileNav = toggleMobileNav;
-        window.retrySubmitQuiz = retrySubmitQuiz;
 
         window.showRiasecModal = function(trait) {
             const data = {
@@ -6532,236 +5732,55 @@ ${careersText}
             document.body.appendChild(modalOverlay);
         };
 
-        // Clear any old legacy test wrap cache so fresh attempts always start clean
-        try {
-            sessionStorage.removeItem('testWrapHTML_v2');
-            sessionStorage.removeItem('testVars_v2');
-        } catch (e) {}
+        // Persist test state to prevent loss on accidental navigation
+        window.addEventListener('beforeunload', () => {
+            if (window.location.pathname === '/take-test') {
+                const wrap = document.querySelector('.wrap');
+                if (wrap) {
+                    sessionStorage.setItem('testWrapHTML_v2', wrap.innerHTML);
+                    sessionStorage.setItem('testVars_v2', JSON.stringify({
+                        currentQuestion: typeof currentQuestion !== 'undefined' ? currentQuestion : 0,
+                        answers: typeof answers !== 'undefined' ? answers : [],
+                        topCareers: typeof topCareers !== 'undefined' ? topCareers : [],
+                        studentInfo: typeof studentInfo !== 'undefined' ? studentInfo : {},
+                        riasecScores: typeof riasecScores !== 'undefined' ? riasecScores : { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
+                        userProfile: typeof userProfile !== 'undefined' ? userProfile : null,
+                        rawResultsData: typeof rawResultsData !== 'undefined' ? rawResultsData : null
+                    }));
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.location.pathname === '/take-test') {
+                const navEntries = performance.getEntriesByType("navigation");
+                if (navEntries.length > 0 && navEntries[0].type === "reload") {
+                    sessionStorage.removeItem('testWrapHTML_v2');
+                    sessionStorage.removeItem('testVars_v2');
+                    return;
+                }
+
+                const savedHTML = sessionStorage.getItem('testWrapHTML_v2');
+                const savedVarsStr = sessionStorage.getItem('testVars_v2');
+                
+                if (savedHTML && savedVarsStr) {
+                    const wrap = document.querySelector('.wrap');
+                    if (wrap && wrap.innerHTML.trim() !== '') {
+                        wrap.innerHTML = savedHTML;
+                        try {
+                            const savedVars = JSON.parse(savedVarsStr);
+                            if (savedVars.currentQuestion !== undefined) currentQuestion = savedVars.currentQuestion;
+                            if (savedVars.answers !== undefined) answers = savedVars.answers;
+                            if (savedVars.topCareers !== undefined) topCareers = savedVars.topCareers;
+                            if (savedVars.studentInfo !== undefined) studentInfo = savedVars.studentInfo;
+                            if (savedVars.riasecScores !== undefined) riasecScores = savedVars.riasecScores;
+                            if (savedVars.userProfile !== undefined) userProfile = savedVars.userProfile;
+                            if (savedVars.rawResultsData !== undefined) rawResultsData = savedVars.rawResultsData;
+                        } catch(e) {}
+                    }
+                }
+            }
+        });
     </script>
-
-<!-- Universal SkillSense Unlock Confirmation Modal (Responsive & Dynamic) -->
-<div id="unlockModal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.58);z-index:9999;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)">
-    <div class="glass" style="background:#ffffff;padding:26px 20px;border-radius:20px;max-width:430px;width:100%;position:relative;box-shadow:0 16px 48px rgba(0,0,0,0.18);border:1px solid var(--stroke);box-sizing:border-box;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch">
-        <button type="button" onclick="closeUnlockModal()" aria-label="Close" style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.15s;min-width:36px;min-height:36px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-
-        <div id="unlockModalEyebrow" class="eyebrow" style="margin-bottom:6px;font-size:0.75rem;letter-spacing:0.06em;color:var(--primary);font-weight:700">ASSESSMENT ACCESS</div>
-        <h3 id="unlockModalTitle" style="font-size:1.25rem;font-weight:800;color:var(--ink);margin:0 0 10px 0;line-height:1.3">Unlock Career Roadmap</h3>
-        
-        <div id="unlockModalBody" style="margin-bottom:22px">
-            <!-- Dynamic Content -->
-        </div>
-
-        <div id="unlockModalActions" style="display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap">
-            <!-- Dynamic Buttons -->
-        </div>
-    </div>
-</div>
-
-<script>
-var currentUnlockAttemptId = null;
-var globalCachedWalletBalance = null;
-var globalCachedLowestPlan = null;
-
-function formatPriceINR(price) {
-    if (price === undefined || price === null || isNaN(price)) return '';
-    const num = Number(price);
-    if (Number.isInteger(num)) {
-        return '₹' + num.toLocaleString('en-IN');
-    }
-    const formatted = num.toFixed(2).replace(/\.00$/, '');
-    return '₹' + formatted;
-}
-
-function closeUnlockModal() {
-    const modal = document.getElementById('unlockModal');
-    if (modal) modal.style.display = 'none';
-    currentUnlockAttemptId = null;
-}
-
-// Close on background overlay click
-document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('unlockModal');
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) closeUnlockModal();
-        });
-    }
-});
-
-// Close on Escape key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('unlockModal');
-        if (modal && modal.style.display === 'flex') {
-            closeUnlockModal();
-        }
-    }
-});
-
-async function openUnlockModal(attemptId) {
-    currentUnlockAttemptId = attemptId;
-    const modal = document.getElementById('unlockModal');
-    if (!modal) return;
-
-    const eyebrow = document.getElementById('unlockModalEyebrow');
-    const title = document.getElementById('unlockModalTitle');
-    const bodyBox = document.getElementById('unlockModalBody');
-    const actionsBox = document.getElementById('unlockModalActions');
-
-    // Show initial loading state in modal while checking balance & dynamic lowest plan
-    if (eyebrow) eyebrow.innerText = "ASSESSMENT ACCESS";
-    if (title) title.innerText = "Unlock Career Roadmap";
-    bodyBox.innerHTML = `
-        <div style="text-align:center;padding:16px 0;color:var(--muted)">
-            <div style="display:inline-block;width:24px;height:24px;border:3px solid var(--stroke);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px"></div>
-            <div style="font-size:0.9rem">Checking assessment access...</div>
-        </div>
-    `;
-    actionsBox.innerHTML = `
-        <button type="button" onclick="closeUnlockModal()" class="btn btn-ghost" style="padding:10px 18px;min-height:44px">Cancel</button>
-    `;
-    modal.style.display = 'flex';
-
-    let userBalance = 0;
-    let lowestPlan = null;
-
-    try {
-        const res = await fetch('/api/account/summary');
-        if (res.status === 401) {
-            // Unauthenticated: redirect to login preserving attempt
-            const nextUrl = '/take-test?attempt_id=' + encodeURIComponent(attemptId);
-            window.location.href = '/login?next=' + encodeURIComponent(nextUrl);
-            return;
-        }
-
-        if (res.ok) {
-            const data = await res.json();
-            userBalance = (data.wallet && typeof data.wallet.balance === 'number') ? data.wallet.balance : 0;
-            lowestPlan = data.lowest_plan || null;
-            globalCachedWalletBalance = userBalance;
-            globalCachedLowestPlan = lowestPlan;
-        } else {
-            const planRes = await fetch('/api/pricing/lowest-plan');
-            if (planRes.ok) {
-                const planData = await planRes.json();
-                lowestPlan = planData.lowest_plan || null;
-                globalCachedLowestPlan = lowestPlan;
-            }
-        }
-    } catch (err) {
-        if (globalCachedLowestPlan) lowestPlan = globalCachedLowestPlan;
-        if (globalCachedWalletBalance !== null) userBalance = globalCachedWalletBalance;
-    }
-
-    // CASE 1: Student has 1+ credits in wallet
-    if (userBalance >= 1) {
-        if (eyebrow) eyebrow.innerText = "CONFIRM UNLOCK";
-        if (title) title.innerText = "Unlock Career Roadmap";
-        bodyBox.innerHTML = `
-            <p style="font-size:0.92rem;color:var(--ink);margin:0;line-height:1.55">
-                Spend <strong>1 assessment credit</strong> to unlock your complete personalized career analysis and subject roadmap permanently?
-            </p>
-            <p style="font-size:0.82rem;color:var(--muted);margin-top:8px;margin-bottom:0">
-                You currently have <strong>${userBalance}</strong> available credit(s).
-            </p>
-        `;
-        actionsBox.innerHTML = `
-            <button type="button" onclick="closeUnlockModal()" class="btn btn-ghost" style="padding:11px 18px;font-weight:600;min-height:44px;flex:1 1 90px;text-align:center;box-sizing:border-box">Cancel</button>
-            <button type="button" id="confirmUnlockBtn" onclick="confirmUnlockExecute()" class="btn btn-primary" style="padding:11px 22px;font-weight:700;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:1 1 170px;text-align:center;box-sizing:border-box">
-                Confirm & Unlock (1 Credit) →
-            </button>
-        `;
-        return;
-    }
-
-    // CASE 2: Student has 0 credits in wallet
-    if (eyebrow) eyebrow.innerText = "ASSESSMENT ACCESS";
-    if (title) title.innerText = "Unlock Career Roadmap";
-
-    if (lowestPlan && lowestPlan.price !== undefined) {
-        const formattedPrice = formatPriceINR(lowestPlan.price);
-        bodyBox.innerHTML = `
-            <p style="font-size:0.92rem;color:var(--ink);margin:0 0 14px 0;line-height:1.55">
-                You have 0 credits in your account. You need at least 1 credit to unlock this Career Roadmap.
-            </p>
-            <div style="background:rgba(0,168,107,0.06);border:1px solid rgba(0,168,107,0.22);padding:12px 14px;border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;box-sizing:border-box;flex-wrap:wrap">
-                <span style="font-size:0.85rem;color:var(--muted);font-weight:600">Available Plans</span>
-                <span style="font-size:0.95rem;color:var(--primary);font-weight:800" id="zeroCreditPriceTag">Starting from ${formattedPrice}</span>
-            </div>
-        `;
-        actionsBox.innerHTML = `
-            <button type="button" onclick="closeUnlockModal()" class="btn btn-ghost" style="padding:11px 18px;font-weight:600;min-height:44px;flex:1 1 90px;text-align:center;box-sizing:border-box">Cancel</button>
-            <a id="viewPricingBtn" href="/pricing?attempt_id=${encodeURIComponent(currentUnlockAttemptId)}&next=${encodeURIComponent('/take-test?attempt_id=' + currentUnlockAttemptId)}" class="btn btn-primary" style="padding:11px 20px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;text-decoration:none;flex:1 1 140px;text-align:center;box-sizing:border-box">
-                View Pricing
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </a>
-        `;
-    } else {
-        // CASE 3: Empty / Invalid pricing state (no active plans in database)
-        bodyBox.innerHTML = `
-            <p style="font-size:0.95rem;color:var(--coral);font-weight:700;margin:0 0 8px 0;line-height:1.4">
-                Credits are currently unavailable. Please try again later.
-            </p>
-            <p style="font-size:0.88rem;color:var(--muted);margin:0;line-height:1.5">
-                No active assessment plans are currently available for purchase. Please contact support or check back soon.
-            </p>
-        `;
-        actionsBox.innerHTML = `
-            <button type="button" onclick="closeUnlockModal()" class="btn btn-ghost" style="padding:11px 18px;font-weight:600;min-height:44px;flex:1 1 90px;text-align:center;box-sizing:border-box">Cancel</button>
-            <a href="/contact" class="btn btn-secondary" style="padding:11px 20px;font-weight:600;min-height:44px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;flex:1 1 140px;text-align:center;box-sizing:border-box">
-                Contact Support
-            </a>
-        `;
-    }
-}
-
-async function confirmUnlockExecute() {
-    if (!currentUnlockAttemptId) return;
-    const btn = document.getElementById('confirmUnlockBtn');
-    if (btn) { btn.disabled = true; btn.innerText = "Unlocking..."; }
-
-    try {
-        const res = await fetch(`/api/assessment/${encodeURIComponent(currentUnlockAttemptId)}/unlock`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'}
-        });
-        const data = await res.json();
-
-        if (res.ok && (data.status === 'success' || data.status === 'already_unlocked')) {
-            closeUnlockModal();
-            if (typeof showToast === 'function') showToast("Career Roadmap Unlocked!");
-            const fullReport = data.full_report || {};
-            if (typeof displayResults === 'function' && window.location.pathname.includes('/take-test')) {
-                displayResults({
-                    is_unlocked: true,
-                    profile: fullReport.student_profile || {},
-                    scores: fullReport.riasec_scores || {},
-                    top_careers: fullReport.top_careers || []
-                });
-            } else {
-                window.location.href = `/take-test?attempt_id=${encodeURIComponent(currentUnlockAttemptId)}`;
-            }
-        } else if (res.status === 402 || (data.error && data.error.includes("Insufficient"))) {
-            closeUnlockModal();
-            window.location.href = `/pricing?attempt_id=${encodeURIComponent(currentUnlockAttemptId)}&next=${encodeURIComponent('/take-test?attempt_id=' + currentUnlockAttemptId)}`;
-        } else {
-            alert(data.error || "Failed to unlock assessment.");
-            if (btn) { btn.disabled = false; btn.innerText = "Confirm & Unlock (1 Credit) →"; }
-        }
-    } catch (err) {
-        alert("Network error unlocking assessment.");
-        if (btn) { btn.disabled = false; btn.innerText = "Confirm & Unlock (1 Credit) →"; }
-    }
-}
-
-// Attach to window object for global availability
-window.openUnlockModal = openUnlockModal;
-window.closeUnlockModal = closeUnlockModal;
-window.confirmUnlockExecute = confirmUnlockExecute;
-window.formatPriceINR = formatPriceINR;
-</script>
-
 </body>
 </html>

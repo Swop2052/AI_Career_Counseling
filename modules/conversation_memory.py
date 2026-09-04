@@ -41,14 +41,13 @@ class ConversationMemory:
             conn = self._get_connection()
             with conn:
                 cursor = conn.cursor()
-                # 1. Clean migration: Drop old relational tables if they exist to keep the database tidy
                 old_tables = [
                     "profile_career_aspirations", "profile_strengths", "profile_hobbies",
                     "profile_interests", "profile_challenging_subjects", "profile_favorite_subjects",
-                    "student_profiles", "career_sessions", "users",
+                    "student_profiles", "career_sessions",
                     "budget_master", "career_master", "class_master", "college_type_master",
                     "education_stream_master", "hobby_master", "interest_master", "learning_mode_master",
-                    "location_preference_master", "strength_master", "subject_master", "messages"
+                    "location_preference_master", "strength_master", "subject_master"
                 ]
                 for table in old_tables:
                     cursor.execute(f"DROP TABLE IF EXISTS {table};")
