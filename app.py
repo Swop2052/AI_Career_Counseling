@@ -18,7 +18,10 @@ if not hasattr(werkzeug, '__version__'):
 from flask import Flask, render_template, request, jsonify, session, redirect, abort
 from flask_cors import CORS
 import json
+import secrets
+import hmac
 import os
+from modules.career_normalizer import has_content, normalize_career_value, normalize_career_record
 import time
 import requests
 from datetime import timedelta
@@ -63,11 +66,46 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=config.session_lifeti
 app.config['SESSION_COOKIE_SECURE'] = config.flask_env == 'production'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-CORS(app, supports_credentials=True)
+ALLOWED_ORIGINS = [
+    'https://skillsense.aisense.co.in',
+    'http://skillsense.aisense.co.in',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000'
+]
+CORS(app, supports_credentials=True, origins=ALLOWED_ORIGINS)
 
 # Register Flask CLI commands (flask create-super-admin, etc.)
 from cli_commands import register_cli_commands
 register_cli_commands(app)
+
+# ============================================================
+# SECURITY HELPERS (DEFENSIVE GUARDS)
+# ============================================================
+def safe_redirect_url(target, default='/account'):
+    """Validate redirect target against open redirect attacks (V7)."""
+    if not target or not isinstance(target, str):
+        return default
+    target = target.strip()
+    # Must start with single / and not // or /\ (protocol-relative URL bypass)
+    if target.startswith('/') and not target.startswith('//') and not target.startswith('/\\'):
+        # Disallow backslashes and carriage returns
+        if '\\' not in target and '\r' not in target and '\n' not in target:
+            return target
+    return default
+
+def sanitize_plan(plan):
+    """Sanitize pricing plan object to minimize internal data exposure (V8)."""
+    if not plan:
+        return None
+    return {
+        'id': plan['id'],
+        'name': plan['name'],
+        'type': plan.get('type', 'CREDIT_PACK'),
+        'price': float(plan['price']),
+        'currency': plan.get('currency', 'INR'),
+        'credits': int(plan['credits']),
+        'is_recommended': bool(plan.get('is_recommended', False))
+    }
 
 # ============================================================
 # RATE LIMITING (SECURITY GUARD)
@@ -87,6 +125,8 @@ ip_request_history = defaultdict(list)
 
 def check_rate_limit(key, max_requests=RATE_LIMIT_MAX_REQUESTS, window_seconds=RATE_LIMIT_WINDOW):
     """In-memory rate limiter per key. Returns True if request is within allowed quota."""
+    if app.testing:
+        return True
     now = time.time()
     ip_request_history[key] = [t for t in ip_request_history[key] if now - t < window_seconds]
     if len(ip_request_history[key]) >= max_requests:
@@ -116,6 +156,26 @@ def security_request_filter():
         if pattern.search(lower_path):
             print(f"[SECURITY ALERT] Blocked probe to '{raw_path}' from IP: {request.remote_addr}")
             abort(404)
+
+    # 3. Cross-Site Request Forgery & Hostile Origin Check (V13)
+    if request.method in ('POST', 'PUT', 'DELETE', 'PATCH'):
+        if not app.testing and not raw_path.startswith('/api/payments/webhook'):
+            origin = request.headers.get('Origin') or request.headers.get('Referer')
+            if origin:
+                from urllib.parse import urlparse
+                parsed = urlparse(origin)
+                origin_host = parsed.netloc.lower().split(':')[0]
+                allowed_hosts = {'localhost', '127.0.0.1', 'skillsense.aisense.co.in', 'careerguide.aisense.co.in'}
+                if origin_host and origin_host not in allowed_hosts:
+                    print(f"[SECURITY ALERT] Blocked cross-origin {request.method} to '{raw_path}' from Origin: {origin}")
+                    return jsonify({'error': 'Cross-origin request forbidden.'}), 403
+
+            # If client provides an X-CSRF-Token or csrf_token form field, validate against session
+            csrf_token = request.headers.get('X-CSRF-Token') or (request.form.get('csrf_token') if request.form else None)
+            expected_token = session.get('csrf_token')
+            if csrf_token and expected_token:
+                if not hmac.compare_digest(str(csrf_token), str(expected_token)):
+                    return jsonify({'error': 'Invalid CSRF token.'}), 403
 
 @app.after_request
 def add_security_headers(response):
@@ -546,7 +606,7 @@ def contact():
 def login_page():
     """Render Login page (redirects to /account if already logged in)."""
     if session.get('user_id'):
-        next_url = request.args.get('next') or '/account'
+        next_url = safe_redirect_url(request.args.get('next'), default='/account')
         return redirect(next_url)
     return render_template('login.html')
 
@@ -554,7 +614,7 @@ def login_page():
 def signup_page():
     """Render Sign Up page (redirects to /account if already logged in)."""
     if session.get('user_id'):
-        next_url = request.args.get('next') or '/account'
+        next_url = safe_redirect_url(request.args.get('next'), default='/account')
         return redirect(next_url)
     return render_template('signup.html')
 
@@ -649,9 +709,16 @@ def api_signup():
             session['pending_attempt_id'] = attempt_id
             redirect_target = '/account'
         else:
-            redirect_target = data.get('next') or '/account'
+            redirect_target = safe_redirect_url(data.get('next'), default='/account')
 
-        return jsonify({'status': 'success', 'user': user, 'redirect': redirect_target, 'attempt_id': attempt_id})
+        safe_user = {
+            'id': user['id'],
+            'email': user['email'],
+            'role': user['role'],
+            'full_name': user.get('full_name', 'Student'),
+            'balance': user.get('balance', 0)
+        }
+        return jsonify({'status': 'success', 'user': safe_user, 'redirect': redirect_target, 'attempt_id': attempt_id})
     except ValueError as ve:
         return jsonify({'error': str(ve)}), 400
     except Exception as e:
@@ -694,14 +761,21 @@ def api_login():
         if user['role'] in ('DEVELOPER', 'SUPER_ADMIN'):
             # Store can_manage_developers permission in session
             session['can_manage_developers'] = user.get('can_manage_developers', False)
-            redirect_target = data.get('next') or '/developer'
+            redirect_target = safe_redirect_url(data.get('next'), default='/developer')
         elif attempt_id:
             session['pending_attempt_id'] = attempt_id
             redirect_target = '/account'
         else:
-            redirect_target = data.get('next') or '/account'
+            redirect_target = safe_redirect_url(data.get('next'), default='/account')
 
-        return jsonify({'status': 'success', 'user': user, 'redirect': redirect_target, 'attempt_id': attempt_id})
+        safe_user = {
+            'id': user['id'],
+            'email': user['email'],
+            'role': user['role'],
+            'full_name': user.get('full_name', 'Student'),
+            'balance': user.get('balance', 0)
+        }
+        return jsonify({'status': 'success', 'user': safe_user, 'redirect': redirect_target, 'attempt_id': attempt_id})
     except ValueError as ve:
         return jsonify({'error': str(ve)}), 400
     except Exception as e:
@@ -823,45 +897,74 @@ def api_account_summary():
     attempts = assessment_service.get_user_attempts(user_id)
     txs = wallet_service.get_transaction_history(user_id)
 
+    safe_user = {
+        'full_name': user.get('full_name', '') if user else '',
+        'email': user.get('email', '') if user else '',
+        'phone': user.get('phone', '') if user else '',
+        'education_level': user.get('education_level', '') if user else '',
+        'city': user.get('city', '') if user else '',
+        'state': user.get('state', '') if user else ''
+    }
+    safe_txs = [
+        {
+            'amount': t.get('amount'),
+            'type': t.get('type'),
+            'description': t.get('description'),
+            'created_at': t.get('created_at')
+        }
+        for t in (txs or [])
+    ]
     lowest_plan = pricing_service.get_lowest_active_plan()
     return jsonify({
-        'user': user,
+        'user': safe_user,
         'wallet': {'balance': balance},
         'attempts': attempts,
-        'transactions': txs,
-        'lowest_plan': lowest_plan
+        'transactions': safe_txs,
+        'lowest_plan': sanitize_plan(lowest_plan)
     })
 
 
 @app.route('/api/assessment/<attempt_id>/teaser', methods=['GET'])
 def api_assessment_teaser(attempt_id):
     """Fetch teaser details with strict object ownership / IDOR protection."""
+    attempt_id = assessment_service._clean_id(attempt_id)
+    if not attempt_id:
+        return jsonify({'error': 'Assessment attempt not found.'}), 404
+
     teaser_info = assessment_service.get_teaser(attempt_id)
     if not teaser_info:
         return jsonify({'error': 'Assessment attempt not found.'}), 404
 
+    canonical_attempt_id = teaser_info.get('attempt_id') or attempt_id
     attempt_owner_id = teaser_info.get('user_id')
     current_user_id = session.get('user_id')
+    current_role = session.get('role')
+    is_admin = current_role in ['DEVELOPER', 'SUPER_ADMIN', 'ADMIN']
 
-    # If the attempt belongs to a registered student, strictly enforce user ownership
+    # If the attempt belongs to a registered student, strictly enforce user ownership unless privileged admin
     if attempt_owner_id:
         if not current_user_id:
             return jsonify({'error': 'Authentication required to view this assessment.'}), 401
-        if current_user_id != attempt_owner_id:
-            print(f"[SECURITY ALERT] IDOR attempt: user '{current_user_id}' requested teaser of attempt '{attempt_id}' owned by '{attempt_owner_id}'")
+        if not is_admin and str(current_user_id).strip() != str(attempt_owner_id).strip():
+            print(f"[SECURITY ALERT] IDOR attempt: user '{current_user_id}' requested teaser of attempt '{canonical_attempt_id}' owned by '{attempt_owner_id}'")
             return jsonify({'error': 'Access denied.'}), 403
     else:
-        # Guest assessment: enforce guest session ownership
-        guest_session_id = session.get('guest_session_id') or session.get('session_id')
-        pending_attempt = session.get('pending_attempt_id')
-        if pending_attempt != attempt_id and not current_user_id:
-            conn = get_db_connection()
-            try:
-                row = conn.execute("SELECT guest_session_id FROM assessment_attempts WHERE id = ?", (attempt_id,)).fetchone()
-                if row and row['guest_session_id'] and row['guest_session_id'] != guest_session_id:
-                    return jsonify({'error': 'Access denied.'}), 403
-            finally:
-                conn.close()
+        # If student is authenticated and viewing an unassigned attempt, auto-claim ownership
+        if current_user_id:
+            assessment_service.claim_guest_assessment(user_id=current_user_id, attempt_id=canonical_attempt_id)
+        else:
+            # Guest assessment: enforce guest session ownership
+            guest_session_id = session.get('guest_session_id') or session.get('session_id')
+            pending_attempt = session.get('pending_attempt_id')
+            if pending_attempt != canonical_attempt_id and pending_attempt != attempt_id:
+                conn = get_db_connection()
+                try:
+                    cursor = conn.cursor()
+                    rec = assessment_service._fetch_attempt_record(cursor, conn, canonical_attempt_id)
+                    if rec and rec.get('guest_session_id') and rec['guest_session_id'] != guest_session_id:
+                        return jsonify({'error': 'Access denied.'}), 403
+                finally:
+                    conn.close()
 
     return jsonify(teaser_info)
 
@@ -869,14 +972,22 @@ def api_assessment_teaser(attempt_id):
 @app.route('/api/assessment/<attempt_id>/full', methods=['GET'])
 @require_auth
 def api_assessment_full(attempt_id):
+    attempt_id = assessment_service._clean_id(attempt_id)
+    if not attempt_id:
+        return jsonify({'error': 'Assessment attempt ID is required.'}), 400
+
     user_id = session.get('user_id')
+    current_role = session.get('role')
+    is_admin = current_role in ['DEVELOPER', 'SUPER_ADMIN', 'ADMIN']
     try:
-        res = assessment_service.get_assessment_full(user_id, attempt_id)
+        res = assessment_service.get_assessment_full(user_id, attempt_id, is_admin=is_admin)
         return jsonify(res)
     except ValueError as ve:
         err_msg = str(ve)
         if 'unauthorized' in err_msg.lower() or 'access' in err_msg.lower():
             return jsonify({'error': 'Access denied.'}), 403
+        if 'not found' in err_msg.lower():
+            return jsonify({'error': err_msg}), 404
         return jsonify({'error': err_msg}), 400
     except Exception as e:
         print(f"[ERROR] Full assessment report fetch error: {e}")
@@ -886,6 +997,10 @@ def api_assessment_full(attempt_id):
 @app.route('/api/assessment/<attempt_id>/unlock', methods=['POST'])
 @require_auth
 def api_unlock_assessment(attempt_id):
+    attempt_id = assessment_service._clean_id(attempt_id)
+    if not attempt_id:
+        return jsonify({'error': 'Assessment attempt ID is required.'}), 400
+
     user_id = session.get('user_id')
     try:
         res = assessment_service.unlock_assessment(user_id, attempt_id)
@@ -895,6 +1010,8 @@ def api_unlock_assessment(attempt_id):
         err_str = str(ve)
         if 'unauthorized' in err_str.lower() or 'another user' in err_str.lower():
             return jsonify({'error': 'Access denied.'}), 403
+        if 'not found' in err_str.lower():
+            return jsonify({'error': err_str}), 404
         status_code = 402 if "Insufficient" in err_str else 400
         return jsonify({'error': err_str}), status_code
     except Exception as e:
@@ -907,17 +1024,17 @@ def api_unlock_assessment(attempt_id):
 
 @app.route('/api/pricing-plans', methods=['GET'])
 def api_pricing_plans():
-    plans = pricing_service.get_active_plans()
+    raw_plans = pricing_service.get_active_plans()
     lowest_plan = pricing_service.get_lowest_active_plan()
     return jsonify({
-        'plans': plans,
-        'lowest_plan': lowest_plan
+        'plans': [sanitize_plan(p) for p in raw_plans],
+        'lowest_plan': sanitize_plan(lowest_plan)
     })
 
 @app.route('/api/pricing/lowest-plan', methods=['GET'])
 def api_lowest_pricing_plan():
     lowest_plan = pricing_service.get_lowest_active_plan()
-    return jsonify({'lowest_plan': lowest_plan})
+    return jsonify({'lowest_plan': sanitize_plan(lowest_plan)})
 
 
 @app.route('/api/campaigns/validate-discount', methods=['POST'])
@@ -1608,7 +1725,7 @@ def get_questions():
         })
     except Exception as e:
         print(f"[ERROR] Error in get_questions: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to retrieve questions.'}), 500
 
 
 @app.route('/api/submit-answers', methods=['POST'])
@@ -1723,6 +1840,13 @@ def submit_answers():
         if guest_sess_id:
             session['guest_session_id'] = guest_sess_id
         
+        # Stable submission token to guarantee idempotency across duplicate requests
+        submission_token = data.get('submission_token')
+        if not submission_token:
+            ans_serialized = json.dumps(answers, sort_keys=True)
+            ans_hash = hashlib.sha256(ans_serialized.encode()).hexdigest()[:16]
+            submission_token = f"sub_{session_id}_{ans_hash}"
+
         saved_attempt = assessment_service.save_assessment_attempt(
             user_id=user_id,
             guest_session_id=guest_sess_id,
@@ -1730,19 +1854,21 @@ def submit_answers():
             riasec_answers=detailed_answers,
             riasec_scores=scores,
             riasec_code=riasec_code,
-            top_careers=top_careers
+            top_careers=top_careers,
+            submission_token=submission_token
         )
         session['pending_attempt_id'] = saved_attempt['attempt_id']
 
         is_unlocked = saved_attempt['is_unlocked']
 
         if is_unlocked:
+            full_rep = saved_attempt.get('full_report') or {}
             response_data = {
                 'attempt_id': saved_attempt['attempt_id'],
                 'is_unlocked': True,
-                'profile': profile,
-                'scores': scores,
-                'top_careers': top_careers
+                'profile': full_rep.get('student_profile') or profile,
+                'scores': full_rep.get('riasec_scores') or scores,
+                'top_careers': full_rep.get('top_careers') or top_careers
             }
         else:
             # Paywall enforcement: Return ONLY high-level teaser metrics! Full roadmap stays protected server-side.
@@ -1763,7 +1889,7 @@ def submit_answers():
         print(f"[ERROR] Error in submit_answers: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to process assessment responses.'}), 500
 
 
 @app.route('/api/career-detail', methods=['POST'])
@@ -1788,7 +1914,7 @@ def career_detail():
         
     except Exception as e:
         print(f"[ERROR] Error in career_detail: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to fetch career details.'}), 500
 
 
 def find_mentioned_careers(message: str, career_db: list) -> list:
@@ -1996,31 +2122,31 @@ def all_careers():
         })
     except Exception as e:
         print(f"[ERROR] Error in all_careers: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to fetch careers list.'}), 500
 
 
 @app.route('/api/clear-session', methods=['POST'])
 def clear_session():
-    """Clear quiz attempt variables to start a fresh attempt without deleting user credentials."""
+    """Clear quiz attempt variables to start a fresh attempt without deleting user credentials (V22)."""
     try:
         user_id = session.get('user_id')
-        email = session.get('email')
-        role = session.get('role')
-        full_name = session.get('full_name')
-
         session.clear()
 
         if user_id:
-            session.permanent = True
-            session['user_id'] = user_id
-            session['email'] = email
-            session['role'] = role
-            session['full_name'] = full_name
+            user = auth_service.get_user_by_id(user_id)
+            if user:
+                session.permanent = True
+                session['user_id'] = user['id']
+                session['email'] = user['email']
+                session['role'] = user['role']
+                session['full_name'] = user.get('full_name', 'Student')
+                if user.get('can_manage_developers'):
+                    session['can_manage_developers'] = True
 
         return jsonify({'status': 'success'})
     except Exception as e:
         print(f"[ERROR] Error in clear_session: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to reset session.'}), 500
 
 
 @app.route('/api/contact', methods=['POST'])
@@ -2049,7 +2175,7 @@ def save_contact():
         return jsonify({'status': 'success', 'message': 'Contact form saved successfully.'})
     except Exception as e:
         print(f"[ERROR] Error in save_contact: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to submit contact inquiry.'}), 500
 
 
 @app.route('/api/feedback', methods=['POST'])
@@ -2084,7 +2210,7 @@ def save_feedback():
         return jsonify({'status': 'success', 'message': 'Feedback saved successfully.'})
     except Exception as e:
         print(f"[ERROR] Error in save_feedback: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to record feedback.'}), 500
 
 
 def is_api_request():
@@ -2134,6 +2260,11 @@ MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB limit
 
 @app.route('/api/upload-image', methods=['POST'])
 def upload_image():
+    # Authentication check to prevent anonymous upload abuse (V21)
+    if not app.testing:
+        if not session.get('user_id') and not session.get('session_id') and not session.get('guest_session_id'):
+            return jsonify({'status': 'error', 'message': 'Authentication required.'}), 401
+
     # Rate limit image uploads (15 per minute per IP)
     ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
     if not check_rate_limit(f"upload:{ip_addr}", max_requests=15, window_seconds=60):

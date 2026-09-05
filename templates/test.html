@@ -2,14 +2,14 @@
 {% block content %}
 <section class="section" id="quiz-section">
 <div class="wrap">
-<div class="sec-head reveal" style="text-align:center;margin:0 auto 40px">
+<div class="sec-head reveal" id="quizSecHead" style="text-align:center;margin:0 auto 40px">
 <div class="eyebrow" style="justify-content:center">CAREER DISCOVERY ASSESSMENT</div>
 <h2 class="h-sec">Discover the path <span class="grad">that fits you.</span></h2>
 <p class="lead" style="margin:0 auto;text-align:center">Tell us about yourself and answer a few
                     questions to understand your interests, strengths, and career preferences.</p>
 </div>
 <!-- Profile Form - Simplified -->
-<div class="profile-form-container active" id="profileFormContainer">
+<div class="profile-form-container" id="profileFormContainer">
 <div class="glass" style="padding:30px">
 <h3 style="text-align:center;margin-bottom:20px;color:var(--ink)">Tell us about yourself</h3>
 <form id="profileForm" onsubmit="submitProfile(event)">
@@ -277,40 +277,108 @@ function validateStep(step) {
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const attemptId = urlParams.get('attempt_id');
+    const rawAttemptId = urlParams.get('attempt_id') || urlParams.get('test_id') || urlParams.get('id');
+    let attemptId = null;
+    if (rawAttemptId) {
+        try {
+            attemptId = decodeURIComponent(rawAttemptId.trim()).trim().replace(/^['"]|['"]$/g, '');
+        } catch (e) {
+            attemptId = rawAttemptId.trim().replace(/^['"]|['"]$/g, '');
+        }
+    }
 
     if (attemptId) {
+        // Viewing an assessment attempt: Hide assessment start banner immediately
+        const secHead = document.getElementById('quizSecHead') || document.querySelector('#quiz-section .sec-head');
+        if (secHead) secHead.style.display = 'none';
+
+        const pfc = document.getElementById('profileFormContainer');
+        if (pfc) pfc.classList.remove('active');
+        const qzc = document.getElementById('quizContainer');
+        if (qzc) qzc.classList.remove('active');
+        const rsc = document.getElementById('resultsContainer');
+        if (rsc) rsc.classList.add('active');
+
         try {
-            const res = await fetch(`/api/assessment/${attemptId}/teaser`);
-            if (!res.ok) {
-                console.warn("Assessment attempt not found:", attemptId);
+            const res = await fetch(`/api/assessment/${encodeURIComponent(attemptId)}/teaser`);
+            if (res.status === 401) {
+                // Unauthenticated: redirect to login and preserve attempt
+                window.location.href = `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
                 return;
             }
-            const data = await res.json();
 
-            document.getElementById('profileFormContainer').classList.remove('active');
-            document.getElementById('quizContainer').classList.remove('active');
-            document.getElementById('resultsContainer').classList.add('active');
+            if (res.status === 403) {
+                if (rsc) {
+                    rsc.innerHTML = `
+                        <div style="text-align:center;padding:50px 20px;max-width:540px;margin:40px auto;background:var(--glass);border:1px solid var(--stroke);border-radius:20px;box-shadow:var(--shadow)">
+                            <div style="font-size:2.4rem;margin-bottom:12px">🔒</div>
+                            <h3 style="font-size:1.35rem;font-weight:800;color:var(--ink);margin-bottom:8px">Access Restricted</h3>
+                            <p style="font-size:0.92rem;color:var(--muted);line-height:1.55;margin-bottom:24px">
+                                This career assessment belongs to another user account. Please sign in with the account that completed this assessment.
+                            </p>
+                            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                                <a href="/account" class="btn btn-primary" style="padding:11px 22px;font-weight:700">Go to My Dashboard</a>
+                                <a href="/take-test" class="btn btn-ghost" style="padding:11px 22px;font-weight:600">Start New Assessment</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            if (!res.ok) {
+                // Attempt not found or invalid
+                if (rsc) {
+                    rsc.innerHTML = `
+                        <div style="text-align:center;padding:50px 20px;max-width:540px;margin:40px auto;background:var(--glass);border:1px solid var(--stroke);border-radius:20px;box-shadow:var(--shadow)">
+                            <div style="font-size:2.4rem;margin-bottom:12px">🔍</div>
+                            <h3 style="font-size:1.35rem;font-weight:800;color:var(--ink);margin-bottom:8px">Assessment Not Found</h3>
+                            <p style="font-size:0.92rem;color:var(--muted);line-height:1.55;margin-bottom:24px">
+                                We could not find this assessment roadmap. It may have expired or belongs to another account.
+                            </p>
+                            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+                                <a href="/account" class="btn btn-primary" style="padding:11px 22px;font-weight:700">Go to My Dashboard</a>
+                                <a href="/take-test" class="btn btn-ghost" style="padding:11px 22px;font-weight:600">Start Assessment</a>
+                            </div>
+                        </div>
+                    `;
+                }
+                return;
+            }
+
+            const data = await res.json();
 
             if (data.is_unlocked) {
                 // Fetch full report from secure full API endpoint
-                const fullRes = await fetch(`/api/assessment/${attemptId}/full`);
+                const fullRes = await fetch(`/api/assessment/${encodeURIComponent(attemptId)}/full`);
                 if (fullRes.ok) {
                     const fullData = await fullRes.json();
-                    displayResults({
-                        is_unlocked: true,
-                        profile: fullData.full_report.student_profile || {},
-                        scores: fullData.full_report.riasec_scores || {},
-                        top_careers: fullData.full_report.top_careers || []
-                    });
+                    const fullRep = fullData.full_report || {};
+                    try {
+                        displayResults({
+                            is_unlocked: true,
+                            profile: fullRep.student_profile || {},
+                            scores: fullRep.riasec_scores || {},
+                            top_careers: fullRep.top_careers || []
+                        });
+                        if (rsc) rsc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } catch (renderErr) {
+                        console.error("displayResults rendering error:", renderErr);
+                        renderLockedTeaserView({
+                            attempt_id: attemptId,
+                            is_unlocked: true,
+                            profile: fullRep.student_profile || {},
+                            scores: fullRep.riasec_scores || {},
+                            teaser: data.teaser || {}
+                        });
+                    }
                 } else {
-                    // Render locked teaser if full report cannot be fetched
                     renderLockedTeaserView({
                         attempt_id: attemptId,
                         is_unlocked: false,
                         profile: {},
                         scores: {},
-                        teaser: data.teaser
+                        teaser: data.teaser || {}
                     });
                 }
             } else {
@@ -320,14 +388,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     is_unlocked: false,
                     profile: {},
                     scores: {},
-                    teaser: data.teaser
+                    teaser: data.teaser || {}
                 });
             }
         } catch (e) {
             console.error("Error loading assessment from query string:", e);
         }
     } else {
-        // Fresh assessment attempt: pre-fill profile info if student is logged in
+        // Fresh assessment attempt: show profile form and pre-fill if logged in
+        const pfc = document.getElementById('profileFormContainer');
+        if (pfc) pfc.classList.add('active');
+
         try {
             const authRes = await fetch('/api/auth/me');
             const authData = await authRes.json();

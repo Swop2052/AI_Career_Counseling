@@ -166,8 +166,7 @@ class AssessmentService:
         riasec_answers: Optional[List] = None,
         riasec_scores: Optional[Dict] = None,
         riasec_code: Optional[str] = None,
-        top_careers: Optional[List] = None,
-        submission_token: Optional[str] = None
+        top_careers: Optional[List] = None
     ) -> Dict[str, Any]:
         """Save completed assessment attempt and generate teaser metrics (locked by default)."""
         attempt_id = f"ast_{uuid.uuid4().hex[:12]}"
@@ -187,7 +186,6 @@ class AssessmentService:
             'teaser_headline': "Your Personalized Career Roadmap Is Ready",
             'teaser_subheadline': "Our assessment engine analyzed your responses and identified career directions that align with your personality, interests, and preferences.",
             'career_status': "Multiple career directions identified for you",
-            'submission_token': submission_token,
             'included_features': [
                 "Complete Career Matches",
                 "Education Pathways",
@@ -210,30 +208,49 @@ class AssessmentService:
         conn = get_db_connection()
         try:
             # Idempotency & Debounce Guard:
+            # Check if an assessment attempt with identical answers was created for this user/session recently (within 45s)
+            answers_json = json.dumps(riasec_answers or [])
             cursor = conn.cursor()
-            existing = None
-            if submission_token:
+            if user_id:
                 cursor.execute("""
-                    SELECT id, is_unlocked, teaser_data, full_result_data, created_at, unlocked_at
+                    SELECT id, is_unlocked, teaser_data, full_result_data, created_at
                     FROM assessment_attempts
-                    WHERE (user_id = ? OR guest_session_id = ?)
-                      AND teaser_data LIKE ?
+                    WHERE user_id = ? AND riasec_answers = ?
                     ORDER BY created_at DESC LIMIT 1
-                """, (user_id or '', guest_session_id or '', f'%"submission_token": "{submission_token}"%'))
-                existing = cursor.fetchone()
+                """, (user_id, answers_json))
+            elif guest_session_id:
+                cursor.execute("""
+                    SELECT id, is_unlocked, teaser_data, full_result_data, created_at
+                    FROM assessment_attempts
+                    WHERE guest_session_id = ? AND riasec_answers = ?
+                    ORDER BY created_at DESC LIMIT 1
+                """, (guest_session_id, answers_json))
+            else:
+                cursor.execute("""
+                    SELECT id, is_unlocked, teaser_data, full_result_data, created_at
+                    FROM assessment_attempts
+                    WHERE riasec_answers = ?
+                    ORDER BY created_at DESC LIMIT 1
+                """, (answers_json,))
 
+            existing = cursor.fetchone()
             if existing:
-                print(f"[INFO] Idempotent submission: reusing existing attempt '{existing['id']}' for token '{submission_token}'")
-                t_data = json.loads(existing['teaser_data']) if isinstance(existing['teaser_data'], str) else (existing['teaser_data'] or {})
-                full_rep = json.loads(existing['full_result_data']) if existing['is_unlocked'] and existing['full_result_data'] else None
-                return {
-                    'attempt_id': existing['id'],
-                    'is_unlocked': bool(existing['is_unlocked']),
-                    'teaser': t_data,
-                    'created_at': existing['created_at'],
-                    'unlocked_at': existing['unlocked_at'],
-                    'full_report': full_rep
-                }
+                try:
+                    c_time = datetime.fromisoformat(existing['created_at'].replace('Z', '+00:00'))
+                    diff = abs((datetime.now() - c_time.replace(tzinfo=None)).total_seconds())
+                except Exception:
+                    diff = 0
+                if diff <= 45:
+                    print(f"[INFO] Idempotent submission: reusing existing attempt '{existing['id']}' created {diff:.1f}s ago")
+                    t_data = json.loads(existing['teaser_data']) if isinstance(existing['teaser_data'], str) else (existing['teaser_data'] or {})
+                    full_rep = json.loads(existing['full_result_data']) if existing['is_unlocked'] and existing['full_result_data'] else None
+                    return {
+                        'attempt_id': existing['id'],
+                        'is_unlocked': bool(existing['is_unlocked']),
+                        'teaser': t_data,
+                        'created_at': existing['created_at'],
+                        'full_report': full_rep
+                    }
 
             with conn:
                 conn.execute("""
@@ -536,41 +553,30 @@ class AssessmentService:
                 else:
                     raise ValueError("Cannot unlock this assessment because assessment responses are incomplete. No credits have been deducted.")
 
-            # Check if this attempt is an accidental duplicate (within 5 seconds) of an already unlocked attempt
+            # Check if this attempt or an identical duplicate attempt is already unlocked for this user
             if not attempt['is_unlocked'] and attempt.get('riasec_answers'):
-                ans_str = attempt['riasec_answers']
-                try:
-                    ans_list = json.loads(ans_str) if isinstance(ans_str, str) else ans_str
-                except Exception:
-                    ans_list = []
-                if isinstance(ans_list, list) and len(ans_list) >= 10:
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT id, full_result_data, unlocked_at, created_at FROM assessment_attempts
-                        WHERE user_id = ? AND riasec_answers = ? AND riasec_code = ? AND is_unlocked = 1
-                    """, (user_id, ans_str, attempt['riasec_code']))
-                    candidates = cursor.fetchall()
-                    for cand in candidates:
-                        try:
-                            t1 = datetime.fromisoformat(cand['created_at'].replace('Z', '+00:00'))
-                            t2 = datetime.fromisoformat(attempt['created_at'].replace('Z', '+00:00'))
-                            if abs((t1 - t2).total_seconds()) <= 5:
-                                print(f"[INFO] Attempt {attempt['id']} is a 5s duplicate of already unlocked {cand['id']} - marking unlocked with 0 credit deduction")
-                                twin_full = json.loads(cand['full_result_data']) if cand['full_result_data'] else None
-                                with conn:
-                                    conn.execute("""
-                                        UPDATE assessment_attempts
-                                        SET is_unlocked = 1, unlocked_at = COALESCE(?, ?), full_result_data = COALESCE(?, full_result_data)
-                                        WHERE id = ?
-                                    """, (cand['unlocked_at'], datetime.now().isoformat(), cand['full_result_data'], attempt['id']))
-                                return {
-                                    'status': 'already_unlocked',
-                                    'message': 'Assessment report is already permanently unlocked.',
-                                    'attempt_id': attempt['id'],
-                                    'full_report': twin_full or AssessmentService._reconstruct_full_report(dict(attempt))
-                                }
-                        except Exception:
-                            pass
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT id, full_result_data, unlocked_at FROM assessment_attempts
+                    WHERE user_id = ? AND riasec_answers = ? AND is_unlocked = 1
+                    LIMIT 1
+                """, (user_id, attempt['riasec_answers']))
+                unlocked_twin = cursor.fetchone()
+                if unlocked_twin:
+                    print(f"[INFO] Attempt {attempt['id']} has an already unlocked counterpart {unlocked_twin['id']} - marking unlocked with 0 credit deduction")
+                    twin_full = json.loads(unlocked_twin['full_result_data']) if unlocked_twin['full_result_data'] else None
+                    with conn:
+                        conn.execute("""
+                            UPDATE assessment_attempts
+                            SET is_unlocked = 1, unlocked_at = COALESCE(?, ?), full_result_data = COALESCE(?, full_result_data)
+                            WHERE id = ?
+                        """, (unlocked_twin['unlocked_at'], datetime.now().isoformat(), unlocked_twin['full_result_data'], attempt['id']))
+                    return {
+                        'status': 'already_unlocked',
+                        'message': 'Assessment report is already permanently unlocked.',
+                        'attempt_id': attempt['id'],
+                        'full_report': twin_full or AssessmentService._reconstruct_full_report(dict(attempt))
+                    }
 
             # Pre-check credit balance before atomic unlock
             user_balance = wallet_service.get_balance(user_id)
@@ -669,49 +675,25 @@ class AssessmentService:
             """, (clean_user_id,))
             rows = cursor.fetchall()
 
-            # Server-side grouping/deduplication for accidental duplicate attempts
+            # Server-side grouping/deduplication for accidental duplicate attempts (same answers within 120s)
+            # Legitimate separate tests (minutes, hours, or days apart) remain completely separate!
             deduped_rows = []
-            seen_ids = set()
             seen_clusters = []
             for r in rows:
-                if r['id'] in seen_ids:
-                    continue
-                seen_ids.add(r['id'])
-
                 r_ans = r['riasec_answers']
-                ans_list = []
-                if r_ans:
-                    try:
-                        ans_list = json.loads(r_ans) if isinstance(r_ans, str) else r_ans
-                    except Exception:
-                        ans_list = []
-
+                r_created = r['created_at']
                 matched_cluster = None
-                # 1. Match by submission_token if present in teaser_data
-                r_teaser = json.loads(r['teaser_data']) if isinstance(r['teaser_data'], str) else (r['teaser_data'] or {})
-                r_tok = r_teaser.get('submission_token')
-                if r_tok:
+                if r_ans:
                     for cl in seen_clusters:
-                        cl_teaser = json.loads(cl.get('teaser_data') or '{}') if isinstance(cl.get('teaser_data'), str) else (cl.get('teaser_data') or {})
-                        if cl_teaser.get('submission_token') == r_tok:
-                            matched_cluster = cl
-                            break
-
-                # 2. Match by full answers (>= 10) + same RIASEC code + created within 5 seconds
-                if not matched_cluster and isinstance(ans_list, list) and len(ans_list) >= 10:
-                    for cl in seen_clusters:
-                        if cl.get('riasec_code') == r['riasec_code']:
-                            cl_ans = cl.get('riasec_answers')
-                            if cl_ans == r_ans:
-                                try:
-                                    t1 = datetime.fromisoformat(cl['created_at'].replace('Z', '+00:00'))
-                                    t2 = datetime.fromisoformat(r['created_at'].replace('Z', '+00:00'))
-                                    if abs((t1 - t2).total_seconds()) <= 5:
-                                        matched_cluster = cl
-                                        break
-                                except Exception:
-                                    pass
-
+                        if cl.get('riasec_answers') == r_ans:
+                            try:
+                                t1 = datetime.fromisoformat(cl['created_at'].replace('Z', '+00:00'))
+                                t2 = datetime.fromisoformat(r_created.replace('Z', '+00:00'))
+                                if abs((t1 - t2).total_seconds()) <= 120:
+                                    matched_cluster = cl
+                                    break
+                            except Exception:
+                                pass
                 if matched_cluster:
                     # Merge unlock status into cluster
                     if r['is_unlocked']:

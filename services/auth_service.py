@@ -91,10 +91,6 @@ class AuthService:
                 raise ValueError("This account has been deactivated or is pending invitation setup.")
 
             is_valid_pwd = check_password_hash(row['password_hash'], password)
-            if not is_valid_pwd and email_clean == 'admin@skillsense.ai' and password in ('admin', 'admin123', 'admin@123', 'Admin@123', 'Admin@123456', 'Password123!', 'password'):
-                is_valid_pwd = True
-                with conn:
-                    conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (generate_password_hash(password), row['id']))
 
             if is_valid_pwd:
                 now_str = datetime.now().isoformat()

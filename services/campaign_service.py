@@ -306,14 +306,24 @@ class CampaignService:
                     if cursor.fetchone():
                         raise ValueError(f"You have already redeemed campaign code '{code_clean}'.")
 
-                # Increment used_count
+                # Increment used_count atomically with max_uses check to prevent race condition (V16)
                 cursor.execute("""
-                    UPDATE campaign_codes SET used_count = used_count + 1, updated_at = ? WHERE id = ?
+                    UPDATE campaign_codes
+                    SET used_count = used_count + 1, updated_at = ?
+                    WHERE id = ? AND used_count < max_uses AND is_active = 1
                 """, (now_dt.isoformat(), code_row['id']))
+                if cursor.rowcount == 0:
+                    raise ValueError(f"Campaign code '{code_clean}' has reached its maximum redemptions limit.")
 
                 # Record redemption
                 redemption_id = f"rdm_{uuid.uuid4().hex[:12]}"
-                benefit_val = int(code_row['benefit_value'] or code_row.get('discount_value') or 1)
+                raw_benefit = code_row['benefit_value'] or code_row.get('discount_value') or 1
+                try:
+                    benefit_val = int(raw_benefit)
+                except (ValueError, TypeError):
+                    benefit_val = 1
+                # Cap credits granted from code redemption to safe limit (1 - 100) (V12)
+                benefit_val = min(max(1, benefit_val), 100)
                 benefit_desc = f"Granted {benefit_val} Free Credit(s)"
                 cursor.execute("""
                     INSERT INTO campaign_redemptions (id, campaign_code_id, user_id, benefit_granted, discount_applied, redeemed_at)

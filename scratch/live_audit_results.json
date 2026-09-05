@@ -1,0 +1,335 @@
+[
+  {
+    "endpoint": "/",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/test",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 200,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/pricing",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/login",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/signup",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/account",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 302,
+    "expected": 302,
+    "data_exposed": "<!doctype html> <html lang=en> <title>Redirecting...</title> <h1>Redirecting...<",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/developer",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 302,
+    "expected": 302,
+    "data_exposed": "<!doctype html> <html lang=en> <title>Redirecting...</title> <h1>Redirecting...<",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/admin",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/.env",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<html>  <head><title>404 Not Found</title></head>  <body>  <center><h1>404 Not F",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/.git/config",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<html>  <head><title>404 Not Found</title></head>  <body>  <center><h1>404 Not F",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/.git/HEAD",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<html>  <head><title>404 Not Found</title></head>  <body>  <center><h1>404 Not F",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/data/career_guide.db",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<html>  <head><title>404 Not Found</title></head>  <body>  <center><h1>404 Not F",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/career_guide.db",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<html>  <head><title>404 Not Found</title></head>  <body>  <center><h1>404 Not F",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/app.py",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "<html>  <head><title>404 Not Found</title></head>  <body>  <center><h1>404 Not F",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/pricing-plans",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "{\"lowest_plan\":{\"created_at\":\"2026-08-16T22:05:17.839060\",\"credits\":1,\"currency\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/pricing/pricing-model",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "{\"error\":\"Resource not found.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/pricing/lowest-plan",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "{\"lowest_plan\":{\"created_at\":\"2026-08-16T22:05:17.839060\",\"credits\":1,\"currency\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/questions",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "{\"questions\":[{\"category\":\"Realistic\",\"id\":1,\"question\":\"I like to work on cars\"",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/csrf-token",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 404,
+    "expected": 404,
+    "data_exposed": "{\"error\":\"Resource not found.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/account/summary",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/profile/update",
+    "method": "POST",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/payments/create-order",
+    "method": "POST",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/payments/verify",
+    "method": "POST",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/campaigns/redeem",
+    "method": "POST",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/campaigns/validate-discount",
+    "method": "POST",
+    "role": "LOGGED_OUT",
+    "status": 400,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Plan ID and referral code are required.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/developer/stats",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/developer/users",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/developer/accounts",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/developer/campaigns",
+    "method": "GET",
+    "role": "LOGGED_OUT",
+    "status": 401,
+    "expected": 401,
+    "data_exposed": "{\"error\":\"Authentication required. Please log in.\"} ",
+    "note": "Logged out check"
+  },
+  {
+    "endpoint": "/api/auth/signup",
+    "method": "POST",
+    "role": "USER_REGISTRATION",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "{\"attempt_id\":null,\"redirect\":\"/account\",\"status\":\"success\",\"user\":{\"email\":\"audit_student_edae42@te",
+    "note": "Student registration"
+  },
+  {
+    "endpoint": "/account",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Student authorization check"
+  },
+  {
+    "endpoint": "/developer",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 403,
+    "expected": 403,
+    "data_exposed": "<!DOCTYPE html>  <html lang=\"en\"> <head> <meta charset=\"utf-8\"/> <meta content=\"",
+    "note": "Student authorization check"
+  },
+  {
+    "endpoint": "/api/account/summary",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 200,
+    "expected": 200,
+    "data_exposed": "{\"attempts\":[],\"lowest_plan\":{\"created_at\":\"2026-08-16T22:05:17.839060\",\"credits",
+    "note": "Student authorization check"
+  },
+  {
+    "endpoint": "/api/developer/stats",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 403,
+    "expected": 403,
+    "data_exposed": "{\"error\":\"Access denied.\"} ",
+    "note": "Student authorization check"
+  },
+  {
+    "endpoint": "/api/developer/users",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 403,
+    "expected": 403,
+    "data_exposed": "{\"error\":\"Access denied.\"} ",
+    "note": "Student authorization check"
+  },
+  {
+    "endpoint": "/api/developer/accounts",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 403,
+    "expected": 403,
+    "data_exposed": "{\"error\":\"Access denied.\"} ",
+    "note": "Student authorization check"
+  },
+  {
+    "endpoint": "/api/developer/campaigns",
+    "method": "GET",
+    "role": "USER (STUDENT)",
+    "status": 403,
+    "expected": 403,
+    "data_exposed": "{\"error\":\"Access denied.\"} ",
+    "note": "Student authorization check"
+  }
+]

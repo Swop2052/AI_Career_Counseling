@@ -1,0 +1,110 @@
+{
+  "price_manipulation": {
+    "status": "SECURE",
+    "returned_amount_paise": 1900,
+    "expected_amount_paise": 1900,
+    "notes": "Server computes price strictly from DB pricing plan"
+  },
+  "forged_payment_signature": {
+    "http_status": 200,
+    "response": "{\"credits_granted\":1,\"message\":\"Successfully credited 1 credits to your wallet!\",\"new_balance\":1,\"pending_attempt_id\":nu",
+    "vulnerable": true,
+    "notes": "If 200, unhardened code is currently running on VPS. If 400/500, rejected."
+  },
+  "forged_webhook": {
+    "http_status": 200,
+    "response": "{\"reason\":\"Order not found\",\"status\":\"ignored\"}\n",
+    "vulnerable": true
+  },
+  "session_role_injection": {
+    "clear_session_status": 200,
+    "developer_page_status": 403,
+    "vulnerable": false,
+    "notes": "Developer page returned 403 (expected 403 or 302)"
+  },
+  "mass_assignment": {
+    "assigned_role": "USER",
+    "vulnerable": false,
+    "notes": "Signed up user received role: USER (expected USER)"
+  },
+  "cors_check": {
+    "allow_origin_header": "https://attacker-domain.com",
+    "vulnerable_wildcard": true,
+    "notes": "Allow-Origin: https://attacker-domain.com"
+  },
+  "pricing_data_exposure": {
+    "unnecessary_fields_exposed": [
+      "created_at",
+      "updated_at",
+      "sort_order",
+      "duration_days"
+    ],
+    "vulnerable": true,
+    "sample_plan_keys": [
+      "created_at",
+      "credits",
+      "currency",
+      "duration_days",
+      "id",
+      "is_active",
+      "is_recommended",
+      "name",
+      "price",
+      "sort_order",
+      "type",
+      "updated_at"
+    ]
+  },
+  "account_summary_exposure": {
+    "internal_user_fields_exposed": [
+      "is_active",
+      "can_manage_developers",
+      "role",
+      "last_login_at"
+    ],
+    "vulnerable": true,
+    "sample_user_keys": [
+      "balance",
+      "can_manage_developers",
+      "city",
+      "created_at",
+      "education_level",
+      "email",
+      "full_name",
+      "id",
+      "is_active",
+      "last_login_at",
+      "phone",
+      "role",
+      "state"
+    ]
+  },
+  "sensitive_files": {
+    "/.env": {
+      "status": 404,
+      "safe": true
+    },
+    "/.git/config": {
+      "status": 404,
+      "safe": true
+    },
+    "/data/career_guide.db": {
+      "status": 404,
+      "safe": true
+    },
+    "/app.py": {
+      "status": 404,
+      "safe": true
+    }
+  },
+  "questionnaire_api": {
+    "total_questions_returned": 42,
+    "keys_in_question": [
+      "category",
+      "id",
+      "question"
+    ],
+    "exposes_riasec_category": true,
+    "exposes_scoring_weights": false
+  }
+}

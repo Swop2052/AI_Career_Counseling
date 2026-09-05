@@ -28,8 +28,8 @@ class RazorpayProvider(BasePaymentProvider):
 
     def create_order(self, amount_in_subunits: int, currency: str, receipt: str, notes: Dict) -> Dict[str, Any]:
         """Create a Razorpay order via REST API or SDK."""
-        if self.key_id.startswith("rzp_test_512345"):
-            # Placeholder test key fallback for offline/development test mode
+        # Gated test fallback for local offline development only
+        if config.flask_env == "development" and self.key_id.startswith("rzp_test_512345"):
             order_id = f"order_rzp_{uuid.uuid4().hex[:14]}"
             return {
                 'order_id': order_id,
@@ -56,14 +56,16 @@ class RazorpayProvider(BasePaymentProvider):
                 'key_id': self.key_id
             }
         except Exception as e:
-            # Fallback simulated order if test keys are invalid
-            order_id = f"order_rzp_{uuid.uuid4().hex[:14]}"
-            return {
-                'order_id': order_id,
-                'amount': amount_in_subunits,
-                'currency': currency,
-                'key_id': self.key_id
-            }
+            # Only allow dummy simulated order in development mode
+            if config.flask_env == "development":
+                order_id = f"order_rzp_{uuid.uuid4().hex[:14]}"
+                return {
+                    'order_id': order_id,
+                    'amount': amount_in_subunits,
+                    'currency': currency,
+                    'key_id': self.key_id
+                }
+            raise ValueError(f"Razorpay order creation failed: {e}")
 
     def verify_signature(self, params: Dict[str, str]) -> bool:
         """Verify Razorpay payment signature using HMAC-SHA256."""
@@ -74,9 +76,10 @@ class RazorpayProvider(BasePaymentProvider):
         if not order_id or not payment_id or not signature:
             return False
 
-        # If test credentials or test signature is used in mock testing mode
-        if signature.startswith("simulated_test_sig") or signature == "test_signature_valid" or self.key_id.startswith("rzp_test_512345"):
-            return True
+        # In development mode only, allow mock testing signatures
+        if config.flask_env == "development":
+            if signature.startswith("simulated_test_sig") or signature == "test_signature_valid" or self.key_id.startswith("rzp_test_512345"):
+                return True
 
         try:
             import razorpay
@@ -99,8 +102,9 @@ class RazorpayProvider(BasePaymentProvider):
 
     def fetch_payment_status(self, payment_id: str, expected_amount: int) -> Dict[str, Any]:
         """Fetch payment from Razorpay API, verify status is captured/authorized, and capture if needed."""
-        if self.key_id.startswith("rzp_test_512345") or payment_id.startswith("pay_test_") or payment_id.startswith("pay_audit_"):
-            return {'status': 'captured', 'captured': True, 'amount': expected_amount}
+        if config.flask_env == "development":
+            if self.key_id.startswith("rzp_test_512345") or payment_id.startswith("pay_test_") or payment_id.startswith("pay_audit_"):
+                return {'status': 'captured', 'captured': True, 'amount': expected_amount}
 
         try:
             import razorpay
@@ -115,7 +119,7 @@ class RazorpayProvider(BasePaymentProvider):
             else:
                 return {'status': status, 'captured': False, 'amount': payment.get('amount'), 'error': payment.get('error_description')}
         except Exception as e:
-            if self.key_id.startswith("rzp_test_"):
+            if config.flask_env == "development" and self.key_id.startswith("rzp_test_"):
                 return {'status': 'captured', 'captured': True, 'amount': expected_amount}
             raise ValueError(f"Unable to verify payment capture with Razorpay: {e}")
 
@@ -286,13 +290,30 @@ class PaymentService:
                     """, (razorpay_payment_id, razorpay_signature, datetime.now().isoformat(), payment_row['id']))
                 raise ValueError(f"Payment capture verification failed: {err_msg}")
 
-            # Mark payment as SUCCESS
+            # Mark payment as SUCCESS atomically to prevent double-crediting race conditions (V5)
             now_str = datetime.now().isoformat()
             with conn:
-                conn.execute("""
-                    UPDATE payments SET status = 'SUCCESS', razorpay_payment_id = ?, razorpay_signature = ?, updated_at = ?
-                    WHERE id = ?
+                cursor = conn.cursor()
+                cursor.execute("""
+                    UPDATE payments
+                    SET status = 'SUCCESS', razorpay_payment_id = ?, razorpay_signature = ?, updated_at = ?
+                    WHERE id = ? AND status = 'CREATED'
                 """, (razorpay_payment_id, razorpay_signature, now_str, payment_row['id']))
+
+                if cursor.rowcount == 0:
+                    # Payment was already processed by another concurrent request
+                    cursor.execute("SELECT status FROM payments WHERE id = ?", (payment_row['id'],))
+                    current_p = cursor.fetchone()
+                    if current_p and current_p['status'] == 'SUCCESS':
+                        balance = wallet_service.get_balance(user_id)
+                        return {
+                            'status': 'already_processed',
+                            'message': 'Payment was already verified and credits granted.',
+                            'credits_granted': payment_row['credits'],
+                            'new_balance': balance,
+                            'pending_attempt_id': attempt_id
+                        }
+                    raise ValueError("Payment processing could not be completed.")
 
             # Grant credits atomically (Discounts reduce price, not credits granted!)
             credits_to_grant = payment_row['credits']
@@ -380,12 +401,14 @@ class PaymentService:
                     campaign_code_id, plan['currency'], free_order_id, free_payment_id, now_str, now_str
                 ))
 
-                # Increment campaign usage
+                # Increment campaign usage atomically with max_uses check (V17)
                 cursor.execute("""
                     UPDATE campaign_codes
                     SET used_count = used_count + 1, updated_at = ?
-                    WHERE id = ?
+                    WHERE id = ? AND used_count < max_uses AND is_active = 1
                 """, (now_str, campaign_code_id))
+                if cursor.rowcount == 0:
+                    raise ValueError("This referral code has reached its maximum usage limit or is inactive.")
 
                 # Record redemption
                 redemption_id = f"rdm_{uuid.uuid4().hex[:12]}"
@@ -476,7 +499,9 @@ class PaymentService:
         ).hexdigest()
 
         if not hmac.compare_digest(generated_sig, signature):
-            if signature != "test_webhook_signature":
+            if config.flask_env == "development" and signature == "test_webhook_signature":
+                pass
+            else:
                 raise ValueError("Invalid webhook signature verification failed.")
 
         event_data = json.loads(raw_body.decode('utf-8'))
@@ -515,10 +540,13 @@ class PaymentService:
                 target_user_id = p_row['user_id'] or user_id
                 now_str = datetime.now().isoformat()
                 with conn:
-                    conn.execute("""
+                    cursor = conn.cursor()
+                    cursor.execute("""
                         UPDATE payments SET status = 'SUCCESS', razorpay_payment_id = ?, updated_at = ?
-                        WHERE id = ?
+                        WHERE id = ? AND status = 'CREATED'
                     """, (payment_id, now_str, p_row['id']))
+                    if cursor.rowcount == 0:
+                        return {'status': 'already_processed'}
 
                 credits_to_grant = p_row['credits']
                 wallet_service.add_credits(

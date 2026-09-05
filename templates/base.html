@@ -3805,13 +3805,15 @@
             try {
                 const response = await fetch('/api/questions');
                 const data = await response.json();
-                questions = data.questions;
-                if (questions.length > 0 && document.getElementById('quizContainer').classList.contains('active')) {
+                questions = data.questions || [];
+                const qc = document.getElementById('quizContainer');
+                if (questions.length > 0 && qc && qc.classList.contains('active')) {
                     showQuestion(0);
                 }
             } catch (error) {
                 console.error('Error loading questions:', error);
-                document.getElementById('qText').textContent = 'Error loading questions. Please refresh.';
+                const qText = document.getElementById('qText');
+                if (qText) qText.textContent = 'Error loading questions. Please refresh.';
             }
         }
 
@@ -3881,7 +3883,12 @@
             updateNavigationButtons();
             
             // Auto-advance to the next question (or submit if it's the last)
-            setTimeout(() => {
+            if (window._autoAdvanceTimer) {
+                clearTimeout(window._autoAdvanceTimer);
+                window._autoAdvanceTimer = null;
+            }
+            window._autoAdvanceTimer = setTimeout(() => {
+                window._autoAdvanceTimer = null;
                 goToNextQuestion();
             }, 300);
         }
@@ -3925,6 +3932,10 @@
         }
 
         function goToNextQuestion() {
+            if (window._autoAdvanceTimer) {
+                clearTimeout(window._autoAdvanceTimer);
+                window._autoAdvanceTimer = null;
+            }
             if (!answers[currentQuestion]) {
                 showToast('Please choose an option before continuing.');
                 return;
@@ -3958,10 +3969,33 @@
         // SUBMIT QUIZ
         // ============================================================
         async function submitQuiz() {
+            // Concurrent submission mutex: prevent duplicate requests
+            if (window._isQuizSubmitting) return;
+            window._isQuizSubmitting = true;
+
+            if (window._autoAdvanceTimer) {
+                clearTimeout(window._autoAdvanceTimer);
+                window._autoAdvanceTimer = null;
+            }
+
             const finalAnswers = answers.filter(Boolean);
             if (finalAnswers.length !== questions.length) {
+                window._isQuizSubmitting = false;
                 showToast('Please answer all questions before submitting.');
                 return;
+            }
+
+            // Disable scale and navigation buttons immediately to prevent duplicate taps
+            const scaleBtns = document.querySelectorAll('#scaleButtons button');
+            scaleBtns.forEach(b => { b.disabled = true; });
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn) { nextBtn.disabled = true; nextBtn.innerText = 'Submitting...'; }
+            const backBtn = document.getElementById('backBtn');
+            if (backBtn) { backBtn.disabled = true; }
+
+            // Stable client submission token per quiz run
+            if (!window._quizSubmissionToken) {
+                window._quizSubmissionToken = 'sub_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
             }
 
             riasecScores = calculateRiasecScoresFromAnswers(finalAnswers);
@@ -3975,7 +4009,8 @@
                     credentials: 'include',
                     body: JSON.stringify({
                         answers: finalAnswers,
-                        student_info: studentInfo
+                        student_info: studentInfo,
+                        submission_token: window._quizSubmissionToken
                     })
                 });
 
@@ -4020,6 +4055,15 @@
                 }, 500);
 
             } catch (error) {
+                window._isQuizSubmitting = false;
+                window._quizSubmissionToken = null;
+                // Re-enable scale buttons on retry
+                const scaleBtns = document.querySelectorAll('#scaleButtons button');
+                scaleBtns.forEach(b => { b.disabled = false; });
+                const nextBtn = document.getElementById('nextBtn');
+                if (nextBtn) { nextBtn.disabled = false; }
+                const backBtn = document.getElementById('backBtn');
+                if (backBtn) { backBtn.disabled = false; }
                 console.error('Error submitting answers:', error);
                 container.innerHTML = `
                     <div style="text-align:center;padding:30px 20px">
@@ -4381,8 +4425,12 @@
         // DISPLAY RESULTS
         // ============================================================
         function displayResults(data) {
-            document.getElementById('quizContainer').classList.remove('active');
-            document.getElementById('resultsContainer').classList.add('active');
+            const pfCont = document.getElementById('profileFormContainer');
+            if (pfCont) pfCont.classList.remove('active');
+            const qzCont = document.getElementById('quizContainer');
+            if (qzCont) qzCont.classList.remove('active');
+            const resCont = document.getElementById('resultsContainer');
+            if (resCont) resCont.classList.add('active');
 
             // Handle Locked Teaser state
             if (data.is_unlocked === false || data.teaser) {
@@ -4404,24 +4452,33 @@
                 return;
             }
 
-            const profile = data.profile;
-            const student = profile.student_info || {};
+            const profile = data.profile || {};
+            const student = profile.student_info || profile;
 
             const resHeader = document.querySelector('.result-header');
             if (resHeader) resHeader.style.display = 'block';
 
             // Update Student Profile Card
-            document.getElementById('studentProfileCard').classList.add('active');
-            document.getElementById('profileAvatar').textContent = student.name ? student.name.charAt(0).toUpperCase() : '🧑';
-            document.getElementById('profileName').textContent = student.name || 'Student';
-            document.getElementById('profileAge').textContent = student.age ? `Age: ${student.age}` : 'Age: --';
-            document.getElementById('profileClass').textContent = student.class ? `Class: ${student.class}` : 'Class: --';
-            document.getElementById('profileEducation').textContent = student.education ? `Stream: ${student.education}` : 'Stream: --';
-            document.getElementById('profileHobbies').textContent = student.hobbies ? `Hobbies: ${student.hobbies}` : 'Hobbies: --';
-            document.getElementById('profileSubjects').textContent = student.subjects ? `Subjects: ${student.subjects}` : 'Subjects: --';
+            const profCard = document.getElementById('studentProfileCard');
+            if (profCard) profCard.classList.add('active');
+            const profAvatar = document.getElementById('profileAvatar');
+            if (profAvatar) profAvatar.textContent = (student.name || student.full_name) ? (student.name || student.full_name).charAt(0).toUpperCase() : '🧑';
+            const profName = document.getElementById('profileName');
+            if (profName) profName.textContent = student.name || student.full_name || 'Student';
+            const profAge = document.getElementById('profileAge');
+            if (profAge) profAge.textContent = student.age ? `Age: ${student.age}` : 'Age: --';
+            const profClass = document.getElementById('profileClass');
+            if (profClass) profClass.textContent = (student.class || student.education_level) ? `Class: ${student.class || student.education_level}` : 'Class: --';
+            const profEdu = document.getElementById('profileEducation');
+            if (profEdu) profEdu.textContent = (student.education || student.stream) ? `Stream: ${student.education || student.stream}` : 'Stream: --';
+            const profHobbies = document.getElementById('profileHobbies');
+            if (profHobbies) profHobbies.textContent = student.hobbies ? `Hobbies: ${student.hobbies}` : 'Hobbies: --';
+            const profSubjects = document.getElementById('profileSubjects');
+            if (profSubjects) profSubjects.textContent = student.subjects ? `Subjects: ${student.subjects}` : 'Subjects: --';
 
             // RIASEC Code
-            document.getElementById('profileRiasecCode').textContent = profile.riasec_code || '---';
+            const profCode = document.getElementById('profileRiasecCode');
+            if (profCode) profCode.textContent = profile.riasec_code || data.riasec_code || '---';
 
             // Update Score Bars
             if (data.scores) {
@@ -4432,16 +4489,21 @@
 
             // Traits with click to open modal
             const traitsContainer = document.getElementById('profileTraits');
-            traitsContainer.innerHTML = '';
-            if (profile.traits && profile.traits.length > 0) {
-                profile.traits.slice(0, 6).forEach(trait => {
-                    const tag = createTraitTag(trait);
-                    traitsContainer.appendChild(tag);
-                });
+            if (traitsContainer) {
+                traitsContainer.innerHTML = '';
+                if (profile.traits && Array.isArray(profile.traits) && profile.traits.length > 0) {
+                    profile.traits.slice(0, 6).forEach(trait => {
+                        const tag = createTraitTag(trait);
+                        traitsContainer.appendChild(tag);
+                    });
+                }
             }
 
-            document.getElementById('profileDescription').textContent =
-                `${profile.primary} · ${profile.secondary} · ${profile.tertiary}`;
+            const profDescEl = document.getElementById('profileDescription');
+            if (profDescEl) {
+                const pParts = [profile.primary, profile.secondary, profile.tertiary].filter(Boolean);
+                profDescEl.textContent = pParts.length > 0 ? pParts.join(' · ') : (profile.riasec_code || 'Personalized Career Matches');
+            }
 
             const container = document.getElementById('careerResults');
             if (data.top_careers && data.top_careers.length > 0) {
@@ -4453,19 +4515,24 @@
                     <div class="career-grid">
                 `;
                 topSix.forEach((career, index) => {
-                    const c = career.data;
-                    const emoji = c.emoji || getEmojiForCareer(career.name);
-                    const income = formatIncome(c.expected_income);
-                    const fee = formatCourseFee(c.course_fee, true);
+                    const c = (career && career.data && typeof career.data === 'object' && Object.keys(career.data).length > 0)
+                        ? career.data
+                        : (career && career.career_data && typeof career.career_data === 'object')
+                            ? career.career_data
+                            : (career || {});
+                    const careerName = career.name || career.career_name || c.name || c.career_name || 'Career Option';
+                    const emoji = c.emoji || (typeof getEmojiForCareer === 'function' ? getEmojiForCareer(careerName) : '🎯');
+                    const income = typeof formatIncome === 'function' ? formatIncome(c.expected_income) : { text: 'Information not available', source: null };
+                    const fee = typeof formatCourseFee === 'function' ? formatCourseFee(c.course_fee, true) : 'Information not available';
                     const growth = c.growth_path || c.expected_growth_path || [];
-                    const growthText = Array.isArray(growth) && growth.length > 0 ? growth.slice(0, 2).join(' → ') : 'N/A';
+                    const growthText = Array.isArray(growth) && growth.length > 0 ? growth.slice(0, 2).join(' → ') : (typeof growth === 'string' ? growth : 'N/A');
                     const traits = c.personality_traits || [];
-                    const traitText = Array.isArray(traits) && traits.length > 0 ? traits.slice(0, 2).join(', ') : 'N/A';
+                    const traitText = Array.isArray(traits) && traits.length > 0 ? traits.slice(0, 2).join(', ') : (typeof traits === 'string' ? traits : 'N/A');
 
                     // Compute matching colleges
                     let matchedCollegesCount = 0;
-                    const studentLocVal = studentInfo.student_location ? studentInfo.student_location.trim().toLowerCase() : '';
-                    if (studentLocVal && c.where_will_you_study) {
+                    const studentLocVal = (studentInfo && studentInfo.student_location) ? String(studentInfo.student_location).trim().toLowerCase() : '';
+                    if (studentLocVal && c && c.where_will_you_study) {
                         const study = c.where_will_you_study;
                         const gov = study.government_institutes || study.government || [];
                         const priv = study.private_institutes || study.private || [];
@@ -4487,20 +4554,19 @@
                     }
 
                     let badgeHtml = '';
-                    if (studentLocVal) {
-                        if (matchedCollegesCount > 0) {
-                            badgeHtml = `<span class="tag tag-cyan" style="font-size: 0.72rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 3px; background: rgba(0, 200, 83, 0.1); border-color: rgba(0, 200, 83, 0.3); color: #00e676; border-radius: 4px; font-weight: 600;">📍 ${matchedCollegesCount} in ${studentInfo.student_location}</span>`;
-                        }
+                    if (studentLocVal && matchedCollegesCount > 0) {
+                        badgeHtml = `<span class="tag tag-cyan" style="font-size: 0.72rem; padding: 2px 8px; display: inline-flex; align-items: center; gap: 3px; background: rgba(0, 200, 83, 0.1); border-color: rgba(0, 200, 83, 0.3); color: #00e676; border-radius: 4px; font-weight: 600;">📍 ${matchedCollegesCount} in ${escapeHtml(studentInfo.student_location)}</span>`;
                     }
 
+                    const safeCareerTarget = (career.originalName || careerName).replace(/'/g, "\\'");
                     html += `
-                        <div class="career-card" onclick="viewFullCareerDetail('${(career.originalName || career.name).replace(/'/g, "\\'")}')">
+                        <div class="career-card" onclick="viewFullCareerDetail('${safeCareerTarget}')">
                             <div class="top">
                                 <span class="rank">${emoji} #${index + 1}</span>
                                 ${badgeHtml}
                             </div>
-                            <h4>${career.name}</h4>
-                            <p class="career-desc">${c.description || 'No description available'}</p>
+                            <h4>${escapeHtml(careerName)}</h4>
+                            <p class="career-desc">${escapeHtml(c.description || career.description || 'Comprehensive career profile and guidance available in full report.')}</p>
                             
                             <div class="cstats-grid">
                                 <div class="cstat-box">
@@ -6718,12 +6784,17 @@ async function openUnlockModal(attemptId) {
 }
 
 async function confirmUnlockExecute() {
-    if (!currentUnlockAttemptId) return;
+    if (window._isUnlocking) return;
+    window._isUnlocking = true;
+    let cleanId = (currentUnlockAttemptId || '').trim();
+    try { cleanId = decodeURIComponent(cleanId).trim().replace(/^['"]|['"]$/g, ''); } catch(e) {}
+    if (!cleanId) return;
+
     const btn = document.getElementById('confirmUnlockBtn');
     if (btn) { btn.disabled = true; btn.innerText = "Unlocking..."; }
 
     try {
-        const res = await fetch(`/api/assessment/${encodeURIComponent(currentUnlockAttemptId)}/unlock`, {
+        const res = await fetch(`/api/assessment/${encodeURIComponent(cleanId)}/unlock`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         });
@@ -6732,17 +6803,42 @@ async function confirmUnlockExecute() {
         if (res.ok && (data.status === 'success' || data.status === 'already_unlocked')) {
             closeUnlockModal();
             if (typeof showToast === 'function') showToast("Career Roadmap Unlocked!");
+
             const fullReport = data.full_report || {};
-            if (typeof displayResults === 'function' && window.location.pathname.includes('/take-test')) {
+            const isTakeTestPage = window.location.pathname === '/take-test' || window.location.pathname.includes('/take-test');
+
+            if (isTakeTestPage && typeof displayResults === 'function') {
+                // Hide assessment header banner so it doesn't say 'Tell us about yourself'
+                const secHead = document.getElementById('quizSecHead') || document.querySelector('#quiz-section .sec-head');
+                if (secHead) secHead.style.display = 'none';
+
+                const pf = document.getElementById('profileFormContainer');
+                if (pf) pf.classList.remove('active');
+                const qc = document.getElementById('quizContainer');
+                if (qc) qc.classList.remove('active');
+                const rc = document.getElementById('resultsContainer');
+                if (rc) rc.classList.add('active');
+
+                // Render full unlocked roadmap immediately
                 displayResults({
                     is_unlocked: true,
                     profile: fullReport.student_profile || {},
                     scores: fullReport.riasec_scores || {},
                     top_careers: fullReport.top_careers || []
                 });
+
+                // Update URL in browser bar so bookmarking/refreshing works permanently
+                try {
+                    history.replaceState({}, '', `/take-test?attempt_id=${encodeURIComponent(currentUnlockAttemptId)}`);
+                } catch(e) {}
+
+                // Scroll smoothly to results
+                if (rc) rc.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
-                window.location.href = `/take-test?attempt_id=${encodeURIComponent(currentUnlockAttemptId)}`;
+                // If on /account, /pricing or another page, redirect to the attempt
+                window.location.href = `/take-test?attempt_id=${encodeURIComponent(cleanId)}`;
             }
+            return;
         } else if (res.status === 402 || (data.error && data.error.includes("Insufficient"))) {
             closeUnlockModal();
             window.location.href = `/pricing?attempt_id=${encodeURIComponent(currentUnlockAttemptId)}&next=${encodeURIComponent('/take-test?attempt_id=' + currentUnlockAttemptId)}`;
@@ -6753,6 +6849,8 @@ async function confirmUnlockExecute() {
     } catch (err) {
         alert("Network error unlocking assessment.");
         if (btn) { btn.disabled = false; btn.innerText = "Confirm & Unlock (1 Credit) →"; }
+    } finally {
+        window._isUnlocking = false;
     }
 }
 

@@ -60,6 +60,24 @@ class Config:
     
     # Fallback
     enable_fallback: bool = True
+
+    @property
+    def is_production(self) -> bool:
+        return self.flask_env.lower() in ('production', 'prod')
+
+    def validate_production_security(self) -> None:
+        """Log warning if insecure defaults are used in production."""
+        if self.is_production:
+            import logging
+            if self.secret_key == 'dev-secret-key-change-in-production':
+                logging.getLogger('security').critical(
+                    'SECURITY CRITICAL: Default SECRET_KEY is used in production environment!'
+                )
+            if self.debug:
+                logging.getLogger('security').critical(
+                    'SECURITY CRITICAL: DEBUG mode is active in production environment!'
+                )
+
     
     @classmethod
     def get_instance(cls) -> "Config":
