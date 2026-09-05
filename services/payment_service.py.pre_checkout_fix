@@ -192,13 +192,6 @@ class PaymentService:
         try:
             with conn:
                 cursor = conn.cursor()
-                # Clean up any stale unfulfilled 'CREATED' orders for this user and plan to prevent accumulating duplicate abandoned records
-                cursor.execute("""
-                    UPDATE payments
-                    SET status = 'CANCELLED', updated_at = ?
-                    WHERE user_id = ? AND plan_id = ? AND status = 'CREATED'
-                """, (now_str, user_id, plan_id))
-
                 cursor.execute("""
                     INSERT INTO payments (
                         id, user_id, plan_id, amount, original_amount, discount_amount, campaign_code_id,
@@ -355,22 +348,6 @@ class PaymentService:
                 'pending_attempt_id': attempt_id,
                 'plan_name': payment_row['plan_name']
             }
-        finally:
-            conn.close()
-
-    def mark_payment_cancelled(self, user_id: str, razorpay_order_id: str) -> bool:
-        """Mark an unfulfilled CREATED payment as CANCELLED when user dismisses or cancels checkout."""
-        now_str = datetime.now().isoformat()
-        conn = get_db_connection()
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE payments
-                    SET status = 'CANCELLED', updated_at = ?
-                    WHERE user_id = ? AND razorpay_order_id = ? AND status = 'CREATED'
-                """, (now_str, user_id, razorpay_order_id))
-                return cursor.rowcount > 0
         finally:
             conn.close()
 

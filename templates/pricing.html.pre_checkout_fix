@@ -669,12 +669,6 @@ function openCheckoutModal(planId) {
     activePlan = loadedPlans.find(p => p.id === planId);
     if (!activePlan) return;
 
-    window._isPaymentInFlight = false;
-    const actionBtn = document.getElementById('checkoutActionBtn');
-    if (actionBtn) {
-        actionBtn.disabled = false;
-    }
-
     const modalInput = document.getElementById('modalReferralInput');
     const feedback = document.getElementById('modalReferralFeedback');
 
@@ -694,11 +688,6 @@ function openCheckoutModal(planId) {
 function closeCheckoutModal() {
     document.getElementById('checkoutModal').style.display = 'none';
     activePlan = null;
-    window._isPaymentInFlight = false;
-    const actionBtn = document.getElementById('checkoutActionBtn');
-    if (actionBtn) {
-        actionBtn.disabled = false;
-    }
 }
 
 function updateModalBreakdown() {
@@ -712,9 +701,6 @@ function updateModalBreakdown() {
     const finalDisplay = document.getElementById('breakdownFinalPrice');
     const actionBtn = document.getElementById('checkoutActionBtn');
     const applyBtn = document.getElementById('modalApplyBtn');
-    if (actionBtn && !window._isPaymentInFlight) {
-        actionBtn.disabled = false;
-    }
 
     origDisplay.innerText = `₹${originalPrice.toFixed(2)}`;
 
@@ -787,10 +773,7 @@ async function applyModalReferralCode() {
             modalDiscount = data;
             feedback.style.display = 'block';
             feedback.style.color = 'var(--primary)';
-            const discountLabel = data.discount_type === 'PERCENTAGE' 
-                ? `${data.discount_value}% OFF` 
-                : `Save ₹${data.discount_amount.toFixed(2)}`;
-            feedback.innerHTML = `✓ <strong>${data.code}</strong> applied! ${discountLabel} (${data.campaign_name}).`;
+            feedback.innerHTML = `✓ <strong>${data.code}</strong> applied! Save ₹${data.discount_amount.toFixed(2)} (${data.campaign_name}).`;
             updateModalBreakdown();
         } else {
             modalDiscount = null;
@@ -803,7 +786,7 @@ async function applyModalReferralCode() {
         modalDiscount = null;
         feedback.style.display = 'block';
         feedback.style.color = 'var(--coral)';
-        feedback.innerText = 'Failed to validate referral code. Please check your connection and try again.';
+        feedback.innerText = 'Error validating referral code.';
         updateModalBreakdown();
     } finally {
         applyBtn.disabled = false;
@@ -823,12 +806,8 @@ function removeModalReferralCode() {
 // ---------------------------------------------------------------------------
 // EXECUTE CHECKOUT (PAID VIA RAZORPAY OR ZERO-RUPEE REDEMPTION)
 // ---------------------------------------------------------------------------
-window._isPaymentInFlight = false;
-let currentRzpInstance = null;
-
 async function executeCheckoutAction() {
     if (!activePlan) return;
-    if (window._isPaymentInFlight) return; // Prevent duplicate concurrent attempts
 
     const urlParams = new URLSearchParams(window.location.search);
     const attemptId = urlParams.get('attempt_id') || '';
@@ -838,7 +817,6 @@ async function executeCheckoutAction() {
     const finalPrice = (modalDiscount && modalDiscount.valid) ? modalDiscount.final_price : Number(activePlan.price);
 
     const actionBtn = document.getElementById('checkoutActionBtn');
-    window._isPaymentInFlight = true;
     actionBtn.disabled = true;
     actionBtn.innerText = 'Processing...';
 
@@ -856,7 +834,6 @@ async function executeCheckoutAction() {
             });
 
             if (res.status === 401) {
-                window._isPaymentInFlight = false;
                 closeCheckoutModal();
                 showPricingModal("Sign In Required", "Please sign in to redeem your free credit.", `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`, "Sign In");
                 return;
@@ -866,13 +843,11 @@ async function executeCheckoutAction() {
             if (res.ok && data.status === 'success') {
                 handlePaymentCompletion(data, attemptId);
             } else {
-                window._isPaymentInFlight = false;
                 actionBtn.disabled = false;
                 updateModalBreakdown();
                 showPricingModal("Redemption Failed", data.error || "Could not redeem zero-rupee plan.", null, "OK");
             }
         } catch (err) {
-            window._isPaymentInFlight = false;
             actionBtn.disabled = false;
             updateModalBreakdown();
             showPricingModal("Error", "Error processing zero-rupee redemption.", null, "OK");
@@ -880,7 +855,7 @@ async function executeCheckoutAction() {
         return;
     }
 
-    // SCENARIO B: PAID ORDER VIA RAZORPAY
+    // SCENARIO B: PAID ORDER VIA RAZORPAY TEST MODE
     try {
         const orderRes = await fetch('/api/payments/create-order', {
             method: 'POST',
@@ -893,7 +868,6 @@ async function executeCheckoutAction() {
         });
 
         if (orderRes.status === 401) {
-            window._isPaymentInFlight = false;
             closeCheckoutModal();
             showPricingModal("Sign In Required", "Please create an account or sign in to purchase credits.", `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`, "Sign In");
             return;
@@ -901,7 +875,6 @@ async function executeCheckoutAction() {
 
         const orderData = await orderRes.json();
         if (!orderRes.ok || !orderData.order_id) {
-            window._isPaymentInFlight = false;
             actionBtn.disabled = false;
             updateModalBreakdown();
             showPricingModal("Payment Error", orderData.error || "Could not create payment order.", null, "OK");
@@ -936,52 +909,26 @@ async function executeCheckoutAction() {
                     if (verifyRes.ok && (verifyData.status === 'success' || verifyData.status === 'already_processed')) {
                         handlePaymentCompletion(verifyData, attemptId);
                     } else {
-                        window._isPaymentInFlight = false;
-                        actionBtn.disabled = false;
-                        updateModalBreakdown();
                         showPricingModal("Verification Failed", verifyData.error || "Payment verification failed.", null, "OK");
                     }
                 } catch (e) {
-                    window._isPaymentInFlight = false;
-                    actionBtn.disabled = false;
-                    updateModalBreakdown();
                     showPricingModal("Verification Error", "Error verifying payment signature.", null, "OK");
                 }
-            },
-            "modal": {
-                "ondismiss": function () {
-                    // Reset stale payment-attempt state on user cancellation or modal dismissal
-                    window._isPaymentInFlight = false;
-                    actionBtn.disabled = false;
-                    updateModalBreakdown();
-                    currentRzpInstance = null;
-
-                    // Asynchronously notify server to mark in-flight order CANCELLED
-                    fetch('/api/payments/cancel', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ order_id: orderData.order_id })
-                    }).catch(() => {});
-                },
-                "escape": true,
-                "backdropclose": false
             },
             "theme": {
                 "color": "#00A86B"
             }
         };
 
-        currentRzpInstance = new Razorpay(options);
-        currentRzpInstance.on('payment.failed', function (response) {
-            window._isPaymentInFlight = false;
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
             actionBtn.disabled = false;
             updateModalBreakdown();
             const desc = (response.error && response.error.description) ? response.error.description : "Payment could not be completed. No credit was added.";
             showPricingModal("Payment Incomplete", desc, null, "OK");
         });
-        currentRzpInstance.open();
+        rzp.open();
     } catch (err) {
-        window._isPaymentInFlight = false;
         actionBtn.disabled = false;
         updateModalBreakdown();
         showPricingModal("Payment Error", "Error initiating payment checkout.", null, "OK");

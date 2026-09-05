@@ -49,7 +49,7 @@ from services.auth_service import auth_service
 from services.wallet_service import wallet_service
 from services.payment_service import payment_service
 from services.pricing_service import pricing_service
-from services.campaign_service import campaign_service, CampaignValidationError
+from services.campaign_service import campaign_service
 from services.assessment_service import assessment_service
 from services.stats_service import stats_service
 from services.email_service import email_service
@@ -1044,52 +1044,17 @@ def api_validate_discount():
     code = data.get('code')
     user_id = session.get('user_id')
 
-    if not plan_id:
-        return jsonify({
-            'valid': False,
-            'status': 'plan_not_eligible',
-            'error': 'Plan ID is required.'
-        }), 400
-
-    if not code or not str(code).strip():
-        return jsonify({
-            'valid': False,
-            'status': 'invalid_code',
-            'error': 'Please enter a referral code.'
-        }), 400
+    if not plan_id or not code:
+        return jsonify({'error': 'Plan ID and referral code are required.'}), 400
 
     try:
         res = campaign_service.validate_discount_code(user_id=user_id, plan_id=plan_id, code_str=code)
-        return jsonify(res), 200
-    except CampaignValidationError as cve:
-        return jsonify(cve.to_dict()), 400
+        return jsonify(res)
     except ValueError as ve:
-        return jsonify({
-            'valid': False,
-            'status': 'invalid_code',
-            'error': str(ve)
-        }), 400
+        return jsonify({'error': str(ve)}), 400
     except Exception as e:
         print(f"[ERROR] Validate discount error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            'valid': False,
-            'status': 'server_error',
-            'error': 'Failed to validate referral code due to an internal server error.'
-        }), 500
-
-
-@app.route('/api/payments/cancel', methods=['POST'])
-@require_auth
-def api_cancel_payment():
-    user_id = session.get('user_id')
-    data = request.json or {}
-    order_id = data.get('order_id')
-    if not order_id:
-        return jsonify({'success': False, 'error': 'Order ID is required.'}), 400
-    res = payment_service.mark_payment_cancelled(user_id=user_id, razorpay_order_id=order_id)
-    return jsonify({'success': res, 'status': 'cancelled'})
+        return jsonify({'error': 'Failed to validate referral code.'}), 500
 
 
 @app.route('/api/payments/create-order', methods=['POST'])
