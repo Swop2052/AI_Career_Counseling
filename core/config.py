@@ -15,21 +15,27 @@ class Config:
     anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
     
     # Flask
-    secret_key: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
     flask_env: str = os.getenv("FLASK_ENV", "development")
+    secret_key: str = os.getenv("SECRET_KEY", "")
+    
+    def __post_init__(self):
+        if not self.secret_key:
+            if self.flask_env == "production":
+                raise ValueError("SECRET_KEY environment variable is missing in production!")
+            else:
+                self.secret_key = os.urandom(24).hex()
+                
     debug: bool = flask_env == "development"
     
     # Session
-    session_lifetime_hours: int = int(os.getenv("SESSION_LIFETIME_HOURS", 2))
+    session_lifetime_hours: int = int(os.getenv("SESSION_LIFETIME_HOURS", 1))
     
-    # Ranking Weights - Configurable
-    weight_profile_match: float = 0.25
-    weight_riasec_match: float = 0.25
-    weight_subject_match: float = 0.15
-    weight_interest_match: float = 0.15
-    weight_goal_match: float = 0.10
-    weight_skill_match: float = 0.05
-    weight_location_match: float = 0.05
+    # Ranking Weights - Psychometric 5-Factor Model
+    weight_riasec_match: float = 0.50
+    weight_mind_aptitude: float = 0.20
+    weight_soul_values: float = 0.10
+    weight_body_work_style: float = 0.10
+    weight_academic_interest: float = 0.10
     
     # Retrieval
     use_llm_retrieval: bool = os.getenv("USE_LLM_RETRIEVAL", "true").lower() == "true"
@@ -39,7 +45,7 @@ class Config:
     max_careers_in_prompt: int = 6
     
     # LLM - Production model
-    llm_model: str = os.getenv("LLM_MODEL", "claude-sonnet-4-6")
+    llm_model: str = os.getenv("LLM_MODEL", "claude-haiku-4-5-20251001")
     llm_max_tokens: int = int(os.getenv("LLM_MAX_TOKENS", 1200))
     llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", 0.3))
     llm_top_p: float = float(os.getenv("LLM_TOP_P", 0.9))
@@ -47,9 +53,19 @@ class Config:
     # Data Paths
     base_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     career_db_path: str = os.path.join(base_dir, "Data.json")
-    riasec_questions_path: str = os.path.join(base_dir, "riasec_questions.json")
+    riasec_questions_path: str = os.path.join(base_dir, "questions.json")
 
-    db_path: str = os.getenv("DB_PATH", os.path.join(base_dir, "data", "career_guide.db"))
+    db_name: str = os.getenv("DB_NAME", "skillsense")
+    db_port: str = os.getenv("DB_PORT", "5434")
+    db_host: str = os.getenv("DB_HOST", "localhost")
+    db_user: str = os.getenv("DB_USER", "postgres")
+    db_password: str = os.getenv("DB_PASSWORD", "postgres")
+
+    @property
+    def database_url(self) -> str:
+        import urllib.parse
+        encoded_pwd = urllib.parse.quote_plus(self.db_password)
+        return f"postgresql://{self.db_user}:{encoded_pwd}@{self.db_host}:{self.db_port}/{self.db_name}"
     db_retention_hours: int = int(os.getenv("DB_RETENTION_HOURS", 24))
     
     # Conversation

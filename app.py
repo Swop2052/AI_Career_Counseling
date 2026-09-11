@@ -7,8 +7,10 @@ if sys.platform.startswith('win'):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
+# pyrefly: ignore [missing-import]
+from deep_translator import GoogleTranslator
 import json
 import os
 import time
@@ -39,7 +41,9 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=config.session_lifeti
 app.config['SESSION_COOKIE_SECURE'] = config.flask_env == 'production'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-CORS(app, supports_credentials=True)
+# Security: Restrict origins and set payload size limits
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max payload
+CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"])
 
 # ============================================================
 # RATE LIMITING (SECURITY GUARD)
@@ -146,12 +150,22 @@ def prepare_questions():
             continue
         if not isinstance(question_list, list):
             continue
-        for question in question_list:
-            questions.append({
-                "id": len(questions) + 1,
-                "question": question,
-                "category": category
-            })
+        for item in question_list:
+            if isinstance(item, dict):
+                questions.append({
+                    "id": len(questions) + 1,
+                    "question": item.get("question", ""),
+                    "answers": item.get("answers", []),
+                    "icons": item.get("icons", []),
+                    "category": category
+                })
+            else:
+                questions.append({
+                    "id": len(questions) + 1,
+                    "question": str(item),
+                    "answers": [],
+                    "category": category
+                })
     
     print(f"[SUCCESS] Prepared {len(questions)} questions")
     return questions
@@ -159,8 +173,360 @@ def prepare_questions():
 
 QUESTIONS = prepare_questions()
 
+UI_TRANSLATIONS_EN = {
+    "brand-title": "🚀 SkillSense",
+    "nav-how": "How it works",
+    "nav-test": "Take Test",
+    "nav-counselor": "AI Counselor",
+    "nav-contact": "Contact",
+    "nav-start": "Start Career Test",
+    "contact-eyebrow": "Let's Connect",
+    "contact-title": "Let's <span class=\"grad\">Connect</span>",
+    "contact-lead": "Whether you are a student exploring your path, a school administrator looking to bring SkillSense to your campus, or have questions about our platform, we are here to help.",
+    "contact-info-title": "Contact Information",
+    "contact-email-label": "Email Us",
+    "contact-email-sub": "Direct lines to our departments",
+    "contact-hq-label": "Headquarters",
+    "contact-phone-label": "Call Us",
+    "contact-form-title": "Send a Message",
+    "contact-form-sub": "Secure transmission through our encrypted routing system.",
+    "contact-name-placeholder": "Full Name",
+    "contact-email-placeholder": "Email Address",
+    "contact-company-placeholder": "Company (Optional)",
+    "contact-subject-placeholder": "Subject",
+    "contact-msg-placeholder": "Your Message",
+    "contact-btn-text": "✈️ Send Message",
+    "hero-eyebrow": "PERSONALITY · AI INSIGHTS · CAREER ROADMAPS",
+    "hero-title": "Find a career path<br><span class=\"12\">that matches who you are.</span>",
+    "hero-sub": "An intelligent career companion that understands your interests, strengths, and goals to create a personalized roadmap for your future.",
+    "hero-start": "Start Career Test →",
+    "hero-chat": "Chat with AI",
+    "num-1": "6",
+    "num-2": "500+",
+    "num-3": "24/7",
+    "step-num-1": "01",
+    "step-num-2": "02",
+    "step-num-3": "03",
+    "step-num-4": "04",
+    "stat-1": "Personality Dimensions",
+    "stat-2": "Career Paths",
+    "stat-3": "AI Guidance",
+    "scale-1": "Not me",
+    "scale-2": "A little",
+    "scale-3": "Maybe",
+    "scale-4": "Yes",
+    "scale-5": "So me!",
+    "toast-switching": "Switching language...",
+    "toast-lang-updated": "Language updated!",
+    "contact-sending": "⏳ Sending...",
+    "contact-success": "📩 Message sent successfully! We will get in touch soon.",
+    "contact-error": "Connection error!",
+    "quiz-question-count": "Question {index} of {total}",
+    "feedback-title": "Feedback Required",
+    "feedback-sub": "To download the guide for <b>{careerName}</b>, please let us know if this career matches your interests:",
+    "feedback-yes": "👍 Yes, it matches!",
+    "feedback-no": "👎 No, it doesn't match",
+    "feedback-saving": "Saving feedback...",
+    "modal-subtitle": "Interactive Career Guide & Pathway Report",
+    "modal-overview": "Career Overview",
+    "modal-personality": "Personality Alignment",
+    "modal-pathway": "Educational Pathway",
+    "modal-exams": "Entrance Exams",
+    "modal-fees": "Estimated Course Fee",
+    "modal-income": "Expected Monthly Income",
+    "modal-financial": "Financial Aid",
+    "modal-scholarships": "Scholarships",
+    "modal-loans": "Educational Loans",
+    "modal-study": "Where will you study?",
+    "modal-gov": "Government Institutes",
+    "modal-priv": "Private Institutes",
+    "modal-dist": "Distance Learning",
+    "modal-growth": "Expected Growth Trajectory",
+    "modal-work": "Where you'll work",
+    "modal-near": "Near You",
+    "modal-filtered": "Filtered out based on your college type preferences",
+    "modal-no-institutes": "No institutes listed",
+    "modal-not-available": "Information not available",
+    "modal-none": "None listed",
+    "sec-journey-eyebrow": "The journey",
+    "sec-journey-title": "Four steps to your <span class=\"grad\">career match</span>",
+    "step-1-title": "Build your profile",
+    "step-1-desc": "Tell us your name, age, class, interests and hobbies — your AI assistant guides you through.",
+    "step-2-title": "Play the career test",
+    "step-2-desc": "Quick cards, XP, coins and streaks. It feels like a game, not an exam.",
+    "step-3-title": "AI reads your strengths",
+    "step-3-desc": "Your answers become a personalized personality and interest profile in seconds.",
+    "step-4-title": "Get your roadmap",
+    "step-4-desc": "Matched careers, colleges, scholarships and a step-by-step path forward.",
+    "sec-quiz-eyebrow": "CAREER DISCOVERY ASSESSMENT",
+    "sec-quiz-title": "Discover the path <span class=\"grad\">that fits you.</span>",
+    "sec-quiz-lead": "Tell us about yourself and answer a few questions to understand your interests, strengths, and career preferences.",
+    "form-heading": "Tell us about yourself",
+    "label-name": "Full Name *",
+    "placeholder-name": "Enter your full name",
+    "label-age": "Age *",
+    "placeholder-age": "Enter your age",
+    "label-class": "Class/Year *",
+    "option-select-class": "Select your class",
+    "label-stream": "Education Stream/Field",
+    "placeholder-stream": "e.g., Science, Commerce, Arts, Engineering",
+    "heading-learning-profile": "Your Learning Profile",
+    "label-subjects": "Subjects you enjoy learning",
+    "placeholder-subjects": "e.g., Mathematics, Physics, English, Biology, History",
+    "label-weak-subjects": "Subjects You Find Challenging",
+    "placeholder-weak-subjects": "e.g., Chemistry, Statistics, Economics",
+    "heading-outside-academics": "What inspires you outside academics?",
+    "label-interests": "Your Interests",
+    "placeholder-interests": "e.g., Technology, Research, Art, Sports, Social Work",
+    "label-hobbies": "Your Hobbies",
+    "placeholder-hobbies": "e.g., Reading, Gaming, Painting, Coding, Gardening",
+    "label-strengths": "Your natural strengths",
+    "placeholder-strengths": "e.g., Problem-solving, Communication, Leadership, Creativity",
+    "label-aspirations": "Career Aspirations (if any)",
+    "placeholder-aspirations": "e.g., Engineer, Doctor, Scientist, Entrepreneur",
+    "heading-preferences": "Career Ambitions & Preferences",
+    "label-learning-mode": "Preferred Learning Mode",
+    "label-budget": "Budget Preference",
+    "label-location": "Location Preference",
+    "label-student-location": "Preferred Study Location",
+    "placeholder-student-location": "e.g., Tamil Nadu, Maharashtra, Delhi",
+    "label-college-range": "Preferred College Type/Range",
+    "option-college-1": "1st Year College",
+    "option-college-2": "2nd Year College",
+    "option-college-3": "3rd Year College",
+    "option-college-4": "4th Year College",
+    "option-graduate": "Graduate",
+    "option-post-graduate": "Post Graduate",
+    "option-learning-offline": "Offline (Classroom/Lab)",
+    "option-learning-distance": "Distance/Online Learning",
+    "option-learning-hybrid": "Hybrid (Mix)",
+    "option-budget-moderate": "Moderate Budget",
+    "option-budget-sensitive": "Budget Sensitive",
+    "option-budget-no-constraint": "No Budget Constraint",
+    "option-location-india": "India Wide",
+    "option-location-local": "Local Opportunities",
+    "option-location-international": "International Career",
+    "option-range-all": "All Colleges (Govt & Private)",
+    "option-range-govt": "Government Colleges Only",
+    "option-range-private": "Private Colleges Only",
+    "option-range-distance": "Distance Learning Only",
+    "btn-submit-profile": "Continue to Career Test →",
+    "scale-not-me": "Not me",
+    "scale-little": "A little",
+    "scale-maybe": "Maybe",
+    "scale-yes": "Yes",
+    "scale-so-me": "So me!",
+    "btn-back": "← Back",
+    "btn-next": "Next →",
+    "btn-submit-test": "Submit Test →",
+    "sec-counselor-eyebrow": "Nova AI Counselor",
+    "sec-counselor-title": "Have questions? <span class=\"grad\">Ask VERA.</span>",
+    "sec-counselor-sub": "Ask anything about your matches, course fees, colleges, entrance exams, or alternate paths.",
+    "placeholder-chat": "Ask Nova about your career matches, colleges, entrance exams...",
+    "btn-send": "Send",
+    "chat-disclaimer": "Disclaimer: VERA is an AI assistant. Guidance is for informational purposes only. Consult professional counselors for critical career decisions.",
+    "modal-close": "Close",
+    "title-overview": "Career Overview",
+    "title-why-matches": "Why It Matches Student Profile",
+    "title-traits": "Personality Traits Alignment",
+    "title-pathway": "Educational Pathway",
+    "title-fees": "Course Fees",
+    "title-income": "Expected Income",
+    "title-scholarships": "Scholarships",
+    "title-loans": "Loans",
+    "title-study": "Where Will You Study?",
+    "title-gov": "Government",
+    "title-priv": "Private",
+    "title-dist": "Distance Learning",
+    "title-work": "Where Will You Work?",
+    "title-growth": "Expected Growth Path",
+    "title-skills": "Skill Development Plan",
+    "title-example": "Example From The Field",
+    "title-exams": "Entrance Exams"
+}
+
+def translate_questions_to(lang_code):
+    import time
+    import os
+    import json
+    
+    cache_file = os.path.join("data", f"translations_{lang_code}.json")
+    os.makedirs("data", exist_ok=True)
+    
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                cached_data = json.load(f)
+                print(f"[INFO] Loaded {lang_code} translations from cache.")
+                return cached_data["questions"], cached_data["scale"], cached_data["ui"]
+        except Exception as e:
+            print(f"[WARNING] Could not load translation cache for {lang_code}: {e}")
+
+    try:
+        print(f"[INFO] Translating questions to {lang_code} (this may take a moment)...")
+        translator = GoogleTranslator(source='en', target=lang_code)
+        
+        q_texts = [q["question"] for q in QUESTIONS]
+        a_texts = []
+        for q in QUESTIONS:
+            a_texts.extend(q.get("answers", []))
+            
+        # Translate Questions
+        batch_str = "\n".join(q_texts)
+        translated_batch_str = translator.translate(batch_str)
+        translated_q_texts = [t.strip() for t in translated_batch_str.split('\n') if t.strip()]
+        
+        if len(translated_q_texts) != len(QUESTIONS):
+            print(f"[WARNING] Length mismatch for {lang_code}. Falling back to sequential translation...")
+            translated_q_texts = []
+            for q in QUESTIONS:
+                translated_q_texts.append(translator.translate(q["question"]))
+                time.sleep(0.2) # Avoid rate limits
+                
+        # Translate Answers
+        if a_texts:
+            batch_a_str = "\n".join(a_texts)
+            translated_batch_a = translator.translate(batch_a_str)
+            translated_a_texts = [t.strip() for t in translated_batch_a.split('\n') if t.strip()]
+            
+            if len(translated_a_texts) != len(a_texts):
+                print(f"[WARNING] Answer length mismatch for {lang_code}. Falling back to sequential...")
+                translated_a_texts = []
+                for ans in a_texts:
+                    translated_a_texts.append(translator.translate(ans))
+                    time.sleep(0.2)
+        else:
+            translated_a_texts = []
+                
+        translated_questions = []
+        ans_idx = 0
+        for i, q in enumerate(QUESTIONS):
+            q_ans_len = len(q.get("answers", []))
+            q_translated_answers = translated_a_texts[ans_idx:ans_idx+q_ans_len]
+            ans_idx += q_ans_len
+            
+            translated_questions.append({
+                "id": q["id"],
+                "question": translated_q_texts[i],
+                "answers": q_translated_answers,
+                "icons": q.get("icons", []),
+                "category": q["category"]
+            })
+        
+        # Scale is deprecated, but keep variable for compatibility with frontend/cache signature
+        translated_scale = {}
+        
+        print(f"[SUCCESS] Translated questions and answers to {lang_code}")
+        
+        # UI Translations
+        print(f"[INFO] Translating static UI to {lang_code} (this may take a moment)...")
+        ui_keys = list(UI_TRANSLATIONS_EN.keys())
+        ui_vals = [UI_TRANSLATIONS_EN[k] for k in ui_keys]
+        
+        batch_ui_str = "\n".join(ui_vals)
+        translated_batch_ui = translator.translate(batch_ui_str)
+        translated_ui_vals = [t.strip() for t in translated_batch_ui.split('\n') if t.strip()]
+        
+        translated_ui = {}
+        if len(translated_ui_vals) == len(ui_keys):
+            for i, k in enumerate(ui_keys):
+                translated_ui[k] = translated_ui_vals[i]
+        else:
+            print(f"[WARNING] UI Scale length mismatch. Falling back to sequential.")
+            for k, v in UI_TRANSLATIONS_EN.items():
+                translated_ui[k] = translator.translate(v)
+                time.sleep(0.1)
+                
+        print(f"[SUCCESS] Translated static UI to {lang_code}")
+        
+        try:
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump({
+                    "questions": translated_questions,
+                    "scale": translated_scale,
+                    "ui": translated_ui
+                }, f, ensure_ascii=False, indent=2)
+            print(f"[INFO] Saved {lang_code} translations to cache.")
+        except Exception as e:
+            print(f"[WARNING] Could not save translation cache for {lang_code}: {e}")
+            
+        return translated_questions, translated_scale, translated_ui
+    except Exception as e:
+        print(f"[ERROR] Failed to translate to {lang_code}: {e}")
+        return QUESTIONS, QUESTIONS_DATA.get('response_scale', {}), UI_TRANSLATIONS_EN
+
+# Cache translated versions on startup
+QUESTIONS_MR, SCALE_MR, UI_MR = translate_questions_to('mr')
+QUESTIONS_HI, SCALE_HI, UI_HI = translate_questions_to('hi')
+
+@app.route('/api/ui-translations', methods=['GET'])
+def get_ui_translations():
+    """Get Static UI translations for the requested language."""
+    lang = request.args.get('lang', 'en')
+    
+    if lang == 'mr':
+        return jsonify(UI_MR)
+    elif lang == 'hi':
+        return jsonify(UI_HI)
+    else:
+        return jsonify(UI_TRANSLATIONS_EN)
+
+@app.route('/api/config', methods=['GET'])
+def get_config():
+    """Get dynamic UI configuration including category info and feedback messages."""
+    return jsonify({
+        "CATEGORY_ORDER": [
+            "Realistic", "Investigative", "Artistic", "Social", "Enterprising", "Conventional"
+        ],
+        "CATEGORY_INFO": {
+            "Realistic": {
+                "color": "#062E27", "tint": "#CFEDED", "emoji": "/images/icons/hammer.png",
+                "title": "Realistic (R)", "desc": "Practical, hands-on, and action-oriented problem solvers.",
+                "videoSrc": "/RIASEC_Realistic_R_Career_Th.mp4"
+            },
+            "Investigative": {
+                "color": "#062E27", "tint": "#CFEDED", "emoji": "/images/icons/search.png",
+                "title": "Investigative (I)", "desc": "Analytical, intellectual, and scientific thinkers.",
+                "videoSrc": "/RIASEC_Investigative_I_.mp4"
+            },
+            "Artistic": {
+                "color": "#062E27", "tint": "#CFEDED", "emoji": "/images/icons/color-palette.png",
+                "title": "Artistic (A)", "desc": "Creative, expressive, and original creators.",
+                "videoSrc": "/RIASEC_Artistic_A_Video.mp4"
+            },
+            "Social": {
+                "color": "#062E27", "tint": "#CFEDED", "emoji": "/images/icons/team.png",
+                "title": "Social (S)", "desc": "Empathetic, helpful, and community-driven leaders.",
+                "videoSrc": "/RIASEC_Social_S_Informativ.mp4"
+            },
+            "Enterprising": {
+                "color": "#062E27", "tint": "#CFEDED", "emoji": "/images/icons/target.png",
+                "title": "Enterprising (E)", "desc": "Ambitious, persuasive, and visionary leaders.",
+                "videoSrc": "/RIASEC_Enterprising_E_Vide.mp4"
+            },
+            "Conventional": {
+                "color": "#062E27", "tint": "#CFEDED", "emoji": "/images/icons/bar-chart.png",
+                "title": "Conventional (C)", "desc": "Organized, detail-oriented, and systematic experts.",
+                "videoSrc": "/RIASEC_Conventional_C_.mp4"
+            }
+        },
+        "FEEDBACK_BY_RANK": {
+            "5": ["That's so you!", "Spot on match!", "Big yes energy!", "Strong fit noted!"],
+            "4": ["Nice, that fits!", "Good match!", "Solid pick!", "Leaning your way!"],
+            "3": ["Fair enough!", "Right in the middle!", "Noted, staying neutral.", "Balanced answer!"],
+            "2": ["Got it, noted.", "Not really your thing.", "Understood.", "Tracked that."],
+            "1": ["Clear signal there.", "Definitely not you.", "Good to know!", "Noted, thanks."]
+        },
+        "MASCOT_MESSAGES": [
+            "You're on a roll!", "Keep going, you're doing great!", "Nice pace — stay with it!",
+            "Look at you go!", "Great focus so far!", "Halfway warrior energy!"
+        ],
+        "TOAST_HOLD_MS": 1250,
+        "MASCOT_HOLD_MS": 2600
+    })
+
 # ============================================================
-# SESSION HELPERS
+# ERROR HANDLERS
 # ============================================================
 
 def get_session_id():
@@ -251,6 +617,7 @@ def normalize_career_record(career):
         'where_will_you_study': ['where_will_you_study', 'institutes', 'institutions', 'study_institutes'],
         'where_will_you_work': ['where_will_you_work', 'work_places', 'work_locations', 'work_environment'],
         'growth_path': ['growth_path', 'expected_growth_path', 'career_growth_path', 'career_progression'],
+        'skill_development_plan': ['skill_development_plan', 'skills_required', 'skills'],
         'related_careers': ['related_careers', 'related_fields', 'adjacent_careers'],
         'differently_abled_opportunities': ['differently_abled_opportunities', 'accessible_opportunities'],
         'entrepreneurship': ['entrepreneurship', 'entrepreneurial_opportunities'],
@@ -322,57 +689,30 @@ def normalize_career_record(career):
     return {key: value for key, value in normalized.items() if has_content(value)}
 
 # ============================================================
-# FLASK ROUTES
+# FLASK ROUTES (API ONLY)
 # ============================================================
-
-@app.route('/')
-def index():
-    """Render the main page."""
-    return render_template('home.html')
-
-@app.route('/how-it-works')
-def how_it_works():
-    """Render the How it works page."""
-    return render_template('how.html')
-
-@app.route('/take-test')
-def take_test():
-    """Render the Take Test page."""
-    from flask import make_response
-    response = make_response(render_template('test.html'))
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
-
-@app.route('/ai-counselor')
-def ai_counselor():
-    """Render the AI Counselor page."""
-    return render_template('counselor.html')
-
-# Disable HTML caching so the latest UI changes are always served
-@app.after_request
-def add_header(response):
-    if 'text/html' in response.headers.get('Content-Type', ''):
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-    return response
-
-@app.route('/contact')
-def contact():
-    """Render the Contact page."""
-    return render_template('contact.html')
 
 
 @app.route('/api/questions', methods=['GET'])
 def get_questions():
     """Get RIASEC questions."""
+    lang = request.args.get('lang', 'en')
+    
+    if lang == 'mr':
+        q_list = QUESTIONS_MR
+        scale = SCALE_MR
+    elif lang == 'hi':
+        q_list = QUESTIONS_HI
+        scale = SCALE_HI
+    else:
+        q_list = QUESTIONS
+        scale = QUESTIONS_DATA.get('response_scale', {})
+        
     try:
         return jsonify({
-            'questions': QUESTIONS,
-            'total': len(QUESTIONS),
-            'response_scale': QUESTIONS_DATA.get('response_scale', {})
+            'questions': q_list,
+            'total': len(q_list),
+            'response_scale': scale
         })
     except Exception as e:
         print(f"[ERROR] Error in get_questions: {e}")
@@ -456,7 +796,7 @@ def submit_answers():
         for match in career_matches[:6]:
             top_careers.append({
                 'name': match.career_name,
-                'score': round(match.match_score, 1),
+                'match_score': round(match.match_score, 1),
                 'riasec_score': round(match.riasec_match, 1),
                 'personality_score': round(match.profile_match, 1),
                 'subject_score': round(match.subject_match, 1),
@@ -512,16 +852,35 @@ def career_detail():
         
         # Check SQLite database first
         from modules.conversation_memory import conversation_memory
-        career_record = conversation_memory.get_career_detail(career_name)
-        if career_record:
-            return jsonify({'career': normalize_career_record(career_record)})
+        target_record = conversation_memory.get_career_detail(career_name)
         
-        # Fallback to local in-memory scan
-        for career in CAREER_DB:
-            if career.get('career_name') == career_name:
-                return jsonify({'career': normalize_career_record(career)})
+        if not target_record:
+            print(f"[DEBUG] /api/career-detail called for career: '{career_name}'")
+            # Fallback to local in-memory scan
+            search_name = str(career_name).strip().lower()
+            for career in CAREER_DB:
+                db_name = str(career.get('career_name', '')).strip().lower()
+                if db_name == search_name:
+                    print(f"[DEBUG] Found career in CAREER_DB: '{career_name}'")
+                    target_record = career
+                    break
         
-        return jsonify({'error': 'Career not found'}), 404
+        if not target_record:
+            print(f"[DEBUG] Career NOT FOUND in CAREER_DB: '{career_name}'")
+            return jsonify({'error': 'Career not found'}), 404
+            
+        normalized = normalize_career_record(target_record)
+        
+        if "skill_development_plan" not in normalized or not normalized["skill_development_plan"]:
+            print(f"[INFO] Dynamically generating Skill Development Plan for {career_name}...")
+            try:
+                prompt = f"Create a concise 'Skill Development Plan' for the career of {career_name}. List the key technical and soft skills required, and provide 3 practical steps a student can take to start building these skills right now. Format clearly using bullet points."
+                normalized['skill_development_plan'] = nova.generate_response(prompt)
+            except Exception as e:
+                print(f"[ERROR] LLM generation failed for skill plan: {e}")
+                normalized['skill_development_plan'] = "Information currently unavailable."
+                
+        return jsonify({'career': normalized})
         
     except Exception as e:
         print(f"[ERROR] Error in career_detail: {e}")
@@ -569,6 +928,7 @@ def chat():
         data = request.json
         message = data.get('message', '').strip()
         language = data.get('language', 'en').strip()
+        email = data.get('email')
         
         # Production Security: Input length validation (1500 chars)
         if len(message) > 1500:
@@ -583,6 +943,19 @@ def chat():
         
         conv = get_or_create_conversation()
         session_id = get_session_id()
+        
+        # Cost Optimization: Apply User Rate Limits before LLM processing
+        message_count = conversation_memory.get_user_message_count(session_id, email)
+        if email:
+            if message_count >= 20:
+                return jsonify({
+                    'response': "You have reached your limit of 20 messages per hour. Please wait a bit before continuing our conversation! Don't worry, your chat history is automatically saved."
+                })
+        else:
+            if message_count >= 3:
+                return jsonify({
+                    'response': "You've reached your 3 free messages as a guest! Please create an account to continue your career journey with VERA."
+                })
         
         # Get persona from SQLite session store or create default
         persona = conversation_memory.get_persona(session_id)
@@ -616,7 +989,7 @@ def chat():
         print(f"   Should use career data: {classification.should_use_career_data}")
         
         # Add user message to memory
-        conversation_memory.add_message(session_id, 'user', message, classification.intent)
+        conversation_memory.add_message(session_id, 'user', message, classification.intent, email=email)
         
         # Get career matches if available and needed
         career_matches_data = []
@@ -764,6 +1137,7 @@ def save_contact():
             return jsonify({'error': 'Required fields are missing.'}), 400
             
         conversation_memory.add_contact_message(
+            # pyrefly: ignore [unexpected-keyword]
             fullname=str(fullname).strip(),
             email=str(email).strip(),
             company=str(company).strip() if company else None,
@@ -798,12 +1172,13 @@ def save_feedback():
         liked_val = 1 if liked_result else 0
         
         conversation_memory.add_feedback(
-            student_id=session_id,
-            assessment_id=session_id,
-            career_id=str(career_id).strip(),
-            liked_result=liked_val,
-            feedback_category=str(feedback_category).strip(),
-            comment=str(comment).strip()
+            session_id,
+            {
+                'career_id': str(career_id).strip(),
+                'liked_result': liked_val,
+                'feedback_category': str(feedback_category).strip(),
+                'comment': str(comment).strip()
+            }
         )
         return jsonify({'status': 'success', 'message': 'Feedback saved successfully.'})
     except Exception as e:
@@ -838,8 +1213,8 @@ def upload_image():
         
     try:
         # Instead of third-party APIs that block VPS IPs, host it locally.
-        # Ensure static/uploads directory exists
-        upload_folder = os.path.join(app.root_path, 'static', 'uploads')
+        # Ensure data/uploads directory exists
+        upload_folder = os.path.join(app.root_path, 'data', 'uploads')
         os.makedirs(upload_folder, exist_ok=True)
         
         # Generate a unique secure filename
@@ -851,13 +1226,20 @@ def upload_image():
         file.save(file_path)
         
         # Generate the absolute public URL for the image
-        file_url = request.host_url.rstrip('/') + f"/static/uploads/{unique_filename}"
+        file_url = request.host_url.rstrip('/') + f"/api/uploads/{unique_filename}"
         
         return jsonify({'status': 'success', 'data': {'url': file_url}})
     except Exception as e:
         import traceback
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/uploads/<path:filename>')
+def serve_upload(filename):
+    """Serve uploaded images from the local data directory."""
+    from flask import send_from_directory
+    upload_folder = os.path.join(app.root_path, 'data', 'uploads')
+    return send_from_directory(upload_folder, filename)
 
 # ============================================================
 # MAIN

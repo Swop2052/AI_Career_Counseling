@@ -1,0 +1,728 @@
+{
+  "Realistic": [
+    {
+      "question": "I would rather fix a broken chair than design a new one.",
+      "answers": [
+        "I would design a new one",
+        "I prefer designing",
+        "Both are okay",
+        "I prefer fixing",
+        "I would fix it"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/architechture.png",
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/tractor.png"
+      ]
+    },
+    {
+      "question": "I prefer solving a problem by doing something practical rather than thinking about a theory.",
+      "answers": [
+        "I strongly prefer theoretical solutions",
+        "I often prefer theories and ideas",
+        "Both approaches are equally useful",
+        "I usually choose practical solutions",
+        "I strongly prefer practical solutions"
+      ],
+      "icons": [
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/tractor.png",
+        "/images/icons/leaves.png",
+        "/images/icons/energy.png"
+      ]
+    },
+    {
+      "question": "I work best when I have clear steps to follow instead of having to create my own way.",
+      "answers": [
+        "I strongly prefer creating my own approach",
+        "I often prefer figuring things out myself",
+        "I am comfortable with both",
+        "I usually like step-by-step guidance",
+        "I always prefer clear instructions"
+      ],
+      "icons": [
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/cool.png",
+        "/images/icons/tractor.png",
+        "/images/icons/target.png"
+      ]
+    },
+    {
+      "question": "I stay calm even when something unexpected happens while doing physical work.",
+      "answers": [
+        "I find surprises very challenging",
+        "Unexpected problems can stress me",
+        "It depends on the situation",
+        "I handle surprises fairly well",
+        "I stay calm and focused"
+      ],
+      "icons": [
+        "/images/icons/hammer.png",
+        "/images/icons/nervous.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/tractor.png",
+        "/images/icons/balance.png"
+      ]
+    },
+    {
+      "question": "I do not like long discussions when there is a simple way to fix a problem.",
+      "answers": [
+        "I strongly prefer detailed discussions",
+        "I often prefer discussing options first",
+        "Both discussion and action matter",
+        "I usually choose action over discussion",
+        "I prefer fixing things right away"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/speak.png",
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/tractor.png"
+      ]
+    },
+    {
+      "question": "I would enjoy working alone outdoors with nature and land.",
+      "answers": [
+        "I strongly prefer working with people indoors",
+        "I would rather do something else",
+        "It seems okay",
+        "I would enjoy it",
+        "That sounds perfect to me"
+      ],
+      "icons": [
+        "/images/icons/team.png",
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/smile.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I am comfortable doing heavy, dirty, or difficult physical work.",
+      "answers": [
+        "I strongly dislike such tasks",
+        "I would rather avoid them",
+        "I can do them if needed",
+        "I am comfortable doing them",
+        "I enjoy tackling such tasks"
+      ],
+      "icons": [
+        "/images/icons/confused.png",
+        "/images/icons/no-entry.png",
+        "/images/icons/hammer.png",
+        "/images/icons/cool.png",
+        "/images/icons/smile.png"
+      ]
+    }
+  ],
+  "Investigative": [
+    {
+      "question": "I enjoy thinking of new ideas and testing if they are correct.",
+      "answers": [
+        "I prefer using ideas that already exist",
+        "I sometimes think of new ideas",
+        "Both new and existing ideas are useful",
+        "I enjoy creating and testing new ideas",
+        "I constantly think of new ideas and test them"
+      ],
+      "icons": [
+        "/images/icons/brain.png",
+        "/images/icons/thinking.png",
+        "/images/icons/search.png",
+        "/images/icons/smile.png",
+        "/images/icons/thinking (1).png"
+      ]
+    },
+    {
+      "question": "I often wonder why things happen in everyday life.",
+      "answers": [
+        "I rarely think about why things happen",
+        "I sometimes ask questions about things",
+        "It depends on the situation",
+        "I often wonder why things happen",
+        "I am always curious about how and why things work"
+      ],
+      "icons": [
+        "/images/icons/thinking.png",
+        "/images/icons/brain.png",
+        "/images/icons/search.png",
+        "/images/icons/puzzle.png",
+        "/images/icons/target.png"
+      ]
+    },
+    {
+      "question": "I enjoy learning about science because I want to understand how things work.",
+      "answers": [
+        "I learn only what I need to know",
+        "Science is somewhat interesting to me",
+        "I like science as much as other subjects",
+        "I enjoy learning how things work",
+        "I love exploring scientific ideas and discoveries"
+      ],
+      "icons": [
+        "/images/icons/books.png",
+        "/images/icons/rocket.png",
+        "/images/icons/brain.png",
+        "/images/icons/university.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I enjoy solving difficult puzzles that make me think in new ways.",
+      "answers": [
+        "I avoid difficult puzzles",
+        "I enjoy easy puzzles only",
+        "Some puzzles are interesting",
+        "I enjoy challenging puzzles",
+        "I love solving complex puzzles and brain teasers"
+      ],
+      "icons": [
+        "/images/icons/puzzle.png",
+        "/images/icons/brain.png",
+        "/images/icons/search.png",
+        "/images/icons/smile.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I think best when I am alone in a quiet place.",
+      "answers": [
+        "I think best around other people",
+        "I usually like group environments",
+        "Both environments work for me",
+        "I prefer quiet places for thinking",
+        "I do my best thinking when I am completely alone and focused"
+      ],
+      "icons": [
+        "/images/icons/thinking.png",
+        "/images/icons/brain.png",
+        "/images/icons/search.png",
+        "/images/icons/thinking (1).png",
+        "/images/icons/puzzle.png"
+      ]
+    },
+    {
+      "question": "I am happy spending a whole day solving a difficult technical problem by myself.",
+      "answers": [
+        "I would get bored quickly",
+        "I could do it for a short time",
+        "It depends on the problem",
+        "I enjoy working on difficult problems",
+        "I can spend hours solving complex technical challenges"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/brain.png",
+        "/images/icons/search.png",
+        "/images/icons/smile.png",
+        "/images/icons/lightning-bolt.png"
+      ]
+    },
+    {
+      "question": "I keep thinking about a difficult problem until I find a solution.",
+      "answers": [
+        "I usually move on to something else",
+        "I think about it for a while",
+        "It depends on the problem",
+        "I usually keep trying until I solve it",
+        "I never give up until I find the answer"
+      ],
+      "icons": [
+        "/images/icons/brain.png",
+        "/images/icons/thinking.png",
+        "/images/icons/search.png",
+        "/images/icons/puzzle.png",
+        "/images/icons/rocket.png"
+      ]
+    }
+  ],
+  "Artistic": [
+    {
+      "question": "I can spend a whole afternoon drawing, painting, or creating things without noticing the time.",
+      "answers": [
+        "Not interested",
+        "Rarely do this",
+        "Sometimes do this",
+        "Enjoy creative activities",
+        "Love creating art"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/butterfly.png",
+        "/images/icons/sparkle.png",
+        "/images/icons/smile.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I enjoy creating something new, such as a story, song, drawing, or picture.",
+      "answers": [
+        "Prefer other activities",
+        "Rarely create",
+        "Sometimes create",
+        "Enjoy being creative",
+        "Love creating new things"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/sparkle.png",
+        "/images/icons/butterfly.png",
+        "/images/icons/smile.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I feel most comfortable when I can use my imagination freely.",
+      "answers": [
+        "Don't relate",
+        "Prefer structure",
+        "Sometimes feel this way",
+        "Enjoy thinking creatively",
+        "Imagination inspires me"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/butterfly.png",
+        "/images/icons/sparkle.png",
+        "/images/icons/thinking.png",
+        "/images/icons/rainbow.png"
+      ]
+    },
+    {
+      "question": "I like using art or creativity to express my ideas and feelings.",
+      "answers": [
+        "Not interested in doing this",
+        "Rarely enjoy this",
+        "Sometimes enjoy this",
+        "Enjoy doing this",
+        "Love expressing myself creatively"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/smile.png",
+        "/images/icons/happy-face.png",
+        "/images/icons/butterfly.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "My feelings often inspire the things I create.",
+      "answers": [
+        "Never inspires my work",
+        "Rarely inspires my work",
+        "Not sure",
+        "Sometimes inspires my work",
+        "Often inspires my creative work"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/butterfly.png",
+        "/images/icons/sparkle.png",
+        "/images/icons/rainbow.png",
+        "/images/icons/face.png"
+      ]
+    },
+    {
+      "question": "I do not like following strict plans; I prefer to follow my ideas and inspiration.",
+      "answers": [
+        "Like strict structure",
+        "Prefer clear plans",
+        "Balance of both",
+        "Prefer some flexibility",
+        "Love freedom and flexibility"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/butterfly.png",
+        "/images/icons/sparkle.png",
+        "/images/icons/rainbow.png",
+        "/images/icons/stars.png"
+      ]
+    }
+  ],
+  "Social": [
+    {
+      "question": "I feel happy when I talk, laugh, and share ideas with other people.",
+      "answers": [
+        "I prefer spending time alone",
+        "I sometimes enjoy social activities",
+        "I enjoy both being alone and with others",
+        "I enjoy talking and sharing ideas with people",
+        "I feel energized when interacting with others"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/smile.png",
+        "/images/icons/happy-face.png",
+        "/images/icons/speak.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "People say I am good at listening and understanding how others feel.",
+      "answers": [
+        "I usually focus on my own thoughts",
+        "I try to listen when needed",
+        "Sometimes I understand others well",
+        "I am a good listener and understand people",
+        "People often come to me because I understand their feelings"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/team.png",
+        "/images/icons/brain.png",
+        "/images/icons/books.png",
+        "/images/icons/waving-hand.png"
+      ]
+    },
+    {
+      "question": "I enjoy meeting new people and helping them feel comfortable.",
+      "answers": [
+        "I prefer staying with people I already know",
+        "I sometimes enjoy meeting new people",
+        "It depends on the situation",
+        "I enjoy welcoming and helping new people",
+        "I love meeting new people and making them feel included"
+      ],
+      "icons": [
+        "/images/icons/team.png",
+        "/images/icons/waving-hand.png",
+        "/images/icons/chat.png",
+        "/images/icons/like.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I often worry about how the people I care about are feeling.",
+      "answers": [
+        "I rarely think about others' feelings",
+        "I think about them sometimes",
+        "It depends on the situation",
+        "I often care about how others are feeling",
+        "I deeply care about the feelings and well-being of others"
+      ],
+      "icons": [
+        "/images/icons/thinking.png",
+        "/images/icons/thinking (1).png",
+        "/images/icons/chat.png",
+        "/images/icons/team.png",
+        "/images/icons/waving-hand.png"
+      ]
+    },
+    {
+      "question": "Helping someone when they are having a difficult time makes me feel good.",
+      "answers": [
+        "I usually stay out of other people's problems",
+        "I help when someone asks me",
+        "It depends on the situation",
+        "I feel good when I help others",
+        "Helping others is one of the most rewarding things for me"
+      ],
+      "icons": [
+        "/images/icons/team.png",
+        "/images/icons/like.png",
+        "/images/icons/chat.png",
+        "/images/icons/waving-hand.png",
+        "/images/icons/speak.png"
+      ]
+    },
+    {
+      "question": "I am happiest when I work with a team toward a common goal.",
+      "answers": [
+        "I prefer working alone",
+        "I can work alone or in groups",
+        "Both are equally enjoyable",
+        "I enjoy working with a team",
+        "I feel most motivated when working closely with a team"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/team.png",
+        "/images/icons/smile.png",
+        "/images/icons/happy-face.png",
+        "/images/icons/waving-hand.png"
+      ]
+    }
+  ],
+  "Enterprising": [
+    {
+      "question": "I feel excited when I convince a group of people to support my idea.",
+      "answers": [
+        "I prefer not to influence others",
+        "I occasionally share my ideas",
+        "It depends on the situation",
+        "I enjoy persuading people to support good ideas",
+        "I love convincing others and gaining support for my ideas"
+      ],
+      "icons": [
+        "/images/icons/briefcase.png",
+        "/images/icons/crown.png",
+        "/images/icons/trophy.png",
+        "/images/icons/team.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I naturally take the lead, even when nobody asks me to.",
+      "answers": [
+        "I prefer others to lead",
+        "I lead only when necessary",
+        "It depends on the group",
+        "I often take the lead naturally",
+        "I confidently step forward and lead others"
+      ],
+      "icons": [
+        "/images/icons/crown.png",
+        "/images/icons/trophy.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/fire.png",
+        "/images/icons/strength.png"
+      ]
+    },
+    {
+      "question": "I enjoy meeting people and talking to them about new opportunities.",
+      "answers": [
+        "I rarely discuss opportunities with others",
+        "I do it occasionally",
+        "It depends on my interest",
+        "I enjoy discussing new opportunities",
+        "I love networking and exploring opportunities with people"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/crown.png",
+        "/images/icons/speak.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "I enjoy friendly competition because it makes me try harder.",
+      "answers": [
+        "Competition does not motivate me",
+        "I enjoy it sometimes",
+        "It depends on the situation",
+        "Competition helps me improve",
+        "I love competition because it pushes me to do my best"
+      ],
+      "icons": [
+        "/images/icons/trophy.png",
+        "/images/icons/smile.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/team.png",
+        "/images/icons/rocket.png"
+      ]
+    },
+    {
+      "question": "I can make difficult decisions without worrying too much about how everyone will feel.",
+      "answers": [
+        "I find difficult decisions stressful",
+        "I sometimes hesitate before deciding",
+        "It depends on the situation",
+        "I can make tough decisions when needed",
+        "I confidently make difficult decisions for the best outcome"
+      ],
+      "icons": [
+        "/images/icons/nervous.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/crown.png",
+        "/images/icons/trophy.png",
+        "/images/icons/strength.png"
+      ]
+    },
+    {
+      "question": "I am willing to disagree with others if it helps us get the result we need.",
+      "answers": [
+        "I avoid disagreements whenever possible",
+        "I disagree only when necessary",
+        "It depends on the situation",
+        "I can express a different opinion when needed",
+        "I confidently challenge ideas to achieve better results"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/crown.png",
+        "/images/icons/trophy.png",
+        "/images/icons/strength.png"
+      ]
+    },
+    {
+      "question": "I stay calm and make good decisions even when there is a lot of pressure.",
+      "answers": [
+        "Pressure makes it difficult for me to decide",
+        "I manage pressure sometimes",
+        "It depends on the situation",
+        "I usually stay calm under pressure",
+        "I perform well and make strong decisions under pressure"
+      ],
+      "icons": [
+        "/images/icons/fire.png",
+        "/images/icons/lightning-bolt.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/balance.png",
+        "/images/icons/crown.png"
+      ]
+    },
+    {
+      "question": "When something goes wrong, I become more determined and try again.",
+      "answers": [
+        "I often feel discouraged",
+        "I try again after some time",
+        "It depends on the challenge",
+        "I keep trying until things improve",
+        "Challenges motivate me to work even harder"
+      ],
+      "icons": [
+        "/images/icons/briefcase.png",
+        "/images/icons/crown.png",
+        "/images/icons/lightning-bolt.png",
+        "/images/icons/trophy.png",
+        "/images/icons/rocket.png"
+      ]
+    }
+  ],
+  "Conventional": [
+    {
+      "question": "I feel calm when my desk, files, and schedule are neat and organized.",
+      "answers": [
+        "Don't care much about order",
+        "Not very organized",
+        "Sometimes organize",
+        "Prefer things in order",
+        "Love being organized"
+      ],
+      "icons": [
+        "/images/icons/schedule.png",
+        "/images/icons/padlock.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I feel proud when I find small mistakes that other people do not notice.",
+      "answers": [
+        "Details don't matter much to me",
+        "Rarely notice them",
+        "Sometimes notice errors",
+        "Good at spotting mistakes",
+        "Notice every detail"
+      ],
+      "icons": [
+        "/images/icons/search.png",
+        "/images/icons/schedule.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/check.png"
+      ]
+    },
+    {
+      "question": "I like having a regular routine and doing work in a clear and predictable way.",
+      "answers": [
+        "Dislike routines",
+        "Like some variety",
+        "Depends on the task",
+        "Prefer predictable work",
+        "Love routines"
+      ],
+      "icons": [
+        "/images/icons/confused.png",
+        "/images/icons/schedule.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "Clear rules and detailed instructions help me do my best work.",
+      "answers": [
+        "Dislike strict rules",
+        "Prefer flexibility",
+        "Depends on the situation",
+        "Prefer structured guidance",
+        "Need clear instructions"
+      ],
+      "icons": [
+        "/images/icons/padlock.png",
+        "/images/icons/schedule.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/balance.png"
+      ]
+    },
+    {
+      "question": "I check my work carefully and make sure I do not miss any details.",
+      "answers": [
+        "Don't focus on details",
+        "Rarely double-check",
+        "Sometimes check details",
+        "Usually review my work",
+        "Always double-check"
+      ],
+      "icons": [
+        "/images/icons/search.png",
+        "/images/icons/check.png",
+        "/images/icons/check (1).png",
+        "/images/icons/schedule.png",
+        "/images/icons/target.png"
+      ]
+    },
+    {
+      "question": "I prefer using methods that are already known to work instead of always trying new ones.",
+      "answers": [
+        "Always follow new trends",
+        "Like trying new things",
+        "Mix of old and new",
+        "Usually prefer familiar ways",
+        "Trust proven methods"
+      ],
+      "icons": [
+        "/images/icons/target.png",
+        "/images/icons/schedule.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/padlock.png"
+      ]
+    },
+    {
+      "question": "I work best in a quiet place where I can focus without interruptions.",
+      "answers": [
+        "Prefer busy workplaces",
+        "Like active environments",
+        "Either is fine",
+        "Prefer fewer distractions",
+        "Love quiet workspaces"
+      ],
+      "icons": [
+        "/images/icons/schedule.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/padlock.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "I feel uncomfortable until all receipts, records, and numbers are correct and organized.",
+      "answers": [
+        "Organization isn't important to me",
+        "Not very concerned",
+        "Sometimes care about it",
+        "Like keeping records accurate",
+        "Need everything organized"
+      ],
+      "icons": [
+        "/images/icons/schedule.png",
+        "/images/icons/repository.png",
+        "/images/icons/take-note.png",
+        "/images/icons/bar-chart.png",
+        "/images/icons/padlock.png"
+      ]
+    }
+  ]
+}

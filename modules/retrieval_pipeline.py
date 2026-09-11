@@ -47,7 +47,21 @@ class RetrievalPipeline:
             return []
         
         try:
-            # 1. Attempt Vector Store-based semantic retrieval if enabled
+            # 1. Attempt AI-powered semantic career retrieval (Claude) if enabled
+            if config.use_llm_retrieval:
+                print("[INFO] Performing AI-powered career retrieval (Claude)...")
+                llm_selected_careers = self._retrieve_via_llm(persona, career_database)
+                
+                if llm_selected_careers:
+                    print(f"[SUCCESS] AI successfully retrieved {len(llm_selected_careers)} candidates.")
+                    # Score and rerank the candidates using our existing semantic search / heuristic engine
+                    ranked_candidates = self._rerank_careers(persona, llm_selected_careers)
+                    final_careers = self._filter_and_select(ranked_candidates, self.final_count)
+                    return self._to_career_matches(persona, final_careers)
+                else:
+                    print("[WARNING] AI retrieval returned empty. Falling back to next strategy.")
+
+            # 2. Attempt Vector Store-based semantic retrieval if enabled
             from modules.vector_store import vector_store
             
             if vector_store.enabled:

@@ -1,10 +1,12 @@
-# modules/conversation_memory.py - Pure SQLite Simplified Database Storage
+# modules/conversation_memory.py - PostgreSQL Database Storage
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
 import json
 import os
 import uuid
-import sqlite3
+import psycopg2
+import psycopg2.extras
+from psycopg2.extras import Json, DictCursor
 
 from core.models import Conversation, Message
 from core.config import config
@@ -12,7 +14,7 @@ from core.config import config
 
 class ConversationMemory:
     """
-    Manages student test attempts, question logs, and chat histories using SQLite.
+    Manages student test attempts, question logs, and chat histories using PostgreSQL.
     """
     
     def __init__(self):
@@ -21,587 +23,454 @@ class ConversationMemory:
         self.cleanup_old_sessions()
         
     def _get_connection(self):
-        """Get a connection to the SQLite database with high concurrency WAL mode."""
-        db_dir = os.path.dirname(config.db_path)
-        if db_dir:
-            os.makedirs(db_dir, exist_ok=True)
-        conn = sqlite3.connect(config.db_path, timeout=30.0, check_same_thread=False)
+        """Get a connection to the PostgreSQL database."""
         try:
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
-        except Exception:
-            pass
-        return conn
+            conn = psycopg2.connect(config.database_url)
+            psycopg2.extras.register_default_jsonb(conn)
+            psycopg2.extras.register_default_json(conn)
+            return conn
+        except Exception as e:
+            print(f"[ERROR] Database connection failed: {e}")
+            raise e
         
     def _init_db(self):
-        """Initialize SQLite simplified database schema."""
+        """Initialize PostgreSQL database schema."""
+        schema_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "database", "schema.sql")
+        if not os.path.exists(schema_path):
+            print("[WARNING] database/schema.sql not found. Skipping initialization.")
+            return
+
+        with open(schema_path, "r", encoding="utf-8") as f:
+            schema_sql = f.read()
+
         conn = None
         cursor = None
         try:
             conn = self._get_connection()
             with conn:
-                cursor = conn.cursor()
-                # 1. Clean migration: Drop old relational tables if they exist to keep the database tidy
-                old_tables = [
-                    "profile_career_aspirations", "profile_strengths", "profile_hobbies",
-                    "profile_interests", "profile_challenging_subjects", "profile_favorite_subjects",
-                    "student_profiles", "career_sessions", "users",
-                    "budget_master", "career_master", "class_master", "college_type_master",
-                    "education_stream_master", "hobby_master", "interest_master", "learning_mode_master",
-                    "location_preference_master", "strength_master", "subject_master", "messages"
-                ]
-                for table in old_tables:
-                    cursor.execute(f"DROP TABLE IF EXISTS {table};")
-                
-                # 2. Create the unified Tests Attempts table
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS tests (
-                        test_id TEXT PRIMARY KEY,
-                        fullname TEXT,
-                        email TEXT,
-                        phone TEXT,
-                        student_profile TEXT,
-                        riasec_answers TEXT,
-                        riasec_scores TEXT,
-                        riasec_code TEXT,
-                        persona TEXT,
-                        career_matches TEXT,
-                        overall_session TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-                
-                # 3. Create messages chat log table linked directly to tests
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS messages (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        test_id TEXT NOT NULL,
-                        role TEXT,
-                        content TEXT,
-                        timestamp TEXT,
-                        intent TEXT,
-                        FOREIGN KEY(test_id) REFERENCES tests(test_id) ON DELETE CASCADE
-                    )
-                """)
-                
-                # 4. Create semantic careers registry table
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS careers (
-                        career_name TEXT PRIMARY KEY,
-                        riasec_tags TEXT,
-                        description TEXT,
-                        career_data TEXT
-                    )
-                """)
-                
-                # 5. Create student feedback table
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS student_feedback (
-                        feedback_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        student_id TEXT NOT NULL,
-                        assessment_id TEXT NOT NULL,
-                        career_id TEXT,
-                        liked_result INTEGER,
-                        feedback_category TEXT,
-                        comment TEXT,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY(student_id) REFERENCES tests(test_id) ON DELETE CASCADE
-                    )
-                """)
-                
-                # 6. Create contact messages table
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS contact_messages (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        fullname TEXT NOT NULL,
-                        email TEXT NOT NULL,
-                        company TEXT,
-                        subject TEXT NOT NULL,
-                        message TEXT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-            print("[SUCCESS] SQLite simplified database successfully initialized.")
+                with conn.cursor() as cursor:
+                    cursor.execute(schema_sql)
+            print("[SUCCESS] PostgreSQL database successfully initialized.")
         except Exception as e:
-            print(f"[ERROR] Failed to initialize SQLite database: {e}")
-            raise e
+            print(f"[ERROR] Failed to initialize PostgreSQL database: {e}")
+            # Don't raise, might just be a connection failure in dev
         finally:
-            if cursor:
-                cursor.close()
             if conn:
                 conn.close()
 
+    def generate_session_id(self) -> str:
+        """Generate a new unique session/test ID."""
+        return uuid.uuid4().hex
+
     def get_session(self, test_id: str) -> Conversation:
-        """Get or create a test session attempt from SQLite."""
-        conn = self._get_connection()
-        cursor = None
+        """Get or create a test session attempt from PostgreSQL."""
+        conn = None
         try:
+            conn = self._get_connection()
             with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT student_profile, riasec_answers, riasec_scores, persona, career_matches, overall_session FROM tests WHERE test_id = ?",
-                    (test_id,)
-                )
-                row = cursor.fetchone()
-                
-                if row:
-                    profile_json, riasec_answers_json, riasec_scores_json, persona_json, career_matches_json, overall_session_json = row
+                with conn.cursor(cursor_factory=DictCursor) as cursor:
+                    cursor.execute("""
+                        SELECT a.student_profile, a.persona, r.answers, r.scores
+                        FROM assessments a
+                        LEFT JOIN assessment_riasec r ON a.assessment_id = r.assessment_id
+                        WHERE a.assessment_id = %s
+                    """, (test_id,))
+                    row = cursor.fetchone()
                     
                     context = {}
-                    persona = json.loads(persona_json) if isinstance(persona_json, str) else (persona_json or None)
-                    career_matches = json.loads(career_matches_json) if isinstance(career_matches_json, str) else (career_matches_json or [])
-                    riasec_answers = json.loads(riasec_answers_json) if isinstance(riasec_answers_json, str) else (riasec_answers_json or [])
-                    riasec_scores = json.loads(riasec_scores_json) if isinstance(riasec_scores_json, str) else (riasec_scores_json or {})
-                    overall_session = json.loads(overall_session_json) if isinstance(overall_session_json, str) else (overall_session_json or None)
+                    persona = None
+                    riasec_answers = []
+                    riasec_scores = {}
+                    career_matches = []
                     
-                    # Load context from overall snapshot if present
-                    if overall_session and 'context' in overall_session:
-                        context = overall_session['context']
-                    
-                    # Fetch messages
-                    cursor.execute(
-                        "SELECT role, content, timestamp, intent FROM messages WHERE test_id = ? ORDER BY id ASC",
-                        (test_id,)
-                    )
-                    msg_rows = cursor.fetchall()
-                    messages = []
-                    for role, content, timestamp_str, intent in msg_rows:
-                        try:
-                            timestamp = datetime.fromisoformat(timestamp_str)
-                        except Exception:
-                            timestamp = datetime.now()
-                        messages.append(Message(role=role, content=content, timestamp=timestamp, intent=intent))
-                    
-                    return Conversation(
+                    if row:
+                        persona = row['persona']
+                        riasec_answers = row['answers'] if row['answers'] else []
+                        riasec_scores = row['scores'] if row['scores'] else {}
+                        
+                        # Fetch career matches
+                        cursor.execute("""
+                            SELECT m.rank, m.match_score, m.match_details, c.career_name, c.career_data
+                            FROM assessment_career_matches m
+                            JOIN careers c ON m.career_id = c.career_id
+                            WHERE m.assessment_id = %s
+                            ORDER BY m.rank ASC
+                        """, (test_id,))
+                        match_rows = cursor.fetchall()
+                        for m_row in match_rows:
+                            career_matches.append(m_row['match_details'])
+                            
+                    # Fetch chat history
+                    conv = Conversation(
                         session_id=test_id,
-                        messages=messages,
                         context=context,
-                        last_intent=None,
                         persona=persona,
                         career_matches=career_matches,
                         riasec_answers=riasec_answers,
-                        riasec_scores=riasec_scores,
-                        overall_session=overall_session
+                        riasec_scores=riasec_scores
                     )
-                else:
-                    # Create a new test session record
-                    cursor.execute(
-                        "INSERT INTO tests (test_id, fullname) VALUES (?, ?)",
-                        (test_id, "Guest Student")
-                    )
-                    return Conversation(session_id=test_id)
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-    
-    def add_message(
-        self,
-        session_id: str,
-        role: str,
-        content: str,
-        intent: Optional[str] = None
-    ) -> Message:
-        """Add a message to the conversation and persist to SQLite."""
-        conv = self.get_session(session_id)
-        msg = conv.add_message(role, content, intent)
-        
-        # Trim history in database if too long
-        if len(conv.messages) > self._max_history * 2:
-            conv.messages = conv.messages[-self._max_history:]
-            conn = self._get_connection()
-            cursor = None
-            try:
-                with conn:
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "SELECT id FROM messages WHERE test_id = ? ORDER BY id DESC LIMIT ?",
-                        (session_id, self._max_history)
-                    )
-                    ids_to_keep = [r[0] for r in cursor.fetchall()]
-                    if ids_to_keep:
-                        pl = ",".join("?" for _ in ids_to_keep)
-                        params = [session_id] + ids_to_keep
-                        cursor.execute(
-                            f"DELETE FROM messages WHERE test_id = ? AND id NOT IN ({pl})",
-                            params
-                        )
-            except Exception as e:
-                print(f"[WARNING] Failed to trim message history: {e}")
-            finally:
-                if cursor:
-                    cursor.close()
-                if conn:
-                    conn.close()
                     
-        # Persist new message
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO messages (test_id, role, content, timestamp, intent) VALUES (?, ?, ?, ?, ?)",
-                    (session_id, role, content, msg.timestamp.isoformat(), intent)
-                )
-                cursor.execute(
-                    "UPDATE tests SET updated_at = CURRENT_TIMESTAMP WHERE test_id = ?",
-                    (session_id,)
-                )
+                    cursor.execute(
+                        "SELECT role, content, created_at, intent FROM messages WHERE assessment_id = %s ORDER BY created_at ASC",
+                        (test_id,)
+                    )
+                    for m_row in cursor.fetchall():
+                        msg = Message(
+                            role=m_row['role'],
+                            content=m_row['content'],
+                            timestamp=m_row['created_at'],
+                            intent=m_row['intent']
+                        )
+                        conv.messages.append(msg)
+                        if msg.intent:
+                            conv.last_intent = msg.intent
+                            
+                    return conv
+        except Exception as e:
+            print(f"[ERROR] Could not load session {test_id}: {e}")
+            return Conversation(session_id=test_id)
         finally:
-            if cursor:
-                cursor.close()
-            conn.close()
+            if conn:
+                conn.close()
+
+    def _ensure_assessment_exists(self, cursor, test_id: str, email: Optional[str] = None):
+        """Helper to create anonymous user, student, and assessment if they don't exist."""
+        cursor.execute("SELECT assessment_id FROM assessments WHERE assessment_id = %s", (test_id,))
+        if cursor.fetchone():
+            return # Already exists
             
-        return msg
-    
-    def get_history(self, session_id: str, limit: int = 10) -> List[Message]:
-        """Get recent conversation history."""
-        conv = self.get_session(session_id)
-        return conv.get_recent_messages(limit)
-    
-    def get_history_for_prompt(self, session_id: str, limit: int = 8) -> str:
-        """Get formatted history for prompt."""
-        conv = self.get_session(session_id)
-        return conv.get_history_for_prompt(limit)
-    
-    def get_context(self, session_id: str) -> Dict:
-        """Get conversation context."""
-        conv = self.get_session(session_id)
-        return conv.context
-    
-    def update_context(self, session_id: str, key: str, value: Any):
-        """Update conversation context."""
-        conv = self.get_session(session_id)
-        conv.context[key] = value
-        
-        # Save context directly inside the overall_session snapshot structure
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT overall_session FROM tests WHERE test_id = ?", (session_id,))
-                row = cursor.fetchone()
-                overall = {}
-                if row and row[0]:
-                    overall = json.loads(row[0]) if isinstance(row[0], str) else row[0]
-                if not isinstance(overall, dict):
-                    overall = {}
-                if 'context' not in overall:
-                    overall['context'] = {}
-                overall['context'][key] = value
-                
-                cursor.execute(
-                    "UPDATE tests SET overall_session = ?, updated_at = CURRENT_TIMESTAMP WHERE test_id = ?",
-                    (json.dumps(overall), session_id)
-                )
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-    
-    def set_persona(self, session_id: str, persona: Dict):
-        """Set the student persona for a session."""
-        self.get_session(session_id)
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE tests SET persona = ?, updated_at = CURRENT_TIMESTAMP WHERE test_id = ?",
-                    (json.dumps(persona) if persona else None, session_id)
-                )
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-    
-    def get_persona(self, session_id: str) -> Optional[Dict]:
-        """Get the student persona for a session."""
-        conv = self.get_session(session_id)
-        return conv.persona
-    
-    def set_career_matches(self, session_id: str, matches: List[Dict]):
-        """Set career matches for a session."""
-        self.get_session(session_id)
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE tests SET career_matches = ?, updated_at = CURRENT_TIMESTAMP WHERE test_id = ?",
-                    (json.dumps(matches) if matches else json.dumps([]), session_id)
-                )
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-    
-    def get_career_matches(self, session_id: str) -> List[Dict]:
-        """Get career matches for a session."""
-        conv = self.get_session(session_id)
-        return conv.career_matches
-        
-    def set_riasec_data(self, session_id: str, answers: List[Dict], scores: Dict):
-        """Store the raw RIASEC test answers and final scores in the database."""
-        self.get_session(session_id)
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE tests SET riasec_answers = ?, riasec_scores = ?, updated_at = CURRENT_TIMESTAMP WHERE test_id = ?",
-                    (json.dumps(answers), json.dumps(scores), session_id)
-                )
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
+        # Create user
+        if email:
+            user_email = email
+            user_fullname = email.split('@')[0].title()
+        else:
+            user_email = f"anon_{test_id}@skillsense.local"
+            user_fullname = 'Anonymous Student'
+            
+        cursor.execute(
+            "INSERT INTO users (email, password_hash) VALUES (%s, 'anon') ON CONFLICT (email) DO NOTHING RETURNING user_id",
+            (user_email,)
+        )
+        user_row = cursor.fetchone()
+        if user_row:
+            user_id = user_row[0]
+        else:
+            cursor.execute("SELECT user_id FROM users WHERE email = %s", (anon_email,))
+            user_id = cursor.fetchone()[0]
+            
+        # Create student
+        cursor.execute(
+            "INSERT INTO students (user_id, fullname) VALUES (%s, %s) ON CONFLICT (user_id) DO NOTHING RETURNING student_id",
+            (user_id, user_fullname)
+        )
+        student_row = cursor.fetchone()
+        if student_row:
+            student_id = student_row[0]
+        else:
+            cursor.execute("SELECT student_id FROM students WHERE user_id = %s", (user_id,))
+            student_id = cursor.fetchone()[0]
+            
+        # Create assessment
+        cursor.execute(
+            "INSERT INTO assessments (assessment_id, student_id) VALUES (%s, %s)",
+            (test_id, student_id)
+        )
 
-    def get_riasec_answers(self, session_id: str) -> List[Dict]:
-        """Get raw RIASEC test answers for a session."""
-        conv = self.get_session(session_id)
-        return conv.riasec_answers
-
-    def get_riasec_scores(self, session_id: str) -> Dict:
-        """Get RIASEC test category scores for a session."""
-        conv = self.get_session(session_id)
-        return conv.riasec_scores
-    
-    def get_last_intent(self, session_id: str) -> Optional[str]:
-        """Get the last intent from a session."""
-        conv = self.get_session(session_id)
-        return conv.last_intent
-    
-    def is_career_related_conversation(self, session_id: str) -> bool:
-        """Check if the conversation is career-related."""
-        conv = self.get_session(session_id)
-        if not conv.messages:
-            return False
-        
-        recent = conv.get_recent_messages(5)
-        career_keywords = ['career', 'job', 'profession', 'occupation', 'work']
-        for msg in recent:
-            if msg.role == 'user':
-                if any(kw in msg.content.lower() for kw in career_keywords):
-                    return True
-        return False
-    
-    def clear_session(self, session_id: str):
-        """Clear a conversation session from SQLite database."""
-        conn = self._get_connection()
-        cursor = None
+    def save_session(self, test_id: str, student_profile: Dict = None, riasec_answers: List = None,
+                     riasec_scores: Dict = None, persona: Dict = None, career_matches: List = None,
+                     overall_session: Dict = None):
+        """Save a session attempt to the PostgreSQL database."""
+        conn = None
         try:
+            conn = self._get_connection()
             with conn:
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM messages WHERE test_id = ?", (session_id,))
-                cursor.execute("DELETE FROM tests WHERE test_id = ?", (session_id,))
+                with conn.cursor() as cursor:
+                    self._ensure_assessment_exists(cursor, test_id)
+                    
+                    # Update assessments table
+                    if student_profile is not None or persona is not None:
+                        cursor.execute("""
+                            UPDATE assessments 
+                            SET student_profile = COALESCE(%s, student_profile),
+                                persona = COALESCE(%s, persona),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE assessment_id = %s
+                        """, (Json(student_profile) if student_profile else None,
+                                Json(persona) if persona else None, test_id))
+                                
+                    # Update assessment_riasec table
+                    if riasec_answers is not None or riasec_scores is not None:
+                        cursor.execute("""
+                            INSERT INTO assessment_riasec (assessment_id, answers, scores)
+                            VALUES (%s, COALESCE(%s, '{}'::jsonb), COALESCE(%s, '{}'::jsonb))
+                            ON CONFLICT (assessment_id) DO UPDATE 
+                            SET answers = COALESCE(EXCLUDED.answers, assessment_riasec.answers),
+                                scores = COALESCE(EXCLUDED.scores, assessment_riasec.scores),
+                                calculated_at = CURRENT_TIMESTAMP
+                        """, (test_id, 
+                                Json(riasec_answers) if riasec_answers else None,
+                                Json(riasec_scores) if riasec_scores else None))
+                                
+                    # Update assessment_career_matches
+                    if career_matches is not None:
+                        # Clear old matches
+                        cursor.execute("DELETE FROM assessment_career_matches WHERE assessment_id = %s", (test_id,))
+                        
+                        seen_careers = set()
+                        rank = 1
+                        for match in career_matches:
+                            career_name = match.get("career_name", "")
+                            if not career_name or career_name in seen_careers:
+                                continue
+                            seen_careers.add(career_name)
+                            
+                            career_data = match.get("career_data", {})
+                            match_score = match.get("match_score", 0.0)
+                            
+                            # Upsert career
+                            cursor.execute("""
+                                INSERT INTO careers (career_name, career_data) 
+                                VALUES (%s, %s)
+                                ON CONFLICT (career_name) DO UPDATE 
+                                SET career_data = EXCLUDED.career_data
+                                RETURNING career_id
+                            """, (career_name, Json(career_data)))
+                            career_id = cursor.fetchone()[0]
+                            
+                            # Insert match
+                            cursor.execute("""
+                                INSERT INTO assessment_career_matches (assessment_id, career_id, rank, match_score, match_details)
+                                VALUES (%s, %s, %s, %s, %s)
+                            """, (test_id, career_id, rank, match_score, Json(match)))
+                            rank += 1
+                            
+        except Exception as e:
+            print(f"[ERROR] Failed to save session {test_id}: {e}")
         finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-    
-    def generate_session_id(self, user_id: str = None) -> str:
-        """Generate a unique session UUID."""
-        return str(uuid.uuid4())
-    
-    def get_conversation_summary(self, session_id: str) -> str:
-        """Get a summary of the conversation."""
-        conv = self.get_session(session_id)
-        if not conv.messages:
-            return "No conversation yet."
-        
-        user_messages = [m for m in conv.messages if m.role == 'user']
-        if not user_messages:
-            return "User hasn't asked any questions yet."
-        
-        topics = []
-        for msg in user_messages[-5:]:
-            content = msg.content[:50]
-            topics.append(f"User asked: {content}")
-        return "\n".join(topics)
+            if conn:
+                conn.close()
 
-    def cleanup_old_sessions(self):
-        """Preserve all historical student session data in SQLite permanently (No-op)."""
-        pass
-
-    def upsert_careers(self, careers_list: List[Dict[str, Any]]):
-        """Seed or update the careers database inside SQLite."""
-        conn = self._get_connection()
-        cursor = None
+    def save_message(self, test_id: str, role: str, content: str, intent: Optional[str] = None, email: Optional[str] = None):
+        """Save a single message to the chat history."""
+        conn = None
         try:
+            conn = self._get_connection()
             with conn:
-                cursor = conn.cursor()
-                for career in careers_list:
-                    name = career.get("career_name", "")
-                    if not name:
-                        continue
-                    riasec_tags = career.get("riasec_tags", [])
-                    desc = career.get("description", "")
+                with conn.cursor() as cursor:
+                    self._ensure_assessment_exists(cursor, test_id, email)
+                    cursor.execute(
+                        "INSERT INTO messages (assessment_id, role, content, intent) VALUES (%s, %s, %s, %s)",
+                        (test_id, role, content, intent)
+                    )
+        except Exception as e:
+            print(f"[ERROR] Failed to save message for {test_id}: {e}")
+        finally:
+            if conn:
+                conn.close()
+
+    def get_chat_history(self, test_id: str) -> List[Message]:
+        """Retrieve chat history for a session."""
+        sess = self.get_session(test_id)
+        return sess.messages
+
+    def clear_history(self, test_id: str):
+        """Clear all chat messages for a session."""
+        conn = None
+        try:
+            conn = self._get_connection()
+            with conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("DELETE FROM messages WHERE assessment_id = %s", (test_id,))
+        except Exception as e:
+            print(f"[ERROR] Failed to clear history for {test_id}: {e}")
+        finally:
+            if conn:
+                conn.close()
+
+    def save_feedback(self, test_id: str, feedback_data: Dict):
+        """Save user feedback."""
+        conn = None
+        try:
+            conn = self._get_connection()
+            with conn:
+                with conn.cursor() as cursor:
+                    self._ensure_assessment_exists(cursor, test_id)
+                    
+                    liked = feedback_data.get('liked_result')
+                    category = feedback_data.get('feedback_category')
+                    comment = feedback_data.get('comment')
+                    career_id = None # We would need to look up career_id by name if provided
                     
                     cursor.execute("""
-                        INSERT OR REPLACE INTO careers (career_name, riasec_tags, description, career_data)
-                        VALUES (?, ?, ?, ?)
-                    """, (name, json.dumps(riasec_tags), desc, json.dumps(career)))
-            print(f"[SUCCESS] Seeded/Updated {len(careers_list)} careers in SQLite.")
+                        INSERT INTO student_feedback (assessment_id, career_id, liked_result, feedback_category, comment)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (test_id, career_id, liked, category, comment))
         except Exception as e:
-            print(f"[ERROR] Failed to seed careers in SQLite: {e}")
+            print(f"[ERROR] Failed to save feedback: {e}")
         finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-
-    def get_all_careers(self) -> List[Dict[str, Any]]:
-        """Retrieve all career records from SQLite database."""
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT career_data FROM careers ORDER BY career_name ASC")
-                rows = cursor.fetchall()
-                careers = []
-                for row in rows:
-                    data_json = row[0]
-                    data = json.loads(data_json) if isinstance(data_json, str) else (data_json or {})
-                    if data:
-                        careers.append(data)
-                return careers
-        except Exception as e:
-            print(f"[WARNING] Failed to load careers from SQLite: {e}")
-            return []
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-
-    def get_career_detail(self, career_name: str) -> Optional[Dict[str, Any]]:
-        """Retrieve a single career details record by its primary key name from SQLite."""
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT career_data FROM careers WHERE career_name = ?", (career_name,))
-                row = cursor.fetchone()
-                if row:
-                    data_json = row[0]
-                    return json.loads(data_json) if isinstance(data_json, str) else (data_json or {})
-                return None
-        except Exception as e:
-            print(f"[WARNING] Failed to fetch career detail '{career_name}' from SQLite: {e}")
-            return None
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-
-    def save_relational_profile(self, session_id: str, student_info: Dict):
-        """Save the student profile info directly to the student_profile JSON column."""
-        self.get_session(session_id)  # Self-healing: ensure user and session exist first before profile insertion
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                name = student_info.get("name") or student_info.get("fullname") or "Student"
-                email = student_info.get("email")
-                phone = student_info.get("phone")
+            if conn:
+                conn.close()
                 
-                # Sanitize fields
-                name = str(name).strip()
-                if email:
-                    email = str(email).strip() or None
-                if phone:
-                    phone = str(phone).strip() or None
-                    
-                cursor.execute("""
-                    UPDATE tests SET 
-                        fullname = ?, 
-                        email = ?, 
-                        phone = ?, 
-                        student_profile = ?, 
-                        updated_at = CURRENT_TIMESTAMP 
-                    WHERE test_id = ?
-                """, (name, email, phone, json.dumps(student_info), session_id))
-            print(f"[SUCCESS] Raw profile details saved successfully for session {session_id}.")
-        except Exception as e:
-            print(f"[ERROR] Failed to save student profile: {e}")
-            import traceback
-            traceback.print_exc()
-            raise e
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-
-    def set_overall_session(self, session_id: str, overall_data: Dict):
-        """Store the complete snapshot of the assessment session in a single JSON column."""
-        self.get_session(session_id)
-        conn = self._get_connection()
-        cursor = None
+    def save_contact_message(self, name: str, email: str, company: str, subject: str, message: str):
+        """Save a contact form message."""
+        conn = None
         try:
+            conn = self._get_connection()
             with conn:
-                cursor = conn.cursor()
-                riasec_code = overall_data.get("riasec_code", "")
-                cursor.execute(
-                    "UPDATE tests SET overall_session = ?, riasec_code = ?, updated_at = CURRENT_TIMESTAMP WHERE test_id = ?",
-                    (json.dumps(overall_data), riasec_code, session_id)
-                )
-            print(f"[SUCCESS] Overall session JSON snapshot saved for session {session_id}.")
-        except Exception as e:
-            print(f"[ERROR] Failed to save overall session snapshot: {e}")
-        finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-
-    def add_contact_message(self, fullname: str, email: str, company: Optional[str], subject: str, message: str):
-        """Save contact form message to database."""
-        conn = self._get_connection()
-        cursor = None
-        try:
-            with conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    INSERT INTO contact_messages (fullname, email, company, subject, message)
-                    VALUES (?, ?, ?, ?, ?)
-                """, (fullname, email, company, subject, message))
-            print(f"[SUCCESS] Contact form message saved for {fullname}.")
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO contact_messages (fullname, email, company, subject, message)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (name, email, company, subject, message))
         except Exception as e:
             print(f"[ERROR] Failed to save contact message: {e}")
-            raise e
         finally:
-            if cursor:
-                cursor.close()
-            conn.close()
-
-    def add_feedback(self, student_id: str, assessment_id: str, career_id: str, liked_result: int, feedback_category: str, comment: str):
-        """Save student guide download feedback to student_feedback table."""
-        self.get_session(student_id)  # Self-healing: guarantee student record exists in tests table
-        conn = self._get_connection()
-        cursor = None
+            if conn:
+                conn.close()
+                
+    def cleanup_old_sessions(self):
+        """Clean up old uncompleted assessments."""
+        conn = None
         try:
+            conn = self._get_connection()
             with conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    INSERT INTO student_feedback (student_id, assessment_id, career_id, liked_result, feedback_category, comment)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (student_id, assessment_id, career_id, liked_result, feedback_category, comment))
-            print(f"[SUCCESS] Student feedback saved for session {student_id} and career {career_id}.")
+                with conn.cursor() as cursor:
+                    retention_hours = getattr(config, 'db_retention_hours', 24)
+                    cursor.execute(
+                        "DELETE FROM assessments WHERE assessment_status = 'draft' AND created_at < NOW() - INTERVAL '%s hours'",
+                        (retention_hours,)
+                    )
         except Exception as e:
-            print(f"[ERROR] Failed to save student feedback: {e}")
-            raise e
+            print(f"[ERROR] Failed to cleanup old sessions: {e}")
         finally:
-            if cursor:
-                cursor.close()
-            conn.close()
+            if conn:
+                conn.close()
 
 
+
+    def get_all_careers(self) -> List[Dict]:
+        conn = None
+        try:
+            conn = self._get_connection()
+            with conn:
+                with conn.cursor(cursor_factory=DictCursor) as cursor:
+                    cursor.execute("SELECT career_name, career_data FROM careers")
+                    return [{"career_name": r[0], **r[1]} for r in cursor.fetchall()]
+        except Exception:
+            return []
+        finally:
+            if conn: conn.close()
+
+    def upsert_careers(self, careers: List[Dict]):
+        conn = None
+        try:
+            conn = self._get_connection()
+            with conn:
+                with conn.cursor() as cursor:
+                    for career in careers:
+                        c_name = career.get("career_name")
+                        cursor.execute(
+                            "INSERT INTO careers (career_name, career_data) VALUES (%s, %s) "
+                            "ON CONFLICT (career_name) DO UPDATE SET career_data = EXCLUDED.career_data",
+                            (c_name, Json(career))
+                        )
+        except Exception:
+            pass
+        finally:
+            if conn: conn.close()
+
+    def set_persona(self, session_id: str, persona: Dict):
+        self.save_session(session_id, persona=persona)
+        
+    def save_relational_profile(self, session_id: str, student_info: Dict):
+        self.save_session(session_id, student_profile=student_info)
+        
+    def set_riasec_data(self, session_id: str, answers: List, scores: Dict):
+        self.save_session(session_id, riasec_answers=answers, riasec_scores=scores)
+        
+    def set_career_matches(self, session_id: str, matches: List):
+        self.save_session(session_id, career_matches=matches)
+        
+    def set_overall_session(self, session_id: str, overall: Dict):
+        self.save_session(session_id, overall_session=overall)
+        
+    def get_career_detail(self, career_name: str) -> Optional[Dict]:
+        conn = None
+        try:
+            conn = self._get_connection()
+            with conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT career_data FROM careers WHERE career_name = %s", (career_name,))
+                    row = cursor.fetchone()
+                    return row[0] if row else None
+        except Exception:
+            return None
+        finally:
+            if conn: conn.close()
+
+    def get_persona(self, session_id: str) -> Dict:
+        sess = self.get_session(session_id)
+        return sess.persona if sess.persona else {}
+        
+    def get_career_matches(self, session_id: str) -> List[Dict]:
+        sess = self.get_session(session_id)
+        return sess.career_matches if sess.career_matches else []
+        
+    def get_last_intent(self, session_id: str) -> Optional[str]:
+        sess = self.get_session(session_id)
+        return sess.last_intent
+        
+    def add_message(self, test_id: str, role: str, content: str, intent: Optional[str] = None, email: Optional[str] = None):
+        """Add a message to the conversation history."""
+        self.save_message(test_id, role, content, intent, email)
+        
+    def get_user_message_count(self, test_id: str, email: Optional[str] = None) -> int:
+        """Get the total number of user messages to enforce rate limits."""
+        conn = None
+        try:
+            conn = self._get_connection()
+            with conn:
+                with conn.cursor() as cursor:
+                    if email:
+                        cursor.execute("""
+                            SELECT count(*) FROM messages m 
+                            JOIN assessments a ON m.assessment_id = a.assessment_id 
+                            JOIN students s ON a.student_id = s.student_id 
+                            JOIN users u ON s.user_id = u.user_id 
+                            WHERE u.email = %s 
+                            AND m.role = 'user'
+                            AND m.created_at >= NOW() - INTERVAL '1 hour'
+                        """, (email,))
+                        return cursor.fetchone()[0]
+                    else:
+                        cursor.execute("""
+                            SELECT count(*) FROM messages 
+                            WHERE assessment_id = %s AND role = 'user'
+                        """, (test_id,))
+                        return cursor.fetchone()[0]
+        except Exception as e:
+            print(f"[ERROR] Failed to get message count: {e}")
+            return 0
+        finally:
+            if conn:
+                conn.close()
+        
+    def get_history_for_prompt(self, session_id: str, limit: int = 5) -> str:
+        msgs = self.get_chat_history(session_id)
+        if not msgs:
+            return ""
+        
+        formatted_msgs = []
+        for m in msgs[-limit:]:
+            role_name = "User" if m.role == "user" else "Assistant"
+            formatted_msgs.append(f"{role_name}: {m.content}")
+            
+        return "\n".join(formatted_msgs)
+        
+    def add_contact_message(self, name: str, email: str, company: str, subject: str, message: str):
+        self.save_contact_message(name, email, company, subject, message)
+        
+    def add_feedback(self, session_id: str, feedback_data: Dict):
+        self.save_feedback(session_id, feedback_data)
 # Singleton instance
 conversation_memory = ConversationMemory()
