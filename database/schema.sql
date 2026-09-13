@@ -1,115 +1,208 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- Complete PostgreSQL Schema for SkillSense
+-- Refactored for full data normalization and strict NOT NULL / UNIQUE constraints.
 
+-- Enable UUID extension for secure primary keys
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. Users Table (authentication identity)
 CREATE TABLE IF NOT EXISTS users (
-  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  email TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  is_email_verified BOOLEAN NOT NULL DEFAULT false,
-  account_status TEXT NOT NULL DEFAULT 'active',
-  last_login_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id VARCHAR(255) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'USER',
+    is_active INTEGER NOT NULL DEFAULT 1,
+    can_manage_developers INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+-- 2. User Profiles Table
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    full_name VARCHAR(255),
+    phone VARCHAR(50),
+    education_level VARCHAR(100),
+    city VARCHAR(100),
+    state VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS students (
-  student_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-  fullname TEXT NOT NULL,
-  phone TEXT,
-  date_of_birth DATE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- 3. Assessment Attempts Table
+CREATE TABLE IF NOT EXISTS assessment_attempts (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+    guest_session_id VARCHAR(255),
+    student_profile JSONB,
+    riasec_answers JSONB,
+    riasec_scores JSONB,
+    riasec_code VARCHAR(10),
+    teaser_data JSONB,
+    full_result_data JSONB,
+    is_unlocked INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    unlocked_at TIMESTAMP WITH TIME ZONE
+);
+CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON assessment_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_attempts_guest_id ON assessment_attempts(guest_session_id);
+
+-- 4. Credit Wallets Table
+CREATE TABLE IF NOT EXISTS credit_wallets (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    balance INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS legal_documents (
-  legal_document_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  document_type TEXT NOT NULL,
-  version TEXT NOT NULL,
-  title TEXT NOT NULL,
-  content TEXT,
-  published_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (document_type, version)
+-- 5. Credit Transactions Table (immutable audit ledger)
+CREATE TABLE IF NOT EXISTS credit_transactions (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL,
+    amount INTEGER NOT NULL,
+    balance_after INTEGER NOT NULL,
+    reference_type VARCHAR(100),
+    reference_id VARCHAR(255),
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON credit_transactions(user_id);
+
+-- 6. Pricing Plans Table
+CREATE TABLE IF NOT EXISTS pricing_plans (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    price NUMERIC(10, 2) NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    credits INTEGER NOT NULL,
+    duration_days INTEGER,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    is_recommended INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS user_consents (
-  consent_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-  legal_document_id UUID NOT NULL REFERENCES legal_documents(legal_document_id),
-  consented BOOLEAN NOT NULL,
-  consented_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  ip_address INET,
-  user_agent TEXT,
-  UNIQUE (user_id, legal_document_id)
+-- 7. Payments Table
+CREATE TABLE IF NOT EXISTS payments (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    plan_id VARCHAR(255) NOT NULL REFERENCES pricing_plans(id),
+    amount NUMERIC(10, 2) NOT NULL,
+    original_amount NUMERIC(10, 2),
+    discount_amount NUMERIC(10, 2) DEFAULT 0,
+    campaign_code_id VARCHAR(255),
+    currency VARCHAR(10) NOT NULL DEFAULT 'INR',
+    gateway VARCHAR(50) NOT NULL DEFAULT 'razorpay',
+    razorpay_order_id VARCHAR(255) UNIQUE,
+    razorpay_payment_id VARCHAR(255) UNIQUE,
+    razorpay_signature TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'CREATED',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(razorpay_order_id);
+CREATE INDEX IF NOT EXISTS idx_payments_payment_id ON payments(razorpay_payment_id);
 
-CREATE TABLE IF NOT EXISTS assessments (
-  assessment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  student_id UUID NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-  assessment_status TEXT NOT NULL DEFAULT 'draft',
-  riasec_code VARCHAR(6),
-  student_profile JSONB NOT NULL DEFAULT '{}',
-  persona JSONB NOT NULL DEFAULT '{}',
-  completed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- 8. Campaign Codes Table
+CREATE TABLE IF NOT EXISTS campaign_codes (
+    id VARCHAR(255) PRIMARY KEY,
+    code VARCHAR(100) UNIQUE NOT NULL,
+    campaign_name VARCHAR(255) NOT NULL,
+    discount_type VARCHAR(50) NOT NULL DEFAULT 'PERCENTAGE',
+    discount_value NUMERIC(10, 2) NOT NULL DEFAULT 20.0,
+    benefit_type VARCHAR(50) NOT NULL DEFAULT 'PERCENTAGE',
+    benefit_value NUMERIC(10, 2) NOT NULL DEFAULT 20.0,
+    valid_from TIMESTAMP WITH TIME ZONE NOT NULL,
+    valid_until TIMESTAMP WITH TIME ZONE NOT NULL,
+    max_uses INTEGER NOT NULL DEFAULT 300,
+    used_count INTEGER NOT NULL DEFAULT 0,
+    one_use_per_user INTEGER NOT NULL DEFAULT 1,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL
 );
+CREATE INDEX IF NOT EXISTS idx_campaign_code ON campaign_codes(code);
 
-CREATE TABLE IF NOT EXISTS assessment_riasec (
-  assessment_id UUID PRIMARY KEY REFERENCES assessments(assessment_id) ON DELETE CASCADE,
-  answers JSONB NOT NULL DEFAULT '{}',
-  scores JSONB NOT NULL DEFAULT '{}',
-  calculated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- 9. Campaign Redemptions Table
+CREATE TABLE IF NOT EXISTS campaign_redemptions (
+    id VARCHAR(255) PRIMARY KEY,
+    campaign_code_id VARCHAR(255) NOT NULL REFERENCES campaign_codes(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    benefit_granted VARCHAR(255) NOT NULL,
+    discount_applied NUMERIC(10, 2) DEFAULT 0,
+    payment_id VARCHAR(255),
+    redeemed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_redemptions_user_code ON campaign_redemptions(user_id, campaign_code_id);
 
-CREATE TABLE IF NOT EXISTS careers (
-  career_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  career_name TEXT NOT NULL UNIQUE,
-  description TEXT,
-  riasec_tags CHAR(1)[],
-  career_data JSONB NOT NULL DEFAULT '{}',
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- 10. Password Resets Table
+CREATE TABLE IF NOT EXISTS password_resets (
+    id VARCHAR(255) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp_hash TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    is_used INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX IF NOT EXISTS idx_resets_email ON password_resets(email);
 
-CREATE TABLE IF NOT EXISTS assessment_career_matches (
-  assessment_id UUID NOT NULL REFERENCES assessments(assessment_id) ON DELETE CASCADE,
-  career_id UUID NOT NULL REFERENCES careers(career_id),
-  rank SMALLINT NOT NULL,
-  match_score NUMERIC(5,2) NOT NULL,
-  match_details JSONB NOT NULL DEFAULT '{}',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (assessment_id, career_id),
-  UNIQUE (assessment_id, rank)
+-- 11. Developer Invitations Table
+CREATE TABLE IF NOT EXISTS developer_invitations (
+    id VARCHAR(255) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL DEFAULT 'DEVELOPER',
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_by VARCHAR(255) REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING'
 );
+CREATE INDEX IF NOT EXISTS idx_invitations_email ON developer_invitations(email);
+CREATE INDEX IF NOT EXISTS idx_invitations_status ON developer_invitations(status);
 
+-- 12. Audit Log Table
+CREATE TABLE IF NOT EXISTS audit_log (
+    id VARCHAR(255) PRIMARY KEY,
+    actor_id VARCHAR(255),
+    actor_email VARCHAR(255),
+    action VARCHAR(255) NOT NULL,
+    target_email VARCHAR(255),
+    target_id VARCHAR(255),
+    details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log(actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at);
+
+-- 13. Messages Table (for conversation_memory)
 CREATE TABLE IF NOT EXISTS messages (
-  message_id BIGSERIAL PRIMARY KEY,
-  assessment_id UUID NOT NULL REFERENCES assessments(assessment_id) ON DELETE CASCADE,
-  role TEXT NOT NULL,
-  content TEXT NOT NULL,
-  intent TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
+    assessment_id VARCHAR(255) REFERENCES assessment_attempts(id) ON DELETE CASCADE,
+    role VARCHAR(50),
+    content TEXT,
+    timestamp TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    intent VARCHAR(100)
 );
 
-CREATE TABLE IF NOT EXISTS student_feedback (
-  feedback_id BIGSERIAL PRIMARY KEY,
-  assessment_id UUID NOT NULL REFERENCES assessments(assessment_id) ON DELETE CASCADE,
-  career_id UUID REFERENCES careers(career_id),
-  liked_result BOOLEAN,
-  feedback_category TEXT,
-  comment TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS contact_messages (
-  contact_message_id BIGSERIAL PRIMARY KEY,
-  fullname TEXT NOT NULL,
-  email TEXT NOT NULL,
-  company TEXT,
-  subject TEXT NOT NULL,
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+-- 14. Assessments / Tests Backwards Compatibility (conversation memory)
+CREATE TABLE IF NOT EXISTS tests (
+    test_id VARCHAR(255) PRIMARY KEY,
+    fullname VARCHAR(255),
+    email VARCHAR(255),
+    student_profile JSONB,
+    riasec_answers JSONB,
+    riasec_scores JSONB,
+    riasec_code VARCHAR(10),
+    career_matches JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

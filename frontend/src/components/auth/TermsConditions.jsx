@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Compass, ArrowLeft, FileText, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../../translations/LanguageContext';
 
 export default function TermsConditions({ onBack, onHome }) {
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('intro');
 
   const scrollToSection = (id) => {
@@ -38,7 +40,7 @@ export default function TermsConditions({ onBack, onHome }) {
             <span className="text-lg font-bold tracking-tight text-[#04211F] leading-none">
               SkillSense<span className="text-[#09A3A3]">.</span>
             </span>
-            <span className="text-[10px] font-semibold text-[#09A3A3] mt-0.5">Terms & Conditions</span>
+            <span className="text-[10px] font-semibold text-[#09A3A3] mt-0.5">{t('termsHeading')}</span>
           </div>
         </div>
 
@@ -179,7 +181,7 @@ export default function TermsConditions({ onBack, onHome }) {
         {/* RIGHT CONTENT AREA */}
         <section className="flex-1 min-w-0 bg-white rounded-3xl shadow-sm border border-[#E3EFEC] p-6 sm:p-10">
           <div className="mb-10 pb-8 border-b border-[#E3EFEC]">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#04211F] mb-4 tracking-tight">Terms & Conditions</h1>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#04211F] mb-4 tracking-tight">{t('termsHeading')}</h1>
             <p className="text-sm font-semibold text-[#5B7975] uppercase tracking-wider">Governed by DPDP Act 2023 & Indian Laws</p>
           </div>
           
@@ -286,7 +288,7 @@ export default function TermsConditions({ onBack, onHome }) {
         <p>AI Sense LLP provides the following services through SkillSense:</p>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>A free 42-question RIASEC-based career assessment</span>
+                  <span>A free 42-question career assessment</span>
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
@@ -533,7 +535,7 @@ export default function TermsConditions({ onBack, onHome }) {
                 12. Intellectual Property
               </h2>
               <div className="space-y-4 text-sm sm:text-base text-[#12302D]/80 leading-relaxed font-medium">
-        <p>All content on SkillSense — including the RIASEC assessment framework implementation, Career Roadmap reports, VERA AI counselor, gamification system, platform design, and the SkillSense brand — is the intellectual property of AI Sense LLP.</p>
+        <p>All content on SkillSense — including the assessment framework implementation, Career Roadmap reports, VERA AI counselor, gamification system, platform design, and the SkillSense brand — is the intellectual property of AI Sense LLP.</p>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
                   <span>You may not reproduce, distribute, resell, or commercially exploit any platform content without prior written permission from AI Sense LLP</span>

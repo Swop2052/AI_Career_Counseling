@@ -13,6 +13,8 @@ class Config:
     
     # API Keys
     anthropic_api_key: Optional[str] = os.getenv("ANTHROPIC_API_KEY")
+    razorpay_key_id: str = os.getenv("RAZORPAY_KEY_ID", "rzp_test_mockkey")
+    razorpay_key_secret: str = os.getenv("RAZORPAY_KEY_SECRET", "rzp_test_mocksecret")
     
     # Flask
     flask_env: str = os.getenv("FLASK_ENV", "development")
@@ -53,8 +55,9 @@ class Config:
     # Data Paths
     base_dir: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     career_db_path: str = os.path.join(base_dir, "Data.json")
-    riasec_questions_path: str = os.path.join(base_dir, "questions.json")
+    riasec_questions_path: str = os.path.join(base_dir, "questions", "english.json")
 
+    db_path: str = os.path.join(base_dir, "data", "career_guide.db")
     db_name: str = os.getenv("DB_NAME", "skillsense")
     db_port: str = os.getenv("DB_PORT", "5434")
     db_host: str = os.getenv("DB_HOST", "localhost")

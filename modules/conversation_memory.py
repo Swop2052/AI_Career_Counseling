@@ -155,6 +155,7 @@ class ConversationMemory:
         if user_row:
             user_id = user_row[0]
         else:
+            anon_email = None
             cursor.execute("SELECT user_id FROM users WHERE email = %s", (anon_email,))
             user_id = cursor.fetchone()[0]
             
@@ -365,17 +366,24 @@ class ConversationMemory:
         conn = None
         try:
             conn = self._get_connection()
-            with conn:
-                with conn.cursor() as cursor:
-                    for career in careers:
-                        c_name = career.get("career_name")
+            conn.autocommit = True
+            with conn.cursor() as cursor:
+                for career in careers:
+                    c_name = career.get("career_name")
+                    if not c_name:
+                        c_name = career.get("career")
+                    if not c_name:
+                        continue
+                    try:
                         cursor.execute(
                             "INSERT INTO careers (career_name, career_data) VALUES (%s, %s) "
                             "ON CONFLICT (career_name) DO UPDATE SET career_data = EXCLUDED.career_data",
                             (c_name, Json(career))
                         )
-        except Exception:
-            pass
+                    except Exception as e:
+                        print(f"[WARNING] Failed to insert career {c_name}: {e}")
+        except Exception as e:
+            print(f"[ERROR] Fatal error in upsert_careers: {e}")
         finally:
             if conn: conn.close()
 

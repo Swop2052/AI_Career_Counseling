@@ -82,18 +82,21 @@ export default function SignupPage({ onSignup, onSuccess, onSwitchToLogin, onHom
           
           <div 
             onClick={onHome}
-            className="flex items-center gap-2.5 cursor-pointer group py-2"
+            className="group flex items-center gap-0.5 cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 py-2"
             title="Go to Home"
           >
-            <div className="w-10 h-10 rounded-2xl bg-[#04302E] group-hover:bg-[#09A3A3] p-0.5 shadow-md transition-all duration-300 group-hover:scale-105">
-              <div className="w-full h-full rounded-[14px] bg-[#04302E] flex items-center justify-center border border-white/20 relative">
-                <Compass className="w-5 h-5 text-[#32d4d4] transition-colors" strokeWidth={2.5} />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#32d4d4]" />
-              </div>
-            </div>
-            <span className="text-xl font-black tracking-tight text-[#04211F] group-hover:text-[#09A3A3] transition-colors duration-200">
-              SkillSense<span className="text-[#09A3A3] group-hover:text-[#04211F] transition-colors duration-200">.</span>
-            </span>
+            <img 
+              src="/logo.png" 
+              alt="SkillSense Icon" 
+              className="h-[46px] w-auto object-contain mix-blend-multiply drop-shadow-sm" 
+              draggable="false"
+            />
+            <img 
+              src="/logo1.png" 
+              alt="SkillSense Typography" 
+              className="h-[28px] sm:h-[32px] w-auto object-contain mix-blend-multiply drop-shadow-sm mt-1" 
+              draggable="false"
+            />
           </div>
 
         </div>

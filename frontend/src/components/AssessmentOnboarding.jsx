@@ -1,8 +1,128 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Compass, User, BookOpen, Sparkles } from 'lucide-react';
+import { useLanguage } from '../translations/LanguageContext';
+
+const locT = {
+  en: {
+    setupTitle: "SkillSense Assessment Setup",
+    stepOf: "Step {step} of 3",
+    heading: "Tell us about yourself",
+    subheading: "Help our AI tailor the precise career roadmap for your profile.",
+    basicDetails: "Basic Details & Learning Profile",
+    fullName: "Full Name *",
+    age: "Age *",
+    classYear: "Class/Year *",
+    selectClass: "Select your class",
+    stream: "Education Stream/Field",
+    enjoySubj: "Subjects you enjoy learning",
+    challSubj: "Subjects You Find Challenging",
+    inspiresOutside: "What inspires you outside academics?",
+    interests: "Your Interests",
+    hobbies: "Your Hobbies",
+    strengths: "Your Natural Strengths",
+    careerAsp: "Career Aspirations (if any)",
+    careerAmb: "Career Ambitions & Preferences",
+    learnMode: "Preferred Learning Mode",
+    budget: "Budget Preference",
+    locPref: "Location Preference",
+    collegeType: "Preferred College Type/Range",
+    backBtn: "Back",
+    nextBtn: "Next Step",
+    continueBtn: "Continue to Career Test",
+    placeholders: {
+      fullName: "Enter your full name",
+      age: "Enter your age",
+      stream: "e.g., Science, Commerce, Arts",
+      enjoySubj: "e.g., Mathematics, Physics, English, History",
+      challSubj: "e.g., Chemistry, Statistics, Economics",
+      interests: "e.g., Technology, Research, Art, Sports, Social Work",
+      hobbies: "e.g., Reading, Gaming, Painting, Coding, Gardening",
+      strengths: "e.g., Problem-solving, Communication, Leadership",
+      careerAsp: "e.g., Engineer, Doctor, Scientist, Entrepreneur"
+    }
+  },
+  mr: {
+    setupTitle: "स्किलसेन्स मूल्यांकन सेटअप",
+    stepOf: "3 पैकी स्टेप {step}",
+    heading: "स्वतःबद्दल सांगा",
+    subheading: "आमच्या AI ला तुमच्या प्रोफाईलनुसार योग्य करिअर रोडमॅप तयार करण्यात मदत करा.",
+    basicDetails: "प्राथमिक माहिती आणि शैक्षणिक प्रोफाईल",
+    fullName: "पूर्ण नाव *",
+    age: "वय *",
+    classYear: "इयत्ता/वर्ष *",
+    selectClass: "तुमची इयत्ता निवडा",
+    stream: "शिक्षण शाखा/क्षेत्र",
+    enjoySubj: "आवडणारे विषय",
+    challSubj: "कठीण वाटणारे विषय",
+    inspiresOutside: "अभ्यासाव्यतिरिक्त तुम्हाला कशाची आवड आहे?",
+    interests: "तुमची आवड",
+    hobbies: "तुमचे छंद",
+    strengths: "तुमचे नैसर्गिक गुण",
+    careerAsp: "करिअरची स्वप्ने (असल्यास)",
+    careerAmb: "करिअरची उद्दिष्टे आणि प्राधान्ये",
+    learnMode: "शिक्षणाचे माध्यम",
+    budget: "बजेट",
+    locPref: "ठिकाण प्राधान्य",
+    collegeType: "कॉलेजचा प्रकार",
+    backBtn: "मागे",
+    nextBtn: "पुढील स्टेप",
+    continueBtn: "करिअर टेस्ट सुरू करा",
+    placeholders: {
+      fullName: "तुमचे पूर्ण नाव लिहा",
+      age: "तुमचे वय लिहा",
+      stream: "उदा., विज्ञान, वाणिज्य, कला",
+      enjoySubj: "उदा., गणित, भौतिकशास्त्र, इंग्रजी, इतिहास",
+      challSubj: "उदा., रसायनशास्त्र, सांख्यिकी, अर्थशास्त्र",
+      interests: "उदा., तंत्रज्ञान, संशोधन, कला, खेळ, समाजकार्य",
+      hobbies: "उदा., वाचन, गेमिंग, चित्रकला, कोडिंग, बागकाम",
+      strengths: "उदा., समस्या सोडवणे, संवाद, नेतृत्व",
+      careerAsp: "उदा., अभियंता, डॉक्टर, शास्त्रज्ञ, उद्योजक"
+    }
+  },
+  hi: {
+    setupTitle: "स्किलसेंस मूल्यांकन सेटअप",
+    stepOf: "3 में से स्टेप {step}",
+    heading: "अपने बारे में बताएं",
+    subheading: "हमारे AI को आपकी प्रोफ़ाइल के अनुसार सटीक करियर रोडमैप तैयार करने में मदद करें।",
+    basicDetails: "मूल जानकारी और शैक्षिक प्रोफ़ाइल",
+    fullName: "पूरा नाम *",
+    age: "उम्र *",
+    classYear: "कक्षा/वर्ष *",
+    selectClass: "अपनी कक्षा चुनें",
+    stream: "शिक्षा स्ट्रीम/क्षेत्र",
+    enjoySubj: "पसंदीदा विषय",
+    challSubj: "कठिन लगने वाले विषय",
+    inspiresOutside: "पढ़ाई के अलावा आपको क्या प्रेरित करता है?",
+    interests: "आपकी रुचियां",
+    hobbies: "आपके शौक",
+    strengths: "आपके प्राकृतिक गुण",
+    careerAsp: "करियर की आकांक्षाएं (यदि कोई हों)",
+    careerAmb: "करियर लक्ष्य और प्राथमिकताएं",
+    learnMode: "सीखने का माध्यम",
+    budget: "बजट",
+    locPref: "स्थान प्राथमिकता",
+    collegeType: "कॉलेज का प्रकार",
+    backBtn: "पीछे",
+    nextBtn: "अगला स्टेप",
+    continueBtn: "करियर टेस्ट शुरू करें",
+    placeholders: {
+      fullName: "अपना पूरा नाम दर्ज करें",
+      age: "अपनी उम्र दर्ज करें",
+      stream: "उदा., विज्ञान, वाणिज्य, कला",
+      enjoySubj: "उदा., गणित, भौतिकी, अंग्रेजी, इतिहास",
+      challSubj: "उदा., रसायन विज्ञान, सांख्यिकी, अर्थशास्त्र",
+      interests: "उदा., प्रौद्योगिकी, अनुसंधान, कला, खेल, सामाजिक कार्य",
+      hobbies: "उदा., पढ़ना, गेमिंग, पेंटिंग, कोडिंग, बागवानी",
+      strengths: "उदा., समस्या समाधान, संचार, नेतृत्व",
+      careerAsp: "उदा., इंजीनियर, डॉक्टर, वैज्ञानिक, उद्यमी"
+    }
+  }
+};
 
 export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
+  const { language } = useLanguage();
+  const tLoc = locT[language] || locT.en;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: '',
@@ -63,11 +183,11 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
                 <Compass className="w-4 h-4" />
               </div>
               <span className="text-xs font-black uppercase tracking-wider text-[#04302E]">
-                SkillSense Assessment Setup
+                {tLoc.setupTitle}
               </span>
             </div>
             <span className="text-xs font-black text-[#09A3A3] bg-[#EBF9F7] px-3 py-1 rounded-full border border-[#09A3A3]/20">
-              Step {step} of 3
+              {tLoc.stepOf.replace('{step}', step)}
             </span>
           </div>
 
@@ -81,10 +201,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
         </div>
 
         <h2 className="text-2xl sm:text-3xl font-black text-[#04211F] tracking-tight text-center mb-1">
-          Tell us about yourself
+          {tLoc.heading}
         </h2>
         <p className="text-xs text-gray-500 text-center mb-8 font-medium">
-          Help our AI tailor the precise career roadmap for your profile.
+          {tLoc.subheading}
         </p>
 
         {/* STEP 1 */}
@@ -99,29 +219,29 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
               className="space-y-5"
             >
               <div className="flex items-center gap-2 text-xs font-black text-[#09A3A3] uppercase tracking-wider mb-2">
-                <User className="w-4 h-4" /> Basic Details & Learning Profile
+                <User className="w-4 h-4" /> {tLoc.basicDetails}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-[#04211F]">Full Name *</label>
+                  <label className="text-xs font-extrabold text-[#04211F]">{tLoc.fullName}</label>
                   <input 
                     type="text" 
                     name="fullName"
                     value={formData.fullName} 
                     onChange={handleChange}
-                    placeholder="Enter your full name"
+                    placeholder={tLoc.placeholders.fullName}
                     className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-[#04211F]">Age *</label>
+                  <label className="text-xs font-extrabold text-[#04211F]">{tLoc.age}</label>
                   <input 
                     type="number" 
                     name="age"
                     value={formData.age} 
                     onChange={handleChange}
-                    placeholder="Enter your age"
+                    placeholder={tLoc.placeholders.age}
                     className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                   />
                 </div>
@@ -129,14 +249,14 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-[#04211F]">Class/Year *</label>
+                  <label className="text-xs font-extrabold text-[#04211F]">{tLoc.classYear}</label>
                   <select 
                     name="classYear"
                     value={formData.classYear} 
                     onChange={handleChange}
                     className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all cursor-pointer"
                   >
-                    <option value="">Select your class</option>
+                    <option value="">{tLoc.selectClass}</option>
                     <option value="Class 10">Class 10</option>
                     <option value="Class 12">Class 12</option>
                     <option value="1st Year College">1st Year College</option>
@@ -145,38 +265,38 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-extrabold text-[#04211F]">Education Stream/Field</label>
+                  <label className="text-xs font-extrabold text-[#04211F]">{tLoc.stream}</label>
                   <input 
                     type="text" 
                     name="stream"
                     value={formData.stream} 
                     onChange={handleChange}
-                    placeholder="e.g., Science, Commerce, Arts"
+                    placeholder={tLoc.placeholders.stream}
                     className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5 pt-2">
-                <label className="text-xs font-extrabold text-[#04211F]">Subjects you enjoy learning</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.enjoySubj}</label>
                 <input 
                   type="text" 
                   name="enjoySubjects"
                   value={formData.enjoySubjects} 
                   onChange={handleChange}
-                  placeholder="e.g., Mathematics, Physics, English, History"
+                  placeholder={tLoc.placeholders.enjoySubj}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Subjects You Find Challenging</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.challSubj}</label>
                 <input 
                   type="text" 
                   name="challengingSubjects"
                   value={formData.challengingSubjects} 
                   onChange={handleChange}
-                  placeholder="e.g., Chemistry, Statistics, Economics"
+                  placeholder={tLoc.placeholders.challSubj}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                 />
               </div>
@@ -194,53 +314,53 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
               className="space-y-4"
             >
               <div className="flex items-center gap-2 text-xs font-black text-[#09A3A3] uppercase tracking-wider mb-2">
-                <Sparkles className="w-4 h-4" /> What inspires you outside academics?
+                <Sparkles className="w-4 h-4" /> {tLoc.inspiresOutside}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Your Interests</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.interests}</label>
                 <input 
                   type="text" 
                   name="interests"
                   value={formData.interests} 
                   onChange={handleChange}
-                  placeholder="e.g., Technology, Research, Art, Sports, Social Work"
+                  placeholder={tLoc.placeholders.interests}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Your Hobbies</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.hobbies}</label>
                 <input 
                   type="text" 
                   name="hobbies"
                   value={formData.hobbies} 
                   onChange={handleChange}
-                  placeholder="e.g., Reading, Gaming, Painting, Coding, Gardening"
+                  placeholder={tLoc.placeholders.hobbies}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Your Natural Strengths</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.strengths}</label>
                 <input 
                   type="text" 
                   name="strengths"
                   value={formData.strengths} 
                   onChange={handleChange}
-                  placeholder="e.g., Problem-solving, Communication, Leadership"
+                  placeholder={tLoc.placeholders.strengths}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Career Aspirations (if any)</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.careerAsp}</label>
                 <input 
                   type="text" 
                   name="careerAspirations"
                   value={formData.careerAspirations} 
                   onChange={handleChange}
-                  placeholder="e.g., Engineer, Doctor, Scientist, Entrepreneur"
+                  placeholder={tLoc.placeholders.careerAsp}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
                 />
               </div>
@@ -258,11 +378,11 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
               className="space-y-4"
             >
               <div className="flex items-center gap-2 text-xs font-black text-[#09A3A3] uppercase tracking-wider mb-2">
-                <BookOpen className="w-4 h-4" /> Career Ambitions & Preferences
+                <BookOpen className="w-4 h-4" /> {tLoc.careerAmb}
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Preferred Learning Mode</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.learnMode}</label>
                 <select 
                   name="learningMode"
                   value={formData.learningMode} 
@@ -276,7 +396,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Budget Preference</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.budget}</label>
                 <select 
                   name="budget"
                   value={formData.budget} 
@@ -290,7 +410,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Location Preference</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.locPref}</label>
                 <select 
                   name="locationPref"
                   value={formData.locationPref} 
@@ -304,7 +424,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-extrabold text-[#04211F]">Preferred College Type/Range</label>
+                <label className="text-xs font-extrabold text-[#04211F]">{tLoc.collegeType}</label>
                 <select 
                   name="collegeType"
                   value={formData.collegeType} 
@@ -328,7 +448,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
             className="px-6 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
+            <span>{tLoc.backBtn}</span>
           </button>
 
           <button
@@ -336,7 +456,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
             onClick={handleNext}
             className="flex-1 max-w-xs py-3.5 rounded-2xl bg-gradient-to-r from-[#04302E] to-[#09A3A3] text-white text-xs font-extrabold shadow-lg shadow-[#09A3A3]/25 hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>{step === 3 ? 'Continue to Career Test' : 'Next Step'}</span>
+            <span>{step === 3 ? tLoc.continueBtn : tLoc.nextBtn}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

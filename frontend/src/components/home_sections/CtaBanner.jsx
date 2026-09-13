@@ -1,8 +1,11 @@
 import React from 'react';
 import { Sparkles, Star, ChevronRight } from 'lucide-react';
 import Reveal from '../Reveal';
+import { useLanguage } from '../../translations/LanguageContext';
 
 export default function CtaBanner({ onStartTest }) {
+  const { t } = useLanguage();
+
   return (
     <section className="relative px-4 sm:px-6 md:px-10 py-12 sm:py-16 bg-[#CFEDED]">
      
@@ -14,10 +17,10 @@ export default function CtaBanner({ onStartTest }) {
          
 
           <h2 className="relative font-display font-semibold text-2xl sm:text-3xl md:text-4xl mb-2 sm:mb-3 tracking-tight">
-            Ready to meet the future you?
+            {t('ctaHeading')}
           </h2>
           <p className="relative text-xs sm:text-sm md:text-base text-white/70 max-w-md mx-auto mb-6 sm:mb-8">
-            Join thousands of students already exploring careers that actually fit them.
+            {t('ctaDesc')}
           </p>
 
           <div className="relative flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
@@ -26,11 +29,11 @@ export default function CtaBanner({ onStartTest }) {
               onClick={onStartTest}
               className="group relative w-full sm:w-auto overflow-hidden rounded-full bg-white text-[#04302E] text-sm sm:text-base font-bold px-6 py-3 sm:px-8 sm:py-3.5 shadow-lg active:scale-[0.98] transition-all duration-300 cursor-pointer"
             >
-              <span className="relative z-10">Start Career Test — It's Free</span>
+              <span className="relative z-10">{t('ctaButton')}</span>
               <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-[#CFEDED]/60 to-transparent skew-x-12" />
             </button>
             <button className="text-xs sm:text-sm font-semibold text-white/80 hover:text-white transition-colors flex items-center justify-center gap-1 py-1 cursor-pointer">
-              See a sample report <ChevronRight className="w-3.5 h-3.5" />
+              {t('sampleReport')} <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

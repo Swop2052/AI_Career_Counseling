@@ -218,7 +218,7 @@ export default function ConsentForm({ onBack, onHome }) {
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>Psychometric assessment responses (42-question RIASEC-based assessment)</span>
+                  <span>Psychometric assessment responses (42-question assessment)</span>
                 </div>
                 <p>3.2 Assessment & Career Data</p>
                 <div className="flex items-start gap-2 ml-4">
@@ -282,7 +282,7 @@ export default function ConsentForm({ onBack, onHome }) {
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>To administer the RIASEC career assessment and generate personalised Career Roadmaps</span>
+                  <span>To administer the career assessment and generate personalised Career Roadmaps</span>
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>

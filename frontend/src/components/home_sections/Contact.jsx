@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import Reveal from '../Reveal';
+import { useLanguage } from '../../translations/LanguageContext';
 
 // Card entrance animation
 const cardVariants = {
@@ -31,13 +32,14 @@ const fieldVariants = {
   }),
 };
 
-const CONTACT_INFO = [
-  { icon: Mail, title: 'Email Us', value: 'hello@skillsense.com' },
-  { icon: Phone, title: 'Call Us', value: '+91 98765 43210' },
-  { icon: MapPin, title: 'Visit Us', value: 'Mumbai, Maharashtra, India' },
+const getContactInfo = (t) => [
+  { icon: Mail, title: t('emailUs'), value: 'hello@skillsense.com' },
+  { icon: Phone, title: t('callUs'), value: '+91 98765 43210' },
+  { icon: MapPin, title: t('visitUs'), value: 'Mumbai, Maharashtra, India' },
 ];
 
 export default function Contact() {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
 
@@ -78,20 +80,20 @@ export default function Contact() {
         <div className="max-w-6xl mx-auto relative z-10">
           <Reveal className="text-center mb-10 sm:mb-16">
             <div className="text-[11px] sm:text-xs font-semibold tracking-widest text-[#078686] uppercase mb-2 sm:mb-3">
-              Get In Touch
+              {t('contactBadge')}
             </div>
             <h2 className="font-display font-semibold text-2xl sm:text-3xl md:text-4xl text-[#04211F] tracking-tight">
-              Let's talk about your future
+              {t('contactHeading')}
             </h2>
             <p className="text-sm sm:text-base text-[#0B3D3D]/65 mt-2 sm:mt-3 max-w-md mx-auto">
-              Have a question or just want to say hi? Drop us a message, we'd love to hear from you.
+              {t('contactDesc')}
             </p>
           </Reveal>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-14 items-start">
             {/* Left: Contact Info */}
             <div className="flex flex-col gap-5 sm:gap-6">
-              {CONTACT_INFO.map((item, i) => (
+              {getContactInfo(t).map((item, i) => (
                 <motion.div
                   key={item.title}
                   custom={i}
@@ -149,10 +151,10 @@ export default function Contact() {
                         <Send className="w-6 h-6 text-[#078686]" />
                       </motion.div>
                       <h3 className="font-display font-semibold text-lg text-[#04211F] mb-1">
-                        Message Sent!
+                        {t('messageSent')}
                       </h3>
                       <p className="text-sm text-[#0B3D3D]/65">
-                        We'll get back to you as soon as possible.
+                        {t('successDesc')}
                       </p>
                     </motion.div>
                   ) : (
@@ -165,8 +167,8 @@ export default function Contact() {
                       className="flex flex-col gap-4"
                     >
                       {[
-                        { id: 'name', label: 'Name', type: 'text', placeholder: 'Your name' },
-                        { id: 'email', label: 'Email', type: 'email', placeholder: 'you@example.com' },
+                        { id: 'name', label: t('nameLabel'), type: 'text', placeholder: 'Your name' },
+                        { id: 'email', label: t('emailLabel'), type: 'email', placeholder: 'you@example.com' },
                       ].map((field, i) => (
                         <motion.div
                           key={field.id}
@@ -208,7 +210,7 @@ export default function Contact() {
                           htmlFor="message"
                           className="block text-xs font-semibold text-[#04211F] mb-1.5"
                         >
-                          Message
+                          {t('messageLabel')}
                         </label>
                         <motion.textarea
                           id="message"
@@ -239,7 +241,7 @@ export default function Contact() {
                         whileTap={{ scale: 0.97 }}
                         className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#09A3A3] to-[#04302E] text-white font-semibold text-sm px-6 py-3 shadow-md shadow-[#09A3A3]/30 hover:shadow-lg hover:shadow-[#09A3A3]/40 transition-shadow duration-300"
                       >
-                        Send Message
+                        {t('sendMessage')}
                         <motion.span
                           animate={{ x: [0, 3, 0] }}
                           transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}

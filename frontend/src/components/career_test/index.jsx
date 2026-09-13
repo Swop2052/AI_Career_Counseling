@@ -1,7 +1,10 @@
 import React from 'react';
 import PersonalityQuiz from './PersonalityQuiz';
+import { useLanguage } from '../../translations/LanguageContext';
 
 export default function CareerTestModule({ userMetadata, appConfig, onCompleteTest, onExit }) {
+  const { language } = useLanguage();
+
   // जेव्हा टेस्ट पूर्ण होईल, तेव्हा रिझल्ट API ला पाठवेल आणि मग App.jsx ला देईल
   const handleQuizFinish = async (answers) => {
     try {
@@ -10,7 +13,8 @@ export default function CareerTestModule({ userMetadata, appConfig, onCompleteTe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           answers: answers,
-          student_info: userMetadata || {}
+          student_info: userMetadata || {},
+          language: language
         })
       });
       const data = await response.json();

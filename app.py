@@ -26,6 +26,7 @@ load_dotenv()
 # ============================================================
 from core.config import config
 from core.models import Conversation, CareerMatch
+from core.translator_cache import translate_career_data, translate_teaser_data
 from core.exceptions import (
     IntentClassificationError, PersonaGenerationError,
     RetrievalError, LLMError, ValidationError
@@ -116,18 +117,24 @@ def load_career_database():
         return []
 
 
-def load_riasec_questions():
+def load_riasec_questions(lang='en'):
     """Load RIASEC questions from JSON file."""
+    lang_map = {'en': 'english', 'hi': 'hindi', 'mr': 'marathi'}
+    file_name = f"{lang_map.get(lang, 'english')}.json"
+    path = os.path.join(config.base_dir, "questions", file_name)
+        
     try:
-        with open(config.riasec_questions_path, "r", encoding="utf-8-sig") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:
             data = json.load(f)
-        print(f"[SUCCESS] Loaded RIASEC questions from {config.riasec_questions_path}")
+        print(f"[SUCCESS] Loaded RIASEC questions from {path}")
         return data
     except FileNotFoundError:
-        print(f"[ERROR] File not found: {config.riasec_questions_path}")
+        print(f"[ERROR] File not found: {path}. Falling back to default.")
+        if lang != 'en':
+            return load_riasec_questions('en')
         return {}
     except json.JSONDecodeError as e:
-        print(f"[ERROR] JSON Error in {config.riasec_questions_path}: {e}")
+        print(f"[ERROR] JSON Error in {path}: {e}")
         return {}
     except Exception as e:
         print(f"[ERROR] RIASEC Questions Error: {e}")
@@ -136,16 +143,18 @@ def load_riasec_questions():
 
 # Load data
 CAREER_DB = load_career_database()
-QUESTIONS_DATA = load_riasec_questions()
+QUESTIONS_DATA = load_riasec_questions('en')
+QUESTIONS_DATA_MR = load_riasec_questions('mr')
+QUESTIONS_DATA_HI = load_riasec_questions('hi')
 
 
-def prepare_questions():
+def prepare_questions(q_data):
     """Prepare questions for the frontend."""
     questions = []
-    if not QUESTIONS_DATA:
+    if not q_data:
         return []
     
-    for category, question_list in QUESTIONS_DATA.items():
+    for category, question_list in q_data.items():
         if category == "response_scale":
             continue
         if not isinstance(question_list, list):
@@ -171,7 +180,9 @@ def prepare_questions():
     return questions
 
 
-QUESTIONS = prepare_questions()
+QUESTIONS = prepare_questions(QUESTIONS_DATA)
+QUESTIONS_MR = prepare_questions(QUESTIONS_DATA_MR)
+QUESTIONS_HI = prepare_questions(QUESTIONS_DATA_HI)
 
 UI_TRANSLATIONS_EN = {
     "brand-title": "🚀 SkillSense",
@@ -345,119 +356,34 @@ UI_TRANSLATIONS_EN = {
     "title-exams": "Entrance Exams"
 }
 
-def translate_questions_to(lang_code):
-    import time
-    import os
-    import json
-    
-    cache_file = os.path.join("data", f"translations_{lang_code}.json")
-    os.makedirs("data", exist_ok=True)
-    
-    if os.path.exists(cache_file):
-        try:
-            with open(cache_file, 'r', encoding='utf-8') as f:
-                cached_data = json.load(f)
-                print(f"[INFO] Loaded {lang_code} translations from cache.")
-                return cached_data["questions"], cached_data["scale"], cached_data["ui"]
-        except Exception as e:
-            print(f"[WARNING] Could not load translation cache for {lang_code}: {e}")
-
+# Dynamic translation of UI at startup
+def translate_ui_to(lang_code):
+    translated_ui = {}
+    print(f"[INFO] Translating static UI to {lang_code}...")
     try:
-        print(f"[INFO] Translating questions to {lang_code} (this may take a moment)...")
+        from deep_translator import GoogleTranslator
         translator = GoogleTranslator(source='en', target=lang_code)
-        
-        q_texts = [q["question"] for q in QUESTIONS]
-        a_texts = []
-        for q in QUESTIONS:
-            a_texts.extend(q.get("answers", []))
-            
-        # Translate Questions
-        batch_str = "\n".join(q_texts)
-        translated_batch_str = translator.translate(batch_str)
-        translated_q_texts = [t.strip() for t in translated_batch_str.split('\n') if t.strip()]
-        
-        if len(translated_q_texts) != len(QUESTIONS):
-            print(f"[WARNING] Length mismatch for {lang_code}. Falling back to sequential translation...")
-            translated_q_texts = []
-            for q in QUESTIONS:
-                translated_q_texts.append(translator.translate(q["question"]))
-                time.sleep(0.2) # Avoid rate limits
-                
-        # Translate Answers
-        if a_texts:
-            batch_a_str = "\n".join(a_texts)
-            translated_batch_a = translator.translate(batch_a_str)
-            translated_a_texts = [t.strip() for t in translated_batch_a.split('\n') if t.strip()]
-            
-            if len(translated_a_texts) != len(a_texts):
-                print(f"[WARNING] Answer length mismatch for {lang_code}. Falling back to sequential...")
-                translated_a_texts = []
-                for ans in a_texts:
-                    translated_a_texts.append(translator.translate(ans))
-                    time.sleep(0.2)
-        else:
-            translated_a_texts = []
-                
-        translated_questions = []
-        ans_idx = 0
-        for i, q in enumerate(QUESTIONS):
-            q_ans_len = len(q.get("answers", []))
-            q_translated_answers = translated_a_texts[ans_idx:ans_idx+q_ans_len]
-            ans_idx += q_ans_len
-            
-            translated_questions.append({
-                "id": q["id"],
-                "question": translated_q_texts[i],
-                "answers": q_translated_answers,
-                "icons": q.get("icons", []),
-                "category": q["category"]
-            })
-        
-        # Scale is deprecated, but keep variable for compatibility with frontend/cache signature
-        translated_scale = {}
-        
-        print(f"[SUCCESS] Translated questions and answers to {lang_code}")
-        
-        # UI Translations
-        print(f"[INFO] Translating static UI to {lang_code} (this may take a moment)...")
         ui_keys = list(UI_TRANSLATIONS_EN.keys())
         ui_vals = [UI_TRANSLATIONS_EN[k] for k in ui_keys]
-        
         batch_ui_str = "\n".join(ui_vals)
         translated_batch_ui = translator.translate(batch_ui_str)
         translated_ui_vals = [t.strip() for t in translated_batch_ui.split('\n') if t.strip()]
         
-        translated_ui = {}
         if len(translated_ui_vals) == len(ui_keys):
             for i, k in enumerate(ui_keys):
                 translated_ui[k] = translated_ui_vals[i]
         else:
-            print(f"[WARNING] UI Scale length mismatch. Falling back to sequential.")
-            for k, v in UI_TRANSLATIONS_EN.items():
-                translated_ui[k] = translator.translate(v)
-                time.sleep(0.1)
-                
-        print(f"[SUCCESS] Translated static UI to {lang_code}")
-        
-        try:
-            with open(cache_file, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "questions": translated_questions,
-                    "scale": translated_scale,
-                    "ui": translated_ui
-                }, f, ensure_ascii=False, indent=2)
-            print(f"[INFO] Saved {lang_code} translations to cache.")
-        except Exception as e:
-            print(f"[WARNING] Could not save translation cache for {lang_code}: {e}")
-            
-        return translated_questions, translated_scale, translated_ui
-    except Exception as e:
-        print(f"[ERROR] Failed to translate to {lang_code}: {e}")
-        return QUESTIONS, QUESTIONS_DATA.get('response_scale', {}), UI_TRANSLATIONS_EN
+            raise ValueError("Mismatch")
+    except Exception:
+        print(f"[WARNING] UI translation failed. Fallback to English.")
+        translated_ui = UI_TRANSLATIONS_EN.copy()
+    
+    return translated_ui
 
-# Cache translated versions on startup
-QUESTIONS_MR, SCALE_MR, UI_MR = translate_questions_to('mr')
-QUESTIONS_HI, SCALE_HI, UI_HI = translate_questions_to('hi')
+UI_MR = translate_ui_to('mr')
+UI_HI = translate_ui_to('hi')
+SCALE_MR = QUESTIONS_DATA_MR.get('response_scale', {}) if QUESTIONS_DATA_MR else {}
+SCALE_HI = QUESTIONS_DATA_HI.get('response_scale', {}) if QUESTIONS_DATA_HI else {}
 
 @app.route('/api/ui-translations', methods=['GET'])
 def get_ui_translations():
@@ -535,7 +461,7 @@ def get_session_id():
         session['session_id'] = conversation_memory.generate_session_id()
     # Strip any large legacy keys to prevent session cookie size warnings
     for key in list(session.keys()):
-        if key not in ['session_id', 'has_taken_test']:
+        if key not in ['session_id', 'has_taken_test', 'user_id', 'role', 'name', 'email']:
             session.pop(key, None)
     return session['session_id']
 
@@ -731,6 +657,7 @@ def submit_answers():
         
         answers = data.get('answers', [])
         student_info = data.get('student_info', {})
+        language = data.get('language', 'en')
         
         print(f"[INFO] Processing {len(answers)} answers for {student_info.get('name', 'Student')}")
         
@@ -806,6 +733,9 @@ def submit_answers():
                 'strengths': match.strengths[:3],
                 'improvement_areas': match.improvement_areas[:2]
             })
+            
+        if language != 'en':
+            top_careers = [translate_career_data(c, language) for c in top_careers]
         
         # Store in conversation memory (database)
         conversation_memory.set_career_matches(session_id, [m.to_dict() for m in career_matches])
@@ -825,10 +755,30 @@ def submit_answers():
         }
         conversation_memory.set_overall_session(session_id, overall_snapshot)
         
+        attempt_id = None
+        try:
+            submission_token = data.get('submission_token')
+            save_res = assessment_service.save_assessment_attempt(
+                user_id=session.get('user_id'),
+                guest_session_id=session_id,
+                student_profile=student_info,
+                riasec_answers=detailed_answers,
+                riasec_scores=scores,
+                riasec_code=riasec_code,
+                top_careers=top_careers,
+                submission_token=submission_token
+            )
+            attempt_id = save_res['attempt_id']
+        except Exception as e:
+            print(f"[ERROR] Failed to save assessment attempt: {e}")
+            import traceback
+            traceback.print_exc()
+        
         response_data = {
             'profile': profile,
             'scores': scores,
-            'top_careers': top_careers
+            'top_careers': top_careers,
+            'attempt_id': attempt_id
         }
         
         elapsed_time = time.time() - start_time
@@ -849,6 +799,7 @@ def career_detail():
     try:
         data = request.json
         career_name = data.get('career_name')
+        language = data.get('language', 'en')
         
         # Check SQLite database first
         from modules.conversation_memory import conversation_memory
@@ -874,11 +825,23 @@ def career_detail():
         if "skill_development_plan" not in normalized or not normalized["skill_development_plan"]:
             print(f"[INFO] Dynamically generating Skill Development Plan for {career_name}...")
             try:
-                prompt = f"Create a concise 'Skill Development Plan' for the career of {career_name}. List the key technical and soft skills required, and provide 3 practical steps a student can take to start building these skills right now. Format clearly using bullet points."
+                # Give instruction to LLM to write in target language
+                lang_instruction = f" Write it strictly in {language} language." if language != 'en' else ""
+                prompt = f"Create a concise 'Skill Development Plan' for the career of {career_name}. List the key technical and soft skills required, and provide 3 practical steps a student can take to start building these skills right now. Format clearly using bullet points.{lang_instruction}"
                 normalized['skill_development_plan'] = nova.generate_response(prompt)
             except Exception as e:
                 print(f"[ERROR] LLM generation failed for skill plan: {e}")
                 normalized['skill_development_plan'] = "Information currently unavailable."
+                
+        if language != 'en':
+            # Translate the base normalized career data (excluding skill_development_plan since we already asked LLM to do it)
+            # Actually, the career translation logic applies recursively
+            translated_normalized = translate_career_data({'data': normalized, 'name': career_name}, language)
+            if 'data' in translated_normalized:
+                normalized = translated_normalized['data']
+            # Reattach skill_development_plan since it wasn't in standard translate_career_data
+            if 'skill_development_plan' not in normalized and 'skill_development_plan' in target_record:
+                pass
                 
         return jsonify({'career': normalized})
         
@@ -1097,6 +1060,166 @@ def chat():
         }), 500
 
 
+# ============================================================
+# ACCOUNT ROUTES
+# ============================================================
+from services.wallet_service import wallet_service
+
+@app.route('/api/account/summary', methods=['GET'])
+def account_summary():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    try:
+        attempts = assessment_service.get_user_attempts(user_id)
+        wallet = wallet_service.get_balance(user_id)
+        return jsonify({
+            'status': 'success',
+            'attempts': attempts,
+            'wallet': {'balance': wallet}
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ============================================================
+# ASSESSMENT ROUTES
+# ============================================================
+
+@app.route('/api/assessment/<attempt_id>/teaser', methods=['GET'])
+def assessment_teaser(attempt_id):
+    try:
+        lang = request.args.get('lang', 'en')
+        teaser = assessment_service.get_teaser(attempt_id)
+        if not teaser:
+            return jsonify({'error': 'Not found'}), 404
+            
+        owner_id = teaser.get('user_id')
+        if owner_id:
+            curr_user = session.get('user_id')
+            if not curr_user:
+                return jsonify({'error': 'Unauthorized'}), 401
+            if str(curr_user) != str(owner_id) and session.get('role') != 'SUPER_ADMIN':
+                return jsonify({'error': 'Forbidden'}), 403
+
+        if lang != 'en':
+            teaser = translate_teaser_data(teaser, lang)
+            
+        return jsonify(teaser)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/assessment/<attempt_id>/full', methods=['GET'])
+def assessment_full(attempt_id):
+    user_id = session.get('user_id')
+    try:
+        lang = request.args.get('lang', 'en')
+        data = assessment_service.get_assessment_full(user_id, attempt_id)
+        if not data:
+            return jsonify({'error': 'Not found'}), 404
+            
+        if lang != 'en' and 'full_result_data' in data:
+            if 'career_matches' in data['full_result_data']:
+                matches = data['full_result_data']['career_matches']
+                data['full_result_data']['career_matches'] = [translate_career_data(m, lang) for m in matches]
+                
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 403
+
+@app.route('/api/assessment/<attempt_id>/unlock', methods=['POST'])
+def assessment_unlock(attempt_id):
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    user_id = session['user_id']
+    try:
+        res = assessment_service.unlock_assessment(user_id, attempt_id)
+        return jsonify(res)
+    except ValueError as e:
+        msg = str(e)
+        if "not found" in msg.lower():
+            return jsonify({'error': msg}), 404
+        if "unauthorized" in msg.lower():
+            return jsonify({'error': msg}), 403
+        return jsonify({'error': msg}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+# ============================================================
+# AUTH ROUTES
+# ============================================================
+from services.auth_service import AuthService
+from services.assessment_service import AssessmentService
+
+auth_service = AuthService()
+assessment_service = AssessmentService()
+
+@app.route('/api/auth/signup', methods=['POST'])
+def signup():
+    data = request.json or {}
+    email = data.get('email')
+    password = data.get('password')
+    full_name = data.get('full_name')
+    phone = data.get('phone')
+    education_level = data.get('education_level')
+    attempt_id = data.get('attempt_id')
+    
+    try:
+        user = auth_service.create_user(email, password, full_name, phone, education_level)
+        session['user_id'] = user['id']
+        session['role'] = user['role']
+        
+        redirect_url = '/account'
+        if attempt_id:
+            try:
+                assessment_service.claim_guest_assessment(attempt_id=attempt_id, user_id=user['id'])
+                redirect_url = f'/pricing?attempt_id={attempt_id}'
+            except Exception as e:
+                print(f"[WARNING] Failed to claim attempt {attempt_id}: {e}")
+                
+        return jsonify({'status': 'success', 'user': user, 'redirect': redirect_url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    data = request.json or {}
+    email = data.get('email')
+    password = data.get('password')
+    attempt_id = data.get('attempt_id')
+    
+    try:
+        user = auth_service.authenticate_user(email, password)
+        if not user:
+            return jsonify({'error': 'Invalid credentials'}), 401
+            
+        session['user_id'] = user['id']
+        session['role'] = user['role']
+        
+        redirect_url = '/account'
+        if attempt_id:
+            try:
+                assessment_service.claim_guest_assessment(attempt_id=attempt_id, user_id=user['id'])
+                redirect_url = f'/pricing?attempt_id={attempt_id}'
+            except Exception as e:
+                print(f"[WARNING] Failed to claim attempt {attempt_id}: {e}")
+                
+        return jsonify({'status': 'success', 'user': user, 'redirect': redirect_url})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/api/auth/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({'status': 'success'})
+
+@app.route('/api/auth/me', methods=['GET'])
+def get_me():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    return jsonify({'user': {'id': session['user_id'], 'role': session.get('role', 'USER')}})
+
 @app.route('/api/all-careers', methods=['GET'])
 def all_careers():
     """Get all careers."""
@@ -1186,6 +1309,84 @@ def save_feedback():
         return jsonify({'error': str(e)}), 500
 
 
+# ============================================================
+# PAYMENT ROUTES
+# ============================================================
+
+from services.payment_service import payment_service
+
+@app.route('/api/payments/create-order', methods=['POST'])
+def create_payment_order():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    data = request.json or {}
+    plan_id = data.get('plan_id')
+    referral_code = data.get('referral_code')
+    attempt_id = data.get('attempt_id')
+    
+    if not plan_id:
+        return jsonify({'error': 'plan_id is required'}), 400
+        
+    try:
+        res = payment_service.create_payment_order(
+            user_id=session['user_id'],
+            plan_id=plan_id,
+            referral_code=referral_code,
+            attempt_id=attempt_id
+        )
+        return jsonify(res)
+    except Exception as e:
+        print(f"[ERROR] create_payment_order: {e}")
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/payments/verify', methods=['POST'])
+def verify_payment():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    data = request.json or {}
+    order_id = data.get('razorpay_order_id')
+    payment_id = data.get('razorpay_payment_id')
+    signature = data.get('razorpay_signature')
+    attempt_id = data.get('attempt_id')
+    
+    if not order_id or not payment_id or not signature:
+        return jsonify({'error': 'Missing verification data'}), 400
+        
+    try:
+        res = payment_service.verify_and_process_payment(
+            user_id=session['user_id'],
+            razorpay_order_id=order_id,
+            razorpay_payment_id=payment_id,
+            razorpay_signature=signature,
+            attempt_id=attempt_id
+        )
+        return jsonify(res)
+    except Exception as e:
+        print(f"[ERROR] verify_payment: {e}")
+        return jsonify({'error': str(e)}), 400
+
+
+@app.route('/api/payments/cancel', methods=['POST'])
+def cancel_payment():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    data = request.json or {}
+    order_id = data.get('order_id')
+    if not order_id:
+        return jsonify({'error': 'order_id is required'}), 400
+        
+    try:
+        success = payment_service.mark_payment_cancelled(session['user_id'], order_id)
+        return jsonify({'success': success})
+    except Exception as e:
+        print(f"[ERROR] cancel_payment: {e}")
+        return jsonify({'error': str(e)}), 400
+
+
 @app.errorhandler(404)
 def not_found(error):
     """Handle 404 errors."""
@@ -1210,6 +1411,11 @@ def upload_image():
     file = request.files['file']
     if file.filename == '':
         return jsonify({'status': 'error', 'message': 'No selected file'}), 400
+        
+    allowed_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed_extensions:
+        return jsonify({'status': 'error', 'message': 'Invalid file type'}), 400
         
     try:
         # Instead of third-party APIs that block VPS IPs, host it locally.
@@ -1240,6 +1446,70 @@ def serve_upload(filename):
     from flask import send_from_directory
     upload_folder = os.path.join(app.root_path, 'data', 'uploads')
     return send_from_directory(upload_folder, filename)
+
+# ============================================================
+# DEVELOPER / ADMIN DASHBOARD ROUTES
+# ============================================================
+from services.stats_service import stats_service
+from services.auth_service import auth_service
+
+def require_developer():
+    """Helper to enforce developer role"""
+    user_id = session.get('user_id')
+    role = session.get('role')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
+    
+    # Super admins are always allowed, otherwise check for developer flag
+    if role == 'SUPER_ADMIN':
+        return None
+        
+    user = auth_service.get_user_by_id(user_id)
+    if not user or user.get('role') not in ('DEVELOPER', 'SUPER_ADMIN') or not user.get('is_active'):
+        return jsonify({'status': 'error', 'message': 'Forbidden'}), 403
+    return None
+
+@app.route('/api/developer/stats', methods=['GET'])
+def dev_stats():
+    err = require_developer()
+    if err: return err
+    return jsonify(stats_service.get_dashboard_stats())
+
+@app.route('/api/developer/users', methods=['GET'])
+def dev_users():
+    err = require_developer()
+    if err: return err
+    return jsonify({'users': auth_service.list_all_users()})
+
+@app.route('/api/developer/plans', methods=['GET'])
+def dev_plans():
+    err = require_developer()
+    if err: return err
+    return jsonify({'status': 'success', 'data': []})
+
+@app.route('/api/developer/campaigns', methods=['GET'])
+def dev_campaigns():
+    err = require_developer()
+    if err: return err
+    return jsonify({'status': 'success', 'data': []})
+
+@app.route('/api/developer/audit-log', methods=['GET'])
+def dev_audit():
+    err = require_developer()
+    if err: return err
+    return jsonify({'status': 'success', 'data': []})
+
+@app.route('/api/developer/accounts', methods=['GET'])
+def dev_accounts():
+    err = require_developer()
+    if err: return err
+    return jsonify({'status': 'success', 'data': []})
+
+@app.route('/api/developer/accounts/invite', methods=['POST'])
+def dev_accounts_invite():
+    err = require_developer()
+    if err: return err
+    return jsonify({'status': 'success', 'message': 'Invited'})
 
 # ============================================================
 # MAIN

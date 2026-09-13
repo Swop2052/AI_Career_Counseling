@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, ArrowRight, Clock, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../../translations/LanguageContext';
 
 //graphics
 import Graphic1 from '../../assets/graphics/graphic-1.png';
@@ -236,6 +237,8 @@ function TypewriterText({
 }
 
 export default function Hero({ onStartTest }) {
+  const { t, language } = useLanguage();
+
   return (
     <section
       className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 min-[1018px]:px-10
@@ -259,15 +262,17 @@ export default function Hero({ onStartTest }) {
           className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold tracking-wide text-[#04302E] uppercase mb-5 bg-white/90 backdrop-blur-md border border-[#09A3A3]/25 rounded-full px-4 py-1.5 shadow-sm"
         >
           <span className="w-2 h-2 rounded-full bg-[#09A3A3] animate-ping" />
-          <span>Personality · AI Insights · Career Roadmaps</span>
+          <span>{t('badge')}</span>
         </motion.div>
 
         <motion.h1
           variants={slideFromLeftVariants}
-          className="font-display font-bold text-[#04211F] text-4xl sm:text-4xl min-[1018px]:text-4xl xl:text-5xl 2xl:text-[3.35rem] leading-[1.16] mb-5 tracking-tight"
+          className={`font-display font-bold text-[#04211F] text-4xl sm:text-4xl min-[1018px]:text-4xl xl:text-5xl 2xl:text-[3.35rem] mb-5 ${language === 'en' ? 'leading-[1.16] tracking-tight' : 'leading-[1.4] tracking-normal'}`}
         >
-          Find the path that fits <br />
-          <TypewriterText />
+          <span className={`block ${language === 'en' ? '' : 'mb-3 sm:mb-4'}`}>
+            {t('titlePart1')}
+          </span>
+          <TypewriterText text={t('titleHighlight')} />
         </motion.h1>
 
         {/* Description */}
@@ -275,7 +280,7 @@ export default function Hero({ onStartTest }) {
           variants={slideFromLeftVariants}
           className="text-[#0B3D3D]/80 text-[12px] sm:text-base min-[1018px]:text-base xl:text-lg max-w-lg mb-8 leading-relaxed"
         >
-          A smart career guide that understands your interests, strengths, and dreams. then builds a clear, step-by-step roadmap just for you. No pressure, no wrong answers.
+          {t('description')}
         </motion.p>
 
         {/* Buttons */}
@@ -290,7 +295,7 @@ export default function Hero({ onStartTest }) {
             className="group relative w-full min-[355px]:w-auto justify-center overflow-hidden rounded-full bg-[#04302E] text-white text-xs sm:text-base font-semibold px-5 py-2.5 sm:px-7 sm:py-3.5 flex items-center gap-2 shadow-lg shadow-[#04302E]/20 transition-all duration-300 hover:shadow-xl hover:shadow-[#09A3A3]/30 active:scale-[0.98] cursor-pointer"
           >
             <span className="relative z-10 flex items-center gap-2">
-              Start Free Assessment
+              {t('startTest')}
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </span>
             <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12" />
@@ -301,7 +306,7 @@ export default function Hero({ onStartTest }) {
             href="#ai-counselor"
             className="group relative w-full min-[355px]:w-auto justify-center inline-flex items-center gap-2 px-5 py-2.5 sm:px-6 sm:py-3.5 rounded-full bg-white/80 hover:bg-white backdrop-blur-sm text-[#04302E] text-xs sm:text-sm font-bold border border-[#09A3A3]/30 shadow-sm active:scale-[0.98] transition-all duration-300 cursor-pointer no-underline"
           >
-            <span>Get Career Advice</span>
+            <span>{t('careerAdvice')}</span>
             <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#04302E]/60 transition-transform duration-300 group-hover:translate-x-1" />
           </a>
         </motion.div>
@@ -323,7 +328,7 @@ export default function Hero({ onStartTest }) {
                   <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                 ))}
             </div>
-              <span className="ml-1 text-[11px] font-bold">4.9/5 (500+ reviews)</span>
+              <span className="ml-1 text-[11px] font-bold">{t('reviews')}</span>
             </div>
           </div>
         </motion.div>

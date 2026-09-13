@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLanguage } from '../../translations/LanguageContext';
 import {
   Compass, Menu, X, Globe, ChevronDown, Check, User, Settings, LogOut, HelpCircle, LogIn, UserPlus
 } from 'lucide-react';
@@ -31,7 +32,8 @@ function Dynamic3DCompassLogo({ onHomeClick }) {
   );
 }
 
-function LanguageDropdown({ selectedLang, setSelectedLang, compact }) {
+function LanguageDropdown({ compact }) {
+  const { language, setLanguage } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -45,6 +47,8 @@ function LanguageDropdown({ selectedLang, setSelectedLang, compact }) {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  const currentLangObj = LANGUAGES.find(l => l.code.toLowerCase() === language) || LANGUAGES[0];
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -53,20 +57,20 @@ function LanguageDropdown({ selectedLang, setSelectedLang, compact }) {
         className={`flex items-center gap-2 ${compact ? 'px-2.5 py-1.5' : 'px-3.5 py-2'} rounded-xl border-t border-l border-b border-r shadow-[0_3px_6px_rgba(4,48,46,0.08),inset_0_1px_0_rgba(255,255,255,1)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] active:translate-y-0.5 text-xs font-bold transition-all duration-150 bg-gradient-to-b from-white to-[#edf3f3] border-white border-b-[#c2d3d2] text-[#04211F] cursor-pointer`}
       >
         <Globe className="w-3.5 h-3.5 text-[#09A3A3]" />
-        <span>{selectedLang.label}</span>
+        <span>{currentLangObj.label}</span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} text-[#0B3D3D]/60`} />
       </button>
 
       {isOpen && (
         <div className="absolute right-0 mt-3 w-40 rounded-2xl border py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150 bg-white border-white/80 shadow-[0_12px_30px_rgba(4,48,46,0.18),0_4px_8px_rgba(0,0,0,0.06)]">
           {LANGUAGES.map((lang) => {
-            const isSelected = selectedLang.code === lang.code;
+            const isSelected = currentLangObj.code === lang.code;
             return (
               <button
                 key={lang.code}
                 type="button"
                 onClick={() => {
-                  setSelectedLang(lang);
+                  setLanguage(lang.code.toLowerCase());
                   setIsOpen(false);
                 }}
                 className={`w-full flex items-center justify-between px-3.5 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${
@@ -228,7 +232,6 @@ export default function Navbar({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
 
   const [hoverStyle, setHoverStyle] = useState({ opacity: 0, left: 0, width: 0 });
   const navRef = useRef(null);
@@ -363,7 +366,7 @@ export default function Navbar({
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
-          <LanguageDropdown selectedLang={selectedLang} setSelectedLang={setSelectedLang} />
+          <LanguageDropdown />
 
           <button
             type="button"

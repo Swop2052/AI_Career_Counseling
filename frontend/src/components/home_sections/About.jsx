@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Reveal from '../Reveal';
+import { useLanguage } from '../../translations/LanguageContext';
 
 import logicImg from '../../assets/logic.png';
 import creativityImg from '../../assets/creativity.png';
@@ -19,36 +20,36 @@ const BUBBLE_SHAPES = [
   '46% 54% 58% 42% / 56% 44% 56% 44%',
 ];
 
-const DIMENSIONS = [
+const getDimensions = (t) => [
   {
-    name: 'Logic',
+    name: t('logicTitle'),
     imageUrl: logicImg,
-    desc: 'How you solve problems and think through challenges, step by step.',
+    desc: t('logicDesc'),
   },
   {
-    name: 'Creativity',
+    name: t('creativityTitle'),
     imageUrl: creativityImg,
-    desc: 'How you imagine, design, and come up with fresh ideas.',
+    desc: t('creativityDesc'),
   },
   {
-    name: 'Empathy',
+    name: t('empathyTitle'),
     imageUrl: empathyImg,
-    desc: 'How well you understand and connect with people around you.',
+    desc: t('empathyDesc'),
   },
   {
-    name: 'Leadership',
+    name: t('leadershipTitle'),
     imageUrl: leadershipImg,
-    desc: 'How you guide, motivate, and take charge in a team.',
+    desc: t('leadershipDesc'),
   },
   {
-    name: 'Curiosity',
+    name: t('curiosityTitle'),
     imageUrl: curiosityImg,
-    desc: 'How eager you are to explore new things and ask "why?"',
+    desc: t('curiosityDesc'),
   },
   {
-    name: 'Discipline',
+    name: t('disciplineTitle'),
     imageUrl: disciplineImg,
-    desc: 'How consistent and focused you stay while chasing a goal.',
+    desc: t('disciplineDesc'),
   },
 ];
 
@@ -90,6 +91,9 @@ const floatVariants = {
 };
 
 export default function About() {
+  const { t } = useLanguage();
+  const dimensions = getDimensions(t);
+
   return (
     <section
       id="about"
@@ -108,19 +112,18 @@ export default function About() {
       <div className="max-w-6xl mx-auto">
         <Reveal className="text-center mb-10 sm:mb-16">
           <div className="text-[11px] sm:text-xs font-semibold tracking-widest text-[#078686] uppercase mb-2 sm:mb-3">
-            About SkillSense
+            {t('aboutBadge')}
           </div>
           <h2 className="font-display font-semibold text-2xl sm:text-3xl md:text-4xl text-[#04211F] tracking-tight">
-           See What Makes You Great at What You Do 
-
+           {t('aboutHeading')}
           </h2>
           <p className="text-xs sm:text-sm md:text-base text-[#0B3D3D]/65 mt-3 max-w-2xl mx-auto leading-relaxed">
-           SkillSense looks at your unique personality, natural talents, and passions to find the perfect career path for you. 
+           {t('aboutDesc')}
           </p>
         </Reveal>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-          {DIMENSIONS.map((dim, i) => (
+          {dimensions.map((dim, i) => (
             <motion.div
               key={dim.name}
               custom={i}

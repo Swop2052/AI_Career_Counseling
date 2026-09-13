@@ -1,0 +1,224 @@
+{
+  "Realistic": [
+    {
+      "question": "नवीन खुर्ची डिझाइन करण्यापेक्षा मोडलेली खुर्ची दुरुस्त करायला मला जास्त आवडेल.",
+      "answers": ["मला डिझाइन करायला आवडेल", "मला डिझाइन करायला थोडे आवडेल", "दोन्ही ठीक आहेत", "मला दुरुस्त करायला थोडे आवडेल", "मी ती दुरुस्त करेन"],
+      "icons": ["/images/icons/color-palette.png", "/images/icons/architechture.png", "/images/icons/hammer.png", "/images/icons/construction-worker.png", "/images/icons/tractor.png"]
+    },
+    {
+      "question": "सिद्धांतावर विचार करण्यापेक्षा व्यावहारिक कृती करून समस्या सोडवणे मला आवडते.",
+      "answers": ["सैद्धांतिक उपाय जास्त आवडतात", "सिद्धांत आणि कल्पना अनेकदा आवडतात", "दोन्ही दृष्टिकोन समान उपयोगी आहेत", "सामान्यतः व्यावहारिक उपाय निवडतो", "व्यावहारिक उपाय जास्त आवडतात"],
+      "icons": ["/images/icons/hammer.png", "/images/icons/tools.png", "/images/icons/balance.png", "/images/icons/brain.png", "/images/icons/thinking.png"]
+    },
+    {
+      "question": "सुट्टीत पुस्तक वाचण्यापेक्षा मी बाहेर काम करणे किंवा काहीतरी बांधणे पसंत करतो.",
+      "answers": ["नेहमी वाचन पसंत करतो", "बहुतेकदा वाचन पसंत करतो", "हे मूडवर अवलंबून असते", "काहीतरी हाताने बनवायला आवडते", "निश्चितच बाहेर काम करायला आवडते"],
+      "icons": ["/images/icons/books.png", "/images/icons/take-note.png", "/images/icons/balance.png", "/images/icons/hammer.png", "/images/icons/construction-worker.png"]
+    },
+    {
+      "question": "लोकांशी चर्चा करण्यापेक्षा मशीन्स, साधने किंवा वनस्पतींसोबत काम करणे मला जास्त आरामदायक वाटते.",
+      "answers": ["नेहमी लोकांसोबत काम करणे आवडते", "लोकांसोबत राहणे जास्त आवडते", "मला दोन्ही समान आवडते", "साधने/मशीन्स सोबत काम करायला जास्त आवडते", "निश्चितच मशीन्स/निसर्गासोबत काम करायला आवडते"],
+      "icons": ["/images/icons/chat.png", "/images/icons/team.png", "/images/icons/balance.png", "/images/icons/tractor.png", "/images/icons/leaves.png"]
+    },
+    {
+      "question": "मला स्पष्ट आणि मोजता येण्यासारखे निकाल देणारे प्रकल्प करायला आवडतात (उदा. घर बांधणे किंवा गाडी दुरुस्त करणे).",
+      "answers": ["मला अमूर्त प्रकल्प आवडतात", "कल्पनांवर काम करायला जास्त आवडते", "कोणताही प्रकल्प चालेल", "स्पष्ट निकाल असलेले प्रकल्प आवडतात", "मला मूर्त, व्यावहारिक परिणाम खूप आवडतात"],
+      "icons": ["/images/icons/stars.png", "/images/icons/brain.png", "/images/icons/balance.png", "/images/icons/hammer.png", "/images/icons/tractor.png"]
+    },
+    {
+      "question": "मी शारीरिकदृष्ट्या सक्रिय राहणे पसंत करतो आणि दिवसभर डेस्कवर बसणे टाळतो.",
+      "answers": ["मला डेस्कवर बसून काम करणे खूप आवडते", "डेस्क जॉब ठीक आहे", "थोडे शारीरिक, थोडे डेस्क जॉब", "सक्रिय राहणे पसंत करतो", "मला सतत शारीरिक हालचाल हवी असते"],
+      "icons": ["/images/icons/chair.png", "/images/icons/take-note.png", "/images/icons/balance.png", "/images/icons/energy.png", "/images/icons/lightning-bolt.png"]
+    },
+    {
+      "question": "अमूर्त संकल्पनांवर चर्चा करण्यापेक्षा तंत्रज्ञानावर किंवा हस्तकलेवर काम करणे मला जास्त आवडते.",
+      "answers": ["अमूर्त चर्चा खूप आवडतात", "चर्चा करायला आवडते", "दोन्ही ठीक आहे", "हाताने काम करायला जास्त आवडते", "निश्चितच व्यावहारिक कौशल्ये वापरणे पसंत करतो"],
+      "icons": ["/images/icons/chat.png", "/images/icons/thinking.png", "/images/icons/balance.png", "/images/icons/hammer.png", "/images/icons/construction-worker.png"]
+    }
+  ],
+  "Investigative": [
+    {
+      "question": "नवीन फोन कसा काम करतो हे समजून घेण्यासाठी मी मॅन्युअल वाचायला तयार असतो.",
+      "answers": ["मी कधीच मॅन्युअल वाचत नाही", "मी क्वचितच वाचतो", "फक्त गरज पडल्यास वाचतो", "मला वाचायला आवडते", "मी नेहमी ते पूर्ण वाचतो"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/smile.png", "/images/icons/brain.png"]
+    },
+    {
+      "question": "मला कोडी सोडवणे किंवा गुंतागुंतीच्या प्रश्नांची उत्तरे शोधणे खूप आवडते.",
+      "answers": ["मला कोडी अजिबात आवडत नाहीत", "मी शक्यतो टाळतो", "कधीकधी ठीक वाटतात", "मला कोडी सोडवायला आवडते", "मला आव्हानात्मक कोडी सोडवण्यात खूप मजा येते"],
+      "icons": ["/images/icons/sad.png", "/images/icons/confused.png", "/images/icons/neutral.png", "/images/icons/thinking.png", "/images/icons/puzzle.png"]
+    },
+    {
+      "question": "मी एकाच तांत्रिक समस्येवर तासनतास एकट्याने काम करू शकतो.",
+      "answers": ["मी लवकर कंटाळतो", "मी थोडा वेळ काम करू शकतो", "हे समस्येवर अवलंबून आहे", "मला कठीण समस्यांवर काम करणे आवडते", "मी जटिल आव्हानांवर तासनतास काम करू शकतो"],
+      "icons": ["/images/icons/sad.png", "/images/icons/brain.png", "/images/icons/search.png", "/images/icons/smile.png", "/images/icons/lightning-bolt.png"]
+    },
+    {
+      "question": "मी कठीण प्रश्नाचा उपाय मिळेपर्यंत सतत विचार करत राहतो.",
+      "answers": ["मी सामान्यतः सोडून देतो", "मी थोडा वेळ विचार करतो", "मी नंतर पुन्हा विचार करतो", "मी उपाय शोधण्याचा प्रयत्न करतो", "जोपर्यंत उपाय मिळत नाही तोपर्यंत मी थांबत नाही"],
+      "icons": ["/images/icons/sad.png", "/images/icons/thinking.png", "/images/icons/search.png", "/images/icons/brain.png", "/images/icons/puzzle.png"]
+    },
+    {
+      "question": "काहीतरी 'कसे' किंवा 'का' काम करते यामागील विज्ञान आणि कारणे मला जाणून घ्यायची असतात.",
+      "answers": ["मला फक्त ते चालत असल्याशी मतलब आहे", "मी क्वचितच विचार करतो", "मी कधीकधी विचारतो", "मला जाणून घ्यायला आवडते", "मी नेहमी सखोल माहिती शोधतो"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/search.png", "/images/icons/brain.png"]
+    },
+    {
+      "question": "मला डेटा, तथ्ये आणि माहितीचे विश्लेषण करणे आवडते.",
+      "answers": ["मला डेटा अजिबात आवडत नाही", "डेटा मला कंटाळवाणा वाटतो", "मी गरजेनुसार करतो", "मला विश्लेषणात्मक काम आवडते", "माहितीतून अर्थ शोधणे मला खूप आवडते"],
+      "icons": ["/images/icons/sad.png", "/images/icons/confused.png", "/images/icons/neutral.png", "/images/icons/bar-chart.png", "/images/icons/search.png"]
+    },
+    {
+      "question": "इतरांवर अवलंबून राहण्यापेक्षा मी स्वतः संशोधन करून उत्तरे शोधणे पसंत करतो.",
+      "answers": ["मी नेहमी इतरांना विचारतो", "मी शक्यतो इतरांना विचारतो", "मी दोन्ही करतो", "मी स्वतः शोधण्याचा प्रयत्न करतो", "मी नेहमी स्वतः सखोल संशोधन करतो"],
+      "icons": ["/images/icons/team.png", "/images/icons/chat.png", "/images/icons/balance.png", "/images/icons/search.png", "/images/icons/brain.png"]
+    }
+  ],
+  "Artistic": [
+    {
+      "question": "अडकून न राहता स्वतःच्या पद्धतीने नवीन गोष्टी बनवायला मला आवडते.",
+      "answers": ["मला स्पष्ट नियम आवडतात", "मला मार्गदर्शनाची गरज असते", "दोन्ही ठीक आहे", "मला स्वातंत्र्य आवडते", "मी स्वतःच्या पद्धतीने काम करणे पसंत करतो"],
+      "icons": ["/images/icons/padlock.png", "/images/icons/take-note.png", "/images/icons/balance.png", "/images/icons/color-palette.png", "/images/icons/stars.png"]
+    },
+    {
+      "question": "माझ्याकडे अनेकदा खूप वेगळ्या आणि कल्पक कल्पना असतात.",
+      "answers": ["मी व्यावहारिक गोष्टींना महत्त्व देतो", "मी क्वचितच वेगळा विचार करतो", "कधीकधी असतात", "माझ्याकडे अनेकदा कल्पक कल्पना असतात", "मी नेहमी कल्पक आणि वेगळा विचार करतो"],
+      "icons": ["/images/icons/hammer.png", "/images/icons/balance.png", "/images/icons/thinking.png", "/images/icons/color-palette.png", "/images/icons/stars.png"]
+    },
+    {
+      "question": "मला लिहायला, चित्र काढायला, संगीत बनवायला किंवा कलात्मक काम करायला आवडते.",
+      "answers": ["मला कला अजिबात आवडत नाही", "मी याकडे लक्ष देत नाही", "कधीकधी आवडते", "मला कलात्मक कामे आवडतात", "कला हा माझ्या जीवनाचा मुख्य भाग आहे"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/sad.png", "/images/icons/neutral.png", "/images/icons/color-palette.png", "/images/icons/stars.png"]
+    },
+    {
+      "question": "माझ्या भावना आणि विचार कलेतून किंवा लेखनातून व्यक्त करणे मला सोपे जाते.",
+      "answers": ["मी थेट बोलणे पसंत करतो", "मी क्वचितच कलात्मक पद्धतीने व्यक्त होतो", "कधीकधी करतो", "मला कलेतून व्यक्त व्हायला आवडते", "माझी कला हीच माझी अभिव्यक्ती आहे"],
+      "icons": ["/images/icons/chat.png", "/images/icons/speak.png", "/images/icons/neutral.png", "/images/icons/take-note.png", "/images/icons/color-palette.png"]
+    },
+    {
+      "question": "रोजच्या कंटाळवाण्या कामांपेक्षा मला कल्पकतेला वाव देणारी कामे आवडतात.",
+      "answers": ["मला ठरलेली कामे आवडतात", "मी ठरलेली कामे करणे पसंत करतो", "दोन्ही समान आहेत", "मला कल्पक कामे आवडतात", "मी फक्त कल्पक कामेच शोधतो"],
+      "icons": ["/images/icons/schedule.png", "/images/icons/padlock.png", "/images/icons/balance.png", "/images/icons/color-palette.png", "/images/icons/stars.png"]
+    },
+    {
+      "question": "माझ्या आजूबाजूला सुंदर डिझाईन्स, कलाकृती किंवा चांगली सजावट असणे माझ्यासाठी महत्त्वाचे आहे.",
+      "answers": ["मला सजावटीची अजिबात पर्वा नाही", "हे माझ्यासाठी फार महत्त्वाचे नाही", "कधीकधी लक्ष देतो", "मला सुंदर वातावरण आवडते", "कलात्मक वातावरण माझ्यासाठी खूप प्रेरणादायी असते"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/smile.png", "/images/icons/stars.png"]
+    },
+    {
+      "question": "एखाद्या प्रकल्पात मला दिलेली माहिती जशीच्या तशी न मांडता त्यात माझी स्वतःची स्टाईल जोडायला आवडते.",
+      "answers": ["मी तंतोतंत सूचना पाळतो", "मी सहसा स्वतःचे बदल करत नाही", "कधीकधी बदल करतो", "मी माझी शैली जोडतो", "मी नेहमी सर्वकाही माझ्या स्वतःच्या वेगळ्या शैलीत करतो"],
+      "icons": ["/images/icons/take-note.png", "/images/icons/check.png", "/images/icons/neutral.png", "/images/icons/color-palette.png", "/images/icons/stars.png"]
+    }
+  ],
+  "Social": [
+    {
+      "question": "इतरांना त्यांच्या समस्या सोडवण्यात आणि नवीन गोष्टी शिकण्यात मदत करायला मला खूप आवडते.",
+      "answers": ["मला एकट्याने काम करायला आवडते", "मी स्वतःच्या कामावर लक्ष केंद्रित करतो", "मी शक्य असेल तेव्हा मदत करतो", "मला मदत करायला आवडते", "इतरांना शिकवणे आणि मदत करणे मला खूप आनंद देते"],
+      "icons": ["/images/icons/padlock.png", "/images/icons/search.png", "/images/icons/neutral.png", "/images/icons/smile.png", "/images/icons/team.png"]
+    },
+    {
+      "question": "लोक अनेकदा सल्ला किंवा आधारासाठी माझ्याकडे येतात.",
+      "answers": ["असे कधीच होत नाही", "क्वचितच घडते", "कधीकधी येतात", "लोक अनेकदा येतात", "लोक नेहमी माझ्याकडे मदतीसाठी येतात"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/chat.png", "/images/icons/team.png"]
+    },
+    {
+      "question": "मला माणसांसोबत काम करायला जास्त आवडते, मशीन्स किंवा डेटा सोबत नाही.",
+      "answers": ["मी पूर्णपणे मशीन्स/डेटा पसंत करतो", "मला डेस्कवर काम करणे जास्त आवडते", "मला दोन्ही समान आवडते", "मला माणसांसोबत काम करणे आवडते", "मला लोकांशी संवाद साधायला खूप आवडते"],
+      "icons": ["/images/icons/tractor.png", "/images/icons/bar-chart.png", "/images/icons/balance.png", "/images/icons/chat.png", "/images/icons/team.png"]
+    },
+    {
+      "question": "नवीन लोकांना भेटणे आणि त्यांच्याशी संवाद साधणे माझ्यासाठी खूप सोपे आहे.",
+      "answers": ["मला लोकांशी बोलणे कठीण वाटते", "मी थोडा लाजाळू आहे", "कधीकधी ठीक असते", "मला नवीन लोकांना भेटायला आवडते", "मला लोकांमध्ये राहायला आणि संवाद साधायला खूप आवडते"],
+      "icons": ["/images/icons/sad.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/smile.png", "/images/icons/team.png"]
+    },
+    {
+      "question": "दुसऱ्यांना समजून घेणे आणि त्यांच्या भावनांचा आदर करणे हे माझ्यासाठी खूप महत्त्वाचे आहे.",
+      "answers": ["मी तर्क आणि तथ्यांवर लक्ष केंद्रित करतो", "मी भावनांकडे कमी लक्ष देतो", "कधीकधी विचार करतो", "मला इतरांच्या भावना समजतात", "मी खूप सहानुभूतीपूर्ण आहे"],
+      "icons": ["/images/icons/brain.png", "/images/icons/take-note.png", "/images/icons/neutral.png", "/images/icons/heart.png", "/images/icons/team.png"]
+    },
+    {
+      "question": "मी सांघिक कामात (Teamwork) उत्कृष्ट आहे आणि मला टीमसोबत काम करायला आवडते.",
+      "answers": ["मी नेहमी एकट्याने काम करणे पसंत करतो", "मी शक्यतो एकटा काम करतो", "गरज पडल्यास करतो", "मला टीममध्ये काम करायला आवडते", "टीमसोबत काम करण्यात मी सर्वोत्तम आहे"],
+      "icons": ["/images/icons/padlock.png", "/images/icons/nervous.png", "/images/icons/balance.png", "/images/icons/smile.png", "/images/icons/team.png"]
+    },
+    {
+      "question": "समाजाच्या भल्यासाठी काम करणे हे माझ्यासाठी पैशांपेक्षा जास्त महत्त्वाचे असू शकते.",
+      "answers": ["पैसा माझ्यासाठी सर्वात महत्त्वाचा आहे", "व्यावहारिक यश महत्त्वाचे आहे", "दोन्ही महत्त्वाचे आहेत", "समाजसेवा मला आवडते", "लोकांचे कल्याण हे माझे मुख्य ध्येय आहे"],
+      "icons": ["/images/icons/bar-chart.png", "/images/icons/take-note.png", "/images/icons/balance.png", "/images/icons/heart.png", "/images/icons/team.png"]
+    }
+  ],
+  "Enterprising": [
+    {
+      "question": "मी जबाबदारी घेतो आणि इतरांना मार्गदर्शन करण्यासाठी पुढे येतो.",
+      "answers": ["मी नेहमी इतरांच्या सूचना पाळतो", "मी शक्यतो मागे राहतो", "कधीकधी जबाबदारी घेतो", "मला नेतृत्व करायला आवडते", "मी जन्मतःच नेता आहे"],
+      "icons": ["/images/icons/take-note.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/smile.png", "/images/icons/crown.png"]
+    },
+    {
+      "question": "माझा स्वतःचा व्यवसाय असावा किंवा मी एक मोठा प्रकल्प लीड करावा असे मला वाटते.",
+      "answers": ["मला व्यवसाय अजिबात आवडत नाही", "मला सुरक्षित नोकरी आवडते", "कधीकधी विचार करतो", "मला व्यवसाय सुरू करायला आवडेल", "मला नक्कीच उद्योजक व्हायचे आहे"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/take-note.png", "/images/icons/neutral.png", "/images/icons/briefcase.png", "/images/icons/crown.png"]
+    },
+    {
+      "question": "इतरांना माझ्या कल्पना पटवून देणे किंवा माझ्या विचारांशी सहमत करणे मला सोपे जाते.",
+      "answers": ["मला पटवून देणे जमत नाही", "मी सहसा वाद घालत नाही", "काही वेळा यशस्वी होतो", "मी चांगल्या प्रकारे पटवून देतो", "मी खूप प्रभावीपणे लोकांशी संवाद साधून त्यांना सहमत करू शकतो"],
+      "icons": ["/images/icons/sad.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/chat.png", "/images/icons/speak.png"]
+    },
+    {
+      "question": "मला मोठी ध्येये ठेवायला आणि स्पर्धा करायला आवडते.",
+      "answers": ["मी स्पर्धा टाळतो", "मी खूप महत्त्वाकांक्षी नाही", "मला कधीकधी आव्हाने आवडतात", "मला मोठी ध्येये ठेवायला आवडतात", "मी अत्यंत स्पर्धात्मक आणि महत्त्वाकांक्षी आहे"],
+      "icons": ["/images/icons/nervous.png", "/images/icons/take-note.png", "/images/icons/neutral.png", "/images/icons/target.png", "/images/icons/trophy.png"]
+    },
+    {
+      "question": "जोखिम घेणे आणि मोठे निर्णय घेणे मला घाबरवत नाही.",
+      "answers": ["मी नेहमी सुरक्षित खेळतो", "मी सहसा जोखिम टाळतो", "कधीकधी जोखिम घेतो", "मला आव्हानात्मक निर्णय घ्यायला आवडतात", "मला मोठे निर्णय आणि जोखिम घेण्यात उत्साह वाटतो"],
+      "icons": ["/images/icons/padlock.png", "/images/icons/nervous.png", "/images/icons/balance.png", "/images/icons/rocket.png", "/images/icons/fire.png"]
+    },
+    {
+      "question": "इव्हेंट आयोजित करणे किंवा एखाद्या कार्यक्रमाचे नियोजन करणे मला चांगले जमते.",
+      "answers": ["मला नियोजन अजिबात आवडत नाही", "मी शक्यतो आयोजनात भाग घेत नाही", "कधीकधी करतो", "मला नियोजन करायला आवडते", "मी नेहमी इव्हेंट आणि कार्यक्रमांचे यशस्वी नियोजन करतो"],
+      "icons": ["/images/icons/no-entry.png", "/images/icons/sad.png", "/images/icons/neutral.png", "/images/icons/schedule.png", "/images/icons/stars.png"]
+    },
+    {
+      "question": "मी स्वतःला एक महत्त्वाकांक्षी व्यक्ती मानतो आणि मला सतत प्रगती करायची असते.",
+      "answers": ["मी जसा आहे तसा समाधानी आहे", "मी जास्त विचार करत नाही", "कधीकधी प्रगतीचा विचार करतो", "मला पुढे जाण्याची इच्छा आहे", "मी नेहमी यशाच्या शिखरावर पोहोचण्याचे ध्येय ठेवतो"],
+      "icons": ["/images/icons/padlock.png", "/images/icons/neutral.png", "/images/icons/thinking.png", "/images/icons/target.png", "/images/icons/rocket.png"]
+    }
+  ],
+  "Conventional": [
+    {
+      "question": "मला स्पष्ट सूचना आणि नियम असलेले काम करायला जास्त आवडते.",
+      "answers": ["मला नियम अजिबात आवडत नाहीत", "मी शक्यतो नियम टाळतो", "कधीकधी ठीक असते", "मला स्पष्ट सूचना आवडतात", "नियम आणि स्पष्टता माझ्यासाठी अत्यंत आवश्यक आहे"],
+      "icons": ["/images/icons/color-palette.png", "/images/icons/nervous.png", "/images/icons/balance.png", "/images/icons/check.png", "/images/icons/padlock.png"]
+    },
+    {
+      "question": "अस्ताव्यस्त काम करण्यापेक्षा मी सर्व गोष्टी व्यवस्थित आणि प्लॅन करून करतो.",
+      "answers": ["मला नियोजनाचा कंटाळा येतो", "मी अनेकदा शेवटच्या क्षणी काम करतो", "कधीकधी प्लॅन करतो", "मला व्यवस्थित काम करायला आवडते", "मी सर्वकाही आधीच प्लॅन करून व्यवस्थित करतो"],
+      "icons": ["/images/icons/stars.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/take-note.png", "/images/icons/schedule.png"]
+    },
+    {
+      "question": "कोणत्याही कामात बारकाव्यांकडे (Details) लक्ष देणे हे माझे बलस्थान आहे.",
+      "answers": ["मी फक्त मोठ्या चित्राकडे लक्ष देतो", "मी अनेकदा छोट्या चुका करतो", "कधीकधी बारकावे पाहतो", "मी बऱ्याचदा काळजीपूर्वक काम करतो", "मी प्रत्येक छोट्या गोष्टीकडे अचूकपणे लक्ष देतो"],
+      "icons": ["/images/icons/stars.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/search.png", "/images/icons/check.png"]
+    },
+    {
+      "question": "डेटा एंट्री, रेकॉर्ड ठेवणे किंवा अचूक गणिती कामे करण्यात मला कोणतीही अडचण येत नाही.",
+      "answers": ["मला अशा कामांचा खूप कंटाळा येतो", "मी शक्यतो टाळतो", "मी थोडेफार करू शकतो", "मला अशी कामे ठीक वाटतात", "मला रेकॉर्ड ठेवणे आणि अचूक काम करायला खूप आवडते"],
+      "icons": ["/images/icons/sad.png", "/images/icons/nervous.png", "/images/icons/neutral.png", "/images/icons/take-note.png", "/images/icons/bar-chart.png"]
+    },
+    {
+      "question": "माझे स्वतःचे ठरलेले वेळापत्रक आणि दिनचर्या (Routine) पाळायला मला आवडते.",
+      "answers": ["मला दररोज नवीन काहीतरी हवे असते", "मला ठरलेले रूटीन आवडत नाही", "मी थोडेफार रूटीन पाळतो", "मला वेळापत्रक आवडते", "मी नेहमी ठरलेल्या वेळापत्रकानुसारच काम करतो"],
+      "icons": ["/images/icons/color-palette.png", "/images/icons/stars.png", "/images/icons/neutral.png", "/images/icons/schedule.png", "/images/icons/padlock.png"]
+    },
+    {
+      "question": "अडथळ्यांविना शांत जागेत काम करणे मी सर्वात जास्त पसंत करतो.",
+      "answers": ["मला गजबजलेली जागा आवडते", "मला लोकांशी गप्पा मारायला आवडते", "दोन्ही ठीक आहे", "मला शांतता आवडते", "मी फक्त शांत वातावरणातच चांगले काम करू शकतो"],
+      "icons": ["/images/icons/team.png", "/images/icons/chat.png", "/images/icons/balance.png", "/images/icons/padlock.png", "/images/icons/schedule.png"]
+    },
+    {
+      "question": "जोपर्यंत सर्व आकडे, रेकॉर्ड आणि माहिती अचूक आणि व्यवस्थित नसते, तोपर्यंत मला समाधान मिळत नाही.",
+      "answers": ["माहिती कशीही असली तरी मला चालते", "मी फार लक्ष देत नाही", "कधीकधी ठीक असते", "मला अचूक माहिती आवडते", "अचूकता आणि सुव्यवस्था माझ्यासाठी सर्वस्व आहे"],
+      "icons": ["/images/icons/color-palette.png", "/images/icons/sad.png", "/images/icons/neutral.png", "/images/icons/check.png", "/images/icons/bar-chart.png"]
+    }
+  ]
+}

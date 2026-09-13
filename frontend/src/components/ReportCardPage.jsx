@@ -5,9 +5,112 @@ import {
   Brain, Heart, GraduationCap, Trophy,
   Rocket, TrendingUp, Award, Target,
   Sparkles, Info, X, DollarSign, BookOpen,
-  Briefcase, ChevronRight, Compass, Download,
+  Briefcase, ChevronRight, Compass, Download, Share2
 } from 'lucide-react';
 import CareerDetailModal from './CareerDetailModal';
+import { useLanguage } from '../translations/LanguageContext';
+
+const repT = {
+  en: {
+    traitProfile: "Trait Profile",
+    careerPathsMapped: "Career paths mapped",
+    topMatches: "Top Career Matches",
+    tapForDetails: "Tap a card for details",
+    mindText: "Leadership and persuasive traits dominate your analytical thinking.",
+    bodyText: "You do best in environments that are structured and well organized.",
+    soulText: "Driven by impact, leadership, and meaningful professional connection.",
+    mind: "Mind",
+    body: "Body",
+    soul: "Soul",
+    yourCareerRoadmap: "Your Career Roadmap",
+    unlockReport: "Unlock Full Report",
+    matchScore: "Match Score",
+    expectedIncome: "Expected Income",
+    courseFee: "Course Fee",
+    recommendedPath: "Recommended Path",
+    coreTraits: "Core Personality Traits",
+    downloadReport: "Download PDF",
+    shareReport: "Share Report",
+    realisticDesc: "Practical, hands-on, and action-oriented.",
+    realisticEx: "e.g., Engineer, Architect",
+    investigativeDesc: "Analytical, intellectual, and scientific thinkers.",
+    investigativeEx: "e.g., Scientist, Researcher",
+    artisticDesc: "Creative, expressive, and original creators.",
+    artisticEx: "e.g., Designer, Writer",
+    socialDesc: "Empathetic, helpful, and community-driven.",
+    socialEx: "e.g., Teacher, Counselor",
+    enterprisingDesc: "Ambitious, persuasive, and visionary leaders.",
+    enterprisingEx: "e.g., Entrepreneur, Manager",
+    conventionalDesc: "Organized, detail-oriented, and systematic experts.",
+    conventionalEx: "e.g., Accountant, Analyst",
+  },
+  mr: {
+    traitProfile: "व्यक्तिमत्व विश्लेषण",
+    careerPathsMapped: "करिअर मार्ग शोधले",
+    topMatches: "सर्वोत्तम करिअर पर्याय",
+    tapForDetails: "अधिक माहितीसाठी कार्डवर टॅप करा",
+    mindText: "विश्लेषणात्मक विचार आणि नेतृत्व करण्याची क्षमता.",
+    bodyText: "सुव्यवस्थित आणि शिस्तबद्ध वातावरणात तुम्ही उत्तम काम करता.",
+    soulText: "सामाजिक प्रभाव, नेतृत्व आणि व्यावसायिक संबंधांद्वारे प्रेरित.",
+    mind: "बुद्धी",
+    body: "शरीर",
+    soul: "आत्मा",
+    yourCareerRoadmap: "तुमचा करिअर रोडमॅप",
+    unlockReport: "संपूर्ण रिपोर्ट अनलॉक करा",
+    matchScore: "मॅच स्कोअर",
+    expectedIncome: "अपेक्षित उत्पन्न",
+    courseFee: "कोर्सची फी",
+    recommendedPath: "शिफारस केलेला मार्ग",
+    coreTraits: "मुख्य व्यक्तिमत्त्व गुण",
+    downloadReport: "PDF डाउनलोड करा",
+    shareReport: "रिपोर्ट शेअर करा",
+    realisticDesc: "व्यावहारिक आणि कृती-देणारी कार्ये.",
+    realisticEx: "उदा., इंजिनिअर, आर्किटेक्ट",
+    investigativeDesc: "विश्लेषणात्मक आणि वैज्ञानिक विचार.",
+    investigativeEx: "उदा., शास्त्रज्ञ, संशोधक",
+    artisticDesc: "सर्जनशील आणि मूळ विचार.",
+    artisticEx: "उदा., डिझायनर, लेखक",
+    socialDesc: "सहानुभूतीपूर्ण आणि मदतीस तत्पर.",
+    socialEx: "उदा., शिक्षक, समुपदेशक",
+    enterprisingDesc: "महत्वाकांक्षी आणि नेतृत्व करणारे.",
+    enterprisingEx: "उदा., उद्योजक, मॅनेजर",
+    conventionalDesc: "सुव्यवस्थित आणि शिस्तबद्ध तज्ञ.",
+    conventionalEx: "उदा., अकाउंटंट, ॲनालिस्ट",
+  },
+  hi: {
+    traitProfile: "व्यक्तित्व विश्लेषण",
+    careerPathsMapped: "करियर विकल्प खोजे गए",
+    topMatches: "सर्वश्रेष्ठ करियर विकल्प",
+    tapForDetails: "अधिक जानकारी के लिए कार्ड पर टैप करें",
+    mindText: "विश्लेषणात्मक सोच और नेतृत्व करने की क्षमता।",
+    bodyText: "सुव्यवस्थित और अनुशासित वातावरण में आप बेहतर काम करते हैं।",
+    soulText: "सामाजिक प्रभाव, नेतृत्व और सार्थक व्यावसायिक संबंधों से प्रेरित।",
+    mind: "बुद्धि",
+    body: "शरीर",
+    soul: "आत्मा",
+    yourCareerRoadmap: "आपका करियर रोडमैप",
+    unlockReport: "पूरी रिपोर्ट अनलॉक करें",
+    matchScore: "मैच स्कोर",
+    expectedIncome: "अपेक्षित आय",
+    courseFee: "कोर्स की फीस",
+    recommendedPath: "सुझाया गया मार्ग",
+    coreTraits: "मुख्य व्यक्तित्व लक्षण",
+    downloadReport: "PDF डाउनलोड करें",
+    shareReport: "रिपोर्ट शेयर करें",
+    realisticDesc: "व्यावहारिक और कार्रवाई उन्मुख।",
+    realisticEx: "उदा., इंजीनियर, आर्किटेक्ट",
+    investigativeDesc: "विश्लेषणात्मक और वैज्ञानिक विचारक।",
+    investigativeEx: "उदा., वैज्ञानिक, शोधकर्ता",
+    artisticDesc: "रचनात्मक और मूल विचारक।",
+    artisticEx: "उदा., डिजाइनर, लेखक",
+    socialDesc: "सहानुभूतिपूर्ण और मददगार।",
+    socialEx: "उदा., शिक्षक, काउंसलर",
+    enterprisingDesc: "महत्वाकांक्षी और नेतृत्व करने वाले।",
+    enterprisingEx: "उदा., उद्यमी, मैनेजर",
+    conventionalDesc: "सुव्यवस्थित और व्यवस्थित विशेषज्ञ।",
+    conventionalEx: "उदा., अकाउंटेंट, एनालिस्ट",
+  }
+};
 
 import Graphic1 from '../assets/graphics/graphic-1.png';
 
@@ -34,6 +137,7 @@ const BG = '#F6FBFA';
 /* ------------------------------------------------------------------ */
 function BarGraph({ data }) {
   const maxScore = Math.max(...data.map(d => d.score));
+  const [hoveredTrait, setHoveredTrait] = useState(null);
   
   return (
     <div className="w-full">
@@ -41,18 +145,35 @@ function BarGraph({ data }) {
         <h2 className="text-sm font-bold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
           Trait Profile
         </h2>
-        <span className="text-[11px] text-gray-400 font-medium">RIASEC model</span>
       </div>
       
       <div className="space-y-3">
         {data.map((d, index) => (
           <motion.div
             key={d.key}
-            className="flex items-center gap-3"
+            className="flex items-center gap-3 relative cursor-help"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.08, duration: 0.3 }}
+            onMouseEnter={() => setHoveredTrait(d.key)}
+            onMouseLeave={() => setHoveredTrait(null)}
           >
+            <AnimatePresence>
+              {hoveredTrait === d.key && (
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -2 }}
+                  className="absolute bottom-[110%] left-16 w-[240px] bg-gray-900 text-white text-[11px] p-2.5 rounded-lg shadow-xl z-50 pointer-events-none"
+                >
+                  <div className="absolute -bottom-1 left-6 w-2 h-2 bg-gray-900 rotate-45" />
+                  <strong className="text-[#09A3A3]">{d.label}</strong><br/>
+                  <span className="opacity-90">{d.desc}</span><br/>
+                  <span className="text-gray-400 italic mt-1 block">{d.example}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <span className="text-[11px] font-semibold w-16 text-right text-gray-500 shrink-0">
               {d.label}
             </span>
@@ -102,6 +223,9 @@ function AmbientBackground() {
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
 export default function ReportCardPage({ isPurchased = false, onCreateAccount, user = null, reportData = null }) {
+  const { language } = useLanguage();
+  const t = repT[language] || repT.en;
+
   const [selectedCareer, setSelectedCareer] = useState(null);
   const [showEcrTooltip, setShowEcrTooltip] = useState(false);
   const [defaultCareers, setDefaultCareers] = useState(null);
@@ -147,36 +271,32 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
             
             // Dummy RIASEC for fallback display
             setDefaultRIASEC([
-              { key: 'R', label: 'Realistic', score: 65, color: '#5C8374' },
-              { key: 'I', label: 'Investigative', score: 78, color: '#2E86AB' },
-              { key: 'A', label: 'Artistic', score: 70, color: GOLD },
-              { key: 'S', label: 'Social', score: 85, color: TEAL },
-              { key: 'E', label: 'Enterprising', score: 94, color: PURPLE },
-              { key: 'C', label: 'Conventional', score: 82, color: DEEP },
+              { key: 'R', label: 'Realistic', score: 65, color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
+              { key: 'I', label: 'Investigative', score: 78, color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
+              { key: 'A', label: 'Artistic', score: 70, color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
+              { key: 'S', label: 'Social', score: 85, color: TEAL, desc: t.socialDesc, example: t.socialEx },
+              { key: 'E', label: 'Enterprising', score: 94, color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
+              { key: 'C', label: 'Conventional', score: 82, color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
             ]);
           }
         })
         .catch(err => console.error("Failed to load placeholder careers from backend:", err));
     }
-  }, [reportData]);
+  }, [reportData, t]);
 
   // Dynamic RIASEC Scores
   const dynamicRIASEC = reportData?.scores ? [
-    { key: 'R', label: 'Realistic', score: Math.round((reportData.scores['R'] / 35) * 100), color: '#5C8374' },
-    { key: 'I', label: 'Investigative', score: Math.round((reportData.scores['I'] / 35) * 100), color: '#2E86AB' },
-    { key: 'A', label: 'Artistic', score: Math.round((reportData.scores['A'] / 35) * 100), color: GOLD },
-    { key: 'S', label: 'Social', score: Math.round((reportData.scores['S'] / 35) * 100), color: TEAL },
-    { key: 'E', label: 'Enterprising', score: Math.round((reportData.scores['E'] / 35) * 100), color: PURPLE },
-    { key: 'C', label: 'Conventional', score: Math.round((reportData.scores['C'] / 35) * 100), color: DEEP },
+    { key: 'R', label: 'Realistic', score: Math.round((reportData.scores['R'] / 35) * 100), color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
+    { key: 'I', label: 'Investigative', score: Math.round((reportData.scores['I'] / 35) * 100), color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
+    { key: 'A', label: 'Artistic', score: Math.round((reportData.scores['A'] / 35) * 100), color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
+    { key: 'S', label: 'Social', score: Math.round((reportData.scores['S'] / 35) * 100), color: TEAL, desc: t.socialDesc, example: t.socialEx },
+    { key: 'E', label: 'Enterprising', score: Math.round((reportData.scores['E'] / 35) * 100), color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
+    { key: 'C', label: 'Conventional', score: Math.round((reportData.scores['C'] / 35) * 100), color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
   ] : defaultRIASEC;
 
   // Calculate 3-letter personality code
-  const personalityCode = reportData?.scores ? 
-    Object.entries(reportData.scores)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(entry => entry[0])
-      .join('') 
+  const personalityCode = dynamicRIASEC 
+    ? [...dynamicRIASEC].sort((a, b) => b.score - a.score).slice(0, 3).map(d => d.key).join('')
     : 'ECR';
 
   // Dynamic Careers
@@ -239,6 +359,14 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
     console.log('Downloading report for:', fullName);
   };
 
+  // LinkedIn Share Function
+  const handleLinkedInShare = () => {
+    const appUrl = window.location.origin;
+    const shareText = `I just discovered my top career match is ${topMatch?.title || 'amazing'} using SkillSense! Find your path today. 🚀`;
+    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText + ' ' + appUrl)}`;
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="min-h-screen w-full py-8 sm:py-12 px-4 sm:px-8 md:px-10 flex justify-center relative" style={{ backgroundColor: BG }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');`}</style>
@@ -283,16 +411,30 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
               </div>
             </div>
 
-            {/* Download Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleDownloadReport}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-white/10 hover:bg-white/20 text-white transition-all border border-white/20 hover:border-white/40 shadow-lg"
-            >
-              <Download className="w-4 h-4" />
-              <span className="text-sm font-semibold">Download Report</span>
-            </motion.button>
+            {/* Actions Container */}
+            <div className="flex items-center gap-3">
+              {/* Download Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleDownloadReport}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-white/10 hover:bg-white/20 text-white transition-all border border-white/20 hover:border-white/40 shadow-lg"
+              >
+                <Download className="w-4 h-4" />
+                <span className="text-sm font-semibold">{isPurchased ? t.downloadReport : t.unlockReport}</span>
+              </motion.button>
+
+              {/* LinkedIn Share Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleLinkedInShare}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#0A66C2] hover:bg-[#004182] text-white transition-all border border-white/20 hover:border-white/40 shadow-lg"
+              >
+                <Share2 className="w-4 h-4" />
+                <span className="text-sm font-semibold">Share</span>
+              </motion.button>
+            </div>
           </div>
 
           {/* ---- Stat strip ---- */}
@@ -340,7 +482,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
                   >
                     <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45" />
                     <strong>{personalityCode} Profile</strong><br/>
-                    Based on your top 3 traits from the RIASEC model. It means your work style is deeply aligned with these characteristics.
+                    Based on your top 3 traits. It means your work style is deeply aligned with these characteristics.
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -421,22 +563,22 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
               {[
                 { 
                   icon: Brain, 
-                  label: 'Mind', 
-                  text: 'Leadership and persuasive traits dominate your analytical thinking.', 
+                  label: t.mind, 
+                  text: t.mindText, 
                   color: TEAL,
                   gradient: 'from-teal-400 to-teal-600'
                 },
                 { 
                   icon: GraduationCap, 
-                  label: 'Body', 
-                  text: 'You do best in environments that are structured and well organized.', 
+                  label: t.body, 
+                  text: t.bodyText, 
                   color: GOLD,
                   gradient: 'from-amber-400 to-amber-600'
                 },
                 { 
                   icon: Heart, 
-                  label: 'Soul', 
-                  text: 'Driven by impact, leadership, and meaningful professional connection.', 
+                  label: t.soul, 
+                  text: t.soulText, 
                   color: PURPLE,
                   gradient: 'from-purple-400 to-purple-600'
                 },

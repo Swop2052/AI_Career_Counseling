@@ -23,6 +23,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isPurchased, setIsPurchased] = useState(false);
   const [tempStudentName, setTempStudentName] = useState('');
+
   const [onboardingData, setOnboardingData] = useState(() => {
     try {
       const savedData = localStorage.getItem('skillsense_onboarding');
@@ -114,21 +115,42 @@ export default function App() {
     }
     setReportData(data);
     localStorage.setItem('skillsense_report', JSON.stringify(data));
-    navigateTo('report', '#report');
+
+    // Enforce authentication before showing report
+    if (!currentUser) {
+      localStorage.setItem('skillsense_pending_report', 'true');
+      navigateTo('signup', '#signup');
+    } else {
+      navigateTo('report', '#report');
+    }
   };
 
   const handleSignupSuccess = (userData) => {
     const user = userData || { name: tempStudentName || onboardingData?.fullName || 'User', email: 'user@skillsense.ai', initials: 'U' };
     setCurrentUser(user);
     localStorage.setItem('skillsense_user', JSON.stringify(user));
-    navigateTo('pricing', '#pricing');
+
+    // If user just completed the test, send them directly to report
+    if (localStorage.getItem('skillsense_pending_report')) {
+      localStorage.removeItem('skillsense_pending_report');
+      navigateTo('report', '#report');
+    } else {
+      navigateTo('pricing', '#pricing');
+    }
   };
 
   const handleLoginSuccess = (userData) => {
     const user = userData || { name: 'User', email: 'user@skillsense.ai', initials: 'U' };
     setCurrentUser(user);
     localStorage.setItem('skillsense_user', JSON.stringify(user));
-    navigateTo('home', '');
+
+    // If user just completed the test as a guest and logged in, send them directly to report
+    if (localStorage.getItem('skillsense_pending_report')) {
+      localStorage.removeItem('skillsense_pending_report');
+      navigateTo('report', '#report');
+    } else {
+      navigateTo('home', '');
+    }
   };
 
   const handlePurchaseSuccess = () => {
@@ -158,10 +180,9 @@ export default function App() {
   }
 
   return (
-    <div 
-      className={`w-full min-h-screen overflow-x-hidden flex flex-col justify-between ${
-        isFullScreenPage ? 'bg-white pt-0' : 'bg-[#CFEDED] pt-12 md:pt-20'
-      }`} 
+    <div
+      className={`w-full min-h-screen overflow-x-hidden flex flex-col justify-between ${isFullScreenPage ? 'bg-white pt-0' : 'bg-[#CFEDED] pt-12 md:pt-20'
+        }`}
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -172,12 +193,12 @@ export default function App() {
 
       {/* Global Navbar */}
       {!isFullScreenPage && (
-        <Navbar 
+        <Navbar
           isLoggedIn={Boolean(currentUser)}
           user={currentUser}
           onOpenLogin={() => navigateTo('login', '#login')}
           onOpenSignup={() => navigateTo('signup', '#signup')}
-          onOpenProfile={() => navigateTo('profile', '#profile')} 
+          onOpenProfile={() => navigateTo('profile', '#profile')}
           onOpenCounselor={() => navigateTo('counselor', '#ai-counselor')}
           onHomeClick={() => navigateTo('home', '')}
           onStartCareerTest={handleStartCareerTest}
@@ -192,14 +213,14 @@ export default function App() {
         )}
 
         {currentPage === 'onboarding' && (
-          <AssessmentOnboarding 
+          <AssessmentOnboarding
             onComplete={handleOnboardingComplete}
             onBackToHome={() => navigateTo('home', '')}
           />
         )}
 
         {currentPage === 'test' && (
-          <CareerTestModule 
+          <CareerTestModule
             userMetadata={onboardingData}
             appConfig={appConfig}
             onCompleteTest={handleCompleteTest}
@@ -208,20 +229,20 @@ export default function App() {
         )}
 
         {currentPage === 'report' && (
-          <ReportCardPage 
+          <ReportCardPage
             user={activeReportUser}
             reportData={reportData}
-            isPurchased={isPurchased}
+            isPurchased={Boolean(currentUser) || isPurchased}
             onCreateAccount={() => navigateTo('signup', '#signup')}
             onGoToPricing={() => navigateTo('pricing', '#pricing')}
           />
         )}
 
         {currentPage === 'signup' && (
-          <Signup 
+          <Signup
             onSuccess={handleSignupSuccess}
             onSwitchToLogin={() => navigateTo('login', '#login')}
-            onHome={() => navigateTo('home', '')} 
+            onHome={() => navigateTo('home', '')}
             onOpenTerms={() => navigateTo('terms', '#terms')}
             onOpenPrivacy={() => navigateTo('privacy', '#privacy')}
             onOpenConsent={() => navigateTo('consent', '#consent')}
@@ -229,7 +250,7 @@ export default function App() {
         )}
 
         {currentPage === 'login' && (
-          <Login 
+          <Login
             onSuccess={handleLoginSuccess}
             onSwitchToSignup={() => navigateTo('signup', '#signup')}
             onBack={() => navigateTo('home', '')}
@@ -239,30 +260,30 @@ export default function App() {
 
         {/* Independent Terms & Conditions Page */}
         {currentPage === 'terms' && (
-          <TermsConditions 
-            onBack={() => navigateTo('signup', '#signup')} 
-            onHome={() => navigateTo('home', '')} 
+          <TermsConditions
+            onBack={() => navigateTo('signup', '#signup')}
+            onHome={() => navigateTo('home', '')}
           />
         )}
 
         {/* Independent Privacy Policy Page */}
         {currentPage === 'privacy' && (
-          <PrivacyPolicy 
-            onBack={() => navigateTo('signup', '#signup')} 
-            onHome={() => navigateTo('home', '')} 
+          <PrivacyPolicy
+            onBack={() => navigateTo('signup', '#signup')}
+            onHome={() => navigateTo('home', '')}
           />
         )}
 
         {/* Independent Consent Form Page */}
         {currentPage === 'consent' && (
-          <ConsentForm 
-            onBack={() => navigateTo('signup', '#signup')} 
-            onHome={() => navigateTo('home', '')} 
+          <ConsentForm
+            onBack={() => navigateTo('signup', '#signup')}
+            onHome={() => navigateTo('home', '')}
           />
         )}
 
         {currentPage === 'pricing' && (
-          <PricingPage 
+          <PricingPage
             onPurchaseSuccess={handlePurchaseSuccess}
             onBack={() => navigateTo('report', '#report')}
             reportData={reportData}
@@ -270,8 +291,8 @@ export default function App() {
         )}
 
         {currentPage === 'profile' && (
-          <ProfilePage 
-            user={currentUser} 
+          <ProfilePage
+            user={currentUser}
             onboardingData={onboardingData}
             isPurchased={isPurchased}
             onBack={() => navigateTo('home', '')}

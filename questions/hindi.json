@@ -1,0 +1,728 @@
+{
+  "Realistic": [
+    {
+      "question": "नई कुर्सी डिज़ाइन करने के बजाय, मैं टूटी हुई कुर्सी को ठीक करना ज़्यादा पसंद करूँगा।",
+      "answers": [
+        "मुझे डिज़ाइन करना पसंद है",
+        "मुझे डिज़ाइन करना थोड़ा पसंद है",
+        "दोनों ठीक हैं",
+        "मुझे ठीक करना थोड़ा पसंद है",
+        "मैं उसे ठीक करूँगा"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/architechture.png",
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png",
+        "/images/icons/tractor.png"
+      ]
+    },
+    {
+      "question": "सिद्धांत पर विचार करने के बजाय व्यावहारिक रूप से कुछ करके समस्या को हल करना मुझे पसंद है।",
+      "answers": [
+        "सैद्धांतिक उपाय ज़्यादा पसंद हैं",
+        "सिद्धांत और विचार अक्सर पसंद आते हैं",
+        "दोनों दृष्टिकोण समान रूप से उपयोगी हैं",
+        "आमतौर पर व्यावहारिक उपाय चुनता हूँ",
+        "व्यावहारिक उपाय बहुत ज़्यादा पसंद हैं"
+      ],
+      "icons": [
+        "/images/icons/hammer.png",
+        "/images/icons/tools.png",
+        "/images/icons/balance.png",
+        "/images/icons/brain.png",
+        "/images/icons/thinking.png"
+      ]
+    },
+    {
+      "question": "छुट्टियों में किताब पढ़ने के बजाय मैं बाहर काम करना या कुछ बनाना पसंद करता हूँ।",
+      "answers": [
+        "हमेशा पढ़ना पसंद करता हूँ",
+        "ज़्यादातर पढ़ना पसंद करता हूँ",
+        "यह मूड पर निर्भर करता है",
+        "हाथ से कुछ बनाना पसंद है",
+        "बाहर काम करना निश्चित रूप से पसंद है"
+      ],
+      "icons": [
+        "/images/icons/books.png",
+        "/images/icons/take-note.png",
+        "/images/icons/balance.png",
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png"
+      ]
+    },
+    {
+      "question": "लोगों से चर्चा करने के बजाय मशीन, उपकरण या पौधों के साथ काम करना मुझे ज़्यादा आरामदायक लगता है।",
+      "answers": [
+        "हमेशा लोगों के साथ काम करना पसंद है",
+        "लोगों के साथ रहना ज़्यादा पसंद है",
+        "मुझे दोनों समान रूप से पसंद हैं",
+        "उपकरणों/मशीनों के साथ काम करना ज़्यादा पसंद है",
+        "निश्चित रूप से मशीनों/प्रकृति के साथ काम करना पसंद है"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/team.png",
+        "/images/icons/balance.png",
+        "/images/icons/tractor.png",
+        "/images/icons/leaves.png"
+      ]
+    },
+    {
+      "question": "मुझे ऐसे प्रोजेक्ट पसंद हैं जिनके स्पष्ट और मापने योग्य परिणाम हों (जैसे घर बनाना या कार ठीक करना)।",
+      "answers": [
+        "मुझे अमूर्त प्रोजेक्ट पसंद हैं",
+        "विचारों पर काम करना ज़्यादा पसंद है",
+        "कोई भी प्रोजेक्ट चलेगा",
+        "स्पष्ट परिणामों वाले प्रोजेक्ट पसंद हैं",
+        "मुझे ठोस, व्यावहारिक परिणाम बहुत पसंद हैं"
+      ],
+      "icons": [
+        "/images/icons/stars.png",
+        "/images/icons/brain.png",
+        "/images/icons/balance.png",
+        "/images/icons/hammer.png",
+        "/images/icons/tractor.png"
+      ]
+    },
+    {
+      "question": "मैं शारीरिक रूप से सक्रिय रहना पसंद करता हूँ और दिन भर डेस्क पर बैठना टालता हूँ।",
+      "answers": [
+        "मुझे डेस्क पर बैठकर काम करना बहुत पसंद है",
+        "डेस्क जॉब ठीक है",
+        "थोड़ा शारीरिक, थोड़ा डेस्क जॉब",
+        "सक्रिय रहना पसंद है",
+        "मुझे लगातार शारीरिक हलचल चाहिए"
+      ],
+      "icons": [
+        "/images/icons/chair.png",
+        "/images/icons/take-note.png",
+        "/images/icons/balance.png",
+        "/images/icons/energy.png",
+        "/images/icons/lightning-bolt.png"
+      ]
+    },
+    {
+      "question": "अमूर्त विचारों पर चर्चा करने के बजाय तकनीक या शिल्प (craft) पर काम करना मुझे ज़्यादा पसंद है।",
+      "answers": [
+        "अमूर्त चर्चाएँ बहुत पसंद हैं",
+        "चर्चा करना पसंद है",
+        "दोनों ठीक हैं",
+        "हाथ से काम करना ज़्यादा पसंद है",
+        "निश्चित रूप से व्यावहारिक कौशल का उपयोग करना पसंद है"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/thinking.png",
+        "/images/icons/balance.png",
+        "/images/icons/hammer.png",
+        "/images/icons/construction-worker.png"
+      ]
+    }
+  ],
+  "Investigative": [
+    {
+      "question": "नया फोन कैसे काम करता है यह समझने के लिए मैं मैनुअल पढ़ने को तैयार रहता हूँ।",
+      "answers": [
+        "मैं कभी मैनुअल नहीं पढ़ता",
+        "मैं शायद ही कभी पढ़ता हूँ",
+        "केवल ज़रूरत पड़ने पर पढ़ता हूँ",
+        "मुझे पढ़ना पसंद है",
+        "मैं हमेशा इसे पूरा पढ़ता हूँ"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/smile.png",
+        "/images/icons/brain.png"
+      ]
+    },
+    {
+      "question": "मुझे पहेलियाँ सुलझाना या जटिल सवालों के जवाब खोजना बहुत पसंद है।",
+      "answers": [
+        "मुझे पहेलियाँ बिल्कुल पसंद नहीं हैं",
+        "मैं जहाँ तक हो सके टालता हूँ",
+        "कभी-कभी ठीक लगती हैं",
+        "मुझे पहेलियाँ सुलझाना पसंद है",
+        "मुझे चुनौतीपूर्ण पहेलियाँ सुलझाने में बहुत मज़ा आता है"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/confused.png",
+        "/images/icons/neutral.png",
+        "/images/icons/thinking.png",
+        "/images/icons/puzzle.png"
+      ]
+    },
+    {
+      "question": "मैं एक ही तकनीकी समस्या पर घंटों अकेले काम कर सकता हूँ।",
+      "answers": [
+        "मैं जल्दी ऊब जाता हूँ",
+        "मैं थोड़ी देर काम कर सकता हूँ",
+        "यह समस्या पर निर्भर करता है",
+        "मुझे कठिन समस्याओं पर काम करना पसंद है",
+        "मैं जटिल चुनौतियों पर घंटों काम कर सकता हूँ"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/brain.png",
+        "/images/icons/search.png",
+        "/images/icons/smile.png",
+        "/images/icons/lightning-bolt.png"
+      ]
+    },
+    {
+      "question": "मैं कठिन प्रश्न का हल मिलने तक लगातार विचार करता रहता हूँ।",
+      "answers": [
+        "मैं आमतौर पर छोड़ देता हूँ",
+        "मैं थोड़ी देर विचार करता हूँ",
+        "मैं बाद में फिर विचार करता हूँ",
+        "मैं हल खोजने की कोशिश करता हूँ",
+        "जब तक हल नहीं मिलता, मैं नहीं रुकता"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/thinking.png",
+        "/images/icons/search.png",
+        "/images/icons/brain.png",
+        "/images/icons/puzzle.png"
+      ]
+    },
+    {
+      "question": "कोई चीज़ 'कैसे' या 'क्यों' काम करती है, इसके पीछे का विज्ञान और कारण मैं जानना चाहता हूँ।",
+      "answers": [
+        "मुझे बस इसके काम करने से मतलब है",
+        "मैं शायद ही कभी सोचता हूँ",
+        "मैं कभी-कभी पूछता हूँ",
+        "मुझे जानना पसंद है",
+        "मैं हमेशा गहरी जानकारी खोजता हूँ"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/search.png",
+        "/images/icons/brain.png"
+      ]
+    },
+    {
+      "question": "मुझे डेटा, तथ्य और जानकारी का विश्लेषण करना पसंद है।",
+      "answers": [
+        "मुझे डेटा बिल्कुल पसंद नहीं है",
+        "डेटा मुझे उबाऊ लगता है",
+        "मैं ज़रूरत के अनुसार करता हूँ",
+        "मुझे विश्लेषणात्मक काम पसंद है",
+        "जानकारी से अर्थ खोजना मुझे बहुत पसंद है"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/confused.png",
+        "/images/icons/neutral.png",
+        "/images/icons/bar-chart.png",
+        "/images/icons/search.png"
+      ]
+    },
+    {
+      "question": "दूसरों पर निर्भर रहने के बजाय मैं खुद शोध करके जवाब खोजना पसंद करता हूँ।",
+      "answers": [
+        "मैं हमेशा दूसरों से पूछता हूँ",
+        "मैं ज़्यादातर दूसरों से पूछता हूँ",
+        "मैं दोनों करता हूँ",
+        "मैं खुद खोजने की कोशिश करता हूँ",
+        "मैं हमेशा खुद गहरा शोध करता हूँ"
+      ],
+      "icons": [
+        "/images/icons/team.png",
+        "/images/icons/chat.png",
+        "/images/icons/balance.png",
+        "/images/icons/search.png",
+        "/images/icons/brain.png"
+      ]
+    }
+  ],
+  "Artistic": [
+    {
+      "question": "बंधा हुआ महसूस किए बिना अपने तरीके से नई चीजें बनाना मुझे पसंद है।",
+      "answers": [
+        "मुझे स्पष्ट नियम पसंद हैं",
+        "मुझे मार्गदर्शन की आवश्यकता होती है",
+        "दोनों ठीक हैं",
+        "मुझे आज़ादी पसंद है",
+        "मैं अपने तरीके से काम करना पसंद करता हूँ"
+      ],
+      "icons": [
+        "/images/icons/padlock.png",
+        "/images/icons/take-note.png",
+        "/images/icons/balance.png",
+        "/images/icons/color-palette.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "मेरे पास अक्सर बहुत अलग और रचनात्मक विचार होते हैं।",
+      "answers": [
+        "मैं व्यावहारिक चीजों को महत्व देता हूँ",
+        "मैं शायद ही कभी अलग सोचता हूँ",
+        "कभी-कभी होते हैं",
+        "मेरे पास अक्सर रचनात्मक विचार होते हैं",
+        "मैं हमेशा रचनात्मक और अलग सोचता हूँ"
+      ],
+      "icons": [
+        "/images/icons/hammer.png",
+        "/images/icons/balance.png",
+        "/images/icons/thinking.png",
+        "/images/icons/color-palette.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "मुझे लिखना, चित्र बनाना, संगीत बनाना या कलात्मक काम करना पसंद है।",
+      "answers": [
+        "मुझे कला बिल्कुल पसंद नहीं है",
+        "मैं इस पर ध्यान नहीं देता",
+        "कभी-कभी पसंद है",
+        "मुझे कलात्मक काम पसंद हैं",
+        "कला मेरे जीवन का मुख्य हिस्सा है"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/sad.png",
+        "/images/icons/neutral.png",
+        "/images/icons/color-palette.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "कला या लेखन के माध्यम से अपनी भावनाओं और विचारों को व्यक्त करना मेरे लिए आसान है।",
+      "answers": [
+        "मैं सीधे बात करना पसंद करता हूँ",
+        "मैं शायद ही कभी कलात्मक रूप से व्यक्त होता हूँ",
+        "कभी-कभी करता हूँ",
+        "मुझे कला के माध्यम से व्यक्त होना पसंद है",
+        "मेरी कला ही मेरी अभिव्यक्ति है"
+      ],
+      "icons": [
+        "/images/icons/chat.png",
+        "/images/icons/speak.png",
+        "/images/icons/neutral.png",
+        "/images/icons/take-note.png",
+        "/images/icons/color-palette.png"
+      ]
+    },
+    {
+      "question": "रोजमर्रा के उबाऊ कामों की तुलना में मुझे वे काम पसंद हैं जो रचनात्मकता को बढ़ावा देते हैं।",
+      "answers": [
+        "मुझे तय किए गए काम पसंद हैं",
+        "मैं तय काम करना पसंद करता हूँ",
+        "दोनों समान हैं",
+        "मुझे रचनात्मक काम पसंद हैं",
+        "मैं केवल रचनात्मक काम ही ढूंढता हूँ"
+      ],
+      "icons": [
+        "/images/icons/schedule.png",
+        "/images/icons/padlock.png",
+        "/images/icons/balance.png",
+        "/images/icons/color-palette.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "मेरे आस-पास सुंदर डिज़ाइन, कलाकृतियां या अच्छी सजावट होना मेरे लिए महत्वपूर्ण है।",
+      "answers": [
+        "मुझे सजावट की कोई परवाह नहीं है",
+        "यह मेरे लिए बहुत महत्वपूर्ण नहीं है",
+        "कभी-कभी ध्यान देता हूँ",
+        "मुझे सुंदर वातावरण पसंद है",
+        "कलात्मक वातावरण मेरे लिए बहुत प्रेरणादायक होता है"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/smile.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "किसी प्रोजेक्ट में, मुझे दी गई जानकारी को वैसे ही प्रस्तुत करने के बजाय अपनी खुद की शैली जोड़ना पसंद है।",
+      "answers": [
+        "मैं सटीक निर्देशों का पालन करता हूँ",
+        "मैं आमतौर पर अपना बदलाव नहीं करता",
+        "कभी-कभी बदलाव करता हूँ",
+        "मैं अपनी शैली जोड़ता हूँ",
+        "मैं हमेशा सब कुछ अपनी अलग शैली में करता हूँ"
+      ],
+      "icons": [
+        "/images/icons/take-note.png",
+        "/images/icons/check.png",
+        "/images/icons/neutral.png",
+        "/images/icons/color-palette.png",
+        "/images/icons/stars.png"
+      ]
+    }
+  ],
+  "Social": [
+    {
+      "question": "दूसरों को उनकी समस्याओं को हल करने और नई चीजें सीखने में मदद करना मुझे बहुत पसंद है।",
+      "answers": [
+        "मुझे अकेले काम करना पसंद है",
+        "मैं अपने काम पर ध्यान केंद्रित करता हूँ",
+        "संभव होने पर मैं मदद करता हूँ",
+        "मुझे मदद करना पसंद है",
+        "दूसरों को सिखाना और मदद करना मुझे बहुत खुशी देता है"
+      ],
+      "icons": [
+        "/images/icons/padlock.png",
+        "/images/icons/search.png",
+        "/images/icons/neutral.png",
+        "/images/icons/smile.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "लोग अक्सर सलाह या समर्थन के लिए मेरे पास आते हैं।",
+      "answers": [
+        "ऐसा कभी नहीं होता",
+        "शायद ही कभी होता है",
+        "कभी-कभी आते हैं",
+        "लोग अक्सर आते हैं",
+        "लोग हमेशा मेरे पास मदद के लिए आते हैं"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/chat.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "मुझे इंसानों के साथ काम करना ज़्यादा पसंद है, मशीनों या डेटा के साथ नहीं।",
+      "answers": [
+        "मैं पूरी तरह से मशीनों/डेटा को पसंद करता हूँ",
+        "मुझे डेस्क पर काम करना ज़्यादा पसंद है",
+        "मुझे दोनों समान रूप से पसंद हैं",
+        "मुझे इंसानों के साथ काम करना पसंद है",
+        "मुझे लोगों से बातचीत करना बहुत पसंद है"
+      ],
+      "icons": [
+        "/images/icons/tractor.png",
+        "/images/icons/bar-chart.png",
+        "/images/icons/balance.png",
+        "/images/icons/chat.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "नए लोगों से मिलना और उनसे बातचीत करना मेरे लिए बहुत आसान है।",
+      "answers": [
+        "मुझे लोगों से बात करना मुश्किल लगता है",
+        "मैं थोड़ा शर्मीला हूँ",
+        "कभी-कभी ठीक होता है",
+        "मुझे नए लोगों से मिलना पसंद है",
+        "मुझे लोगों के बीच रहना और संवाद करना बहुत पसंद है"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/smile.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "दूसरों को समझना और उनकी भावनाओं का सम्मान करना मेरे लिए बहुत महत्वपूर्ण है।",
+      "answers": [
+        "मैं तर्क और तथ्यों पर ध्यान केंद्रित करता हूँ",
+        "मैं भावनाओं पर कम ध्यान देता हूँ",
+        "कभी-कभी विचार करता हूँ",
+        "मैं दूसरों की भावनाओं को समझता हूँ",
+        "मैं बहुत सहानुभूतिपूर्ण हूँ"
+      ],
+      "icons": [
+        "/images/icons/brain.png",
+        "/images/icons/take-note.png",
+        "/images/icons/neutral.png",
+        "/images/icons/heart.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "मैं टीमवर्क में उत्कृष्ट हूँ और मुझे टीम के साथ काम करना पसंद है।",
+      "answers": [
+        "मैं हमेशा अकेले काम करना पसंद करता हूँ",
+        "मैं जहाँ तक हो सके अकेले काम करता हूँ",
+        "ज़रूरत पड़ने पर करता हूँ",
+        "मुझे टीम में काम करना पसंद है",
+        "टीम के साथ काम करने में मैं सर्वश्रेष्ठ हूँ"
+      ],
+      "icons": [
+        "/images/icons/padlock.png",
+        "/images/icons/nervous.png",
+        "/images/icons/balance.png",
+        "/images/icons/smile.png",
+        "/images/icons/team.png"
+      ]
+    },
+    {
+      "question": "समाज की भलाई के लिए काम करना मेरे लिए पैसे से ज़्यादा महत्वपूर्ण हो सकता है।",
+      "answers": [
+        "पैसा मेरे लिए सबसे महत्वपूर्ण है",
+        "व्यावहारिक सफलता महत्वपूर्ण है",
+        "दोनों महत्वपूर्ण हैं",
+        "समाज सेवा मुझे पसंद है",
+        "लोगों का कल्याण मेरा मुख्य लक्ष्य है"
+      ],
+      "icons": [
+        "/images/icons/bar-chart.png",
+        "/images/icons/take-note.png",
+        "/images/icons/balance.png",
+        "/images/icons/heart.png",
+        "/images/icons/team.png"
+      ]
+    }
+  ],
+  "Enterprising": [
+    {
+      "question": "मैं जिम्मेदारी लेता हूँ और दूसरों का मार्गदर्शन करने के लिए आगे आता हूँ।",
+      "answers": [
+        "मैं हमेशा दूसरों के निर्देशों का पालन करता हूँ",
+        "मैं ज़्यादातर पीछे रहता हूँ",
+        "कभी-कभी जिम्मेदारी लेता हूँ",
+        "मुझे नेतृत्व करना पसंद है",
+        "मैं जन्मजात नेता हूँ"
+      ],
+      "icons": [
+        "/images/icons/take-note.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/smile.png",
+        "/images/icons/crown.png"
+      ]
+    },
+    {
+      "question": "मैं चाहता हूँ कि मेरा अपना व्यवसाय हो या मैं किसी बड़े प्रोजेक्ट का नेतृत्व करूँ।",
+      "answers": [
+        "मुझे व्यवसाय बिल्कुल पसंद नहीं है",
+        "मुझे सुरक्षित नौकरी पसंद है",
+        "कभी-कभी विचार करता हूँ",
+        "मैं व्यवसाय शुरू करना चाहूंगा",
+        "मैं निश्चित रूप से उद्यमी बनना चाहता हूँ"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/take-note.png",
+        "/images/icons/neutral.png",
+        "/images/icons/briefcase.png",
+        "/images/icons/crown.png"
+      ]
+    },
+    {
+      "question": "दूसरों को अपने विचारों के लिए मनाना या सहमत करना मेरे लिए आसान है।",
+      "answers": [
+        "मैं मनाना नहीं जानता",
+        "मैं आमतौर पर बहस नहीं करता",
+        "कुछ समय सफल होता हूँ",
+        "मैं अच्छी तरह से मना लेता हूँ",
+        "मैं लोगों से बहुत प्रभावी ढंग से संवाद करके उन्हें सहमत कर सकता हूँ"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/chat.png",
+        "/images/icons/speak.png"
+      ]
+    },
+    {
+      "question": "मुझे बड़े लक्ष्य निर्धारित करना और प्रतिस्पर्धा करना पसंद है।",
+      "answers": [
+        "मैं प्रतिस्पर्धा से बचता हूँ",
+        "मैं बहुत महत्वाकांक्षी नहीं हूँ",
+        "मुझे कभी-कभी चुनौतियां पसंद आती हैं",
+        "मुझे बड़े लक्ष्य निर्धारित करना पसंद है",
+        "मैं अत्यधिक प्रतिस्पर्धी और महत्वाकांक्षी हूँ"
+      ],
+      "icons": [
+        "/images/icons/nervous.png",
+        "/images/icons/take-note.png",
+        "/images/icons/neutral.png",
+        "/images/icons/target.png",
+        "/images/icons/trophy.png"
+      ]
+    },
+    {
+      "question": "जोखिम लेना और बड़े फैसले लेना मुझे डराता नहीं है।",
+      "answers": [
+        "मैं हमेशा सुरक्षित खेलता हूँ",
+        "मैं आमतौर पर जोखिम से बचता हूँ",
+        "कभी-कभी जोखिम लेता हूँ",
+        "मुझे चुनौतीपूर्ण निर्णय लेना पसंद है",
+        "मुझे बड़े निर्णय और जोखिम लेने में उत्साह महसूस होता है"
+      ],
+      "icons": [
+        "/images/icons/padlock.png",
+        "/images/icons/nervous.png",
+        "/images/icons/balance.png",
+        "/images/icons/rocket.png",
+        "/images/icons/fire.png"
+      ]
+    },
+    {
+      "question": "इवेंट आयोजित करना या किसी कार्यक्रम की योजना बनाना मुझे अच्छी तरह आता है।",
+      "answers": [
+        "मुझे योजना बनाना बिल्कुल पसंद नहीं है",
+        "मैं जहाँ तक हो सके आयोजन में भाग नहीं लेता",
+        "कभी-कभी करता हूँ",
+        "मुझे योजना बनाना पसंद है",
+        "मैं हमेशा इवेंट्स और कार्यक्रमों की सफल योजना बनाता हूँ"
+      ],
+      "icons": [
+        "/images/icons/no-entry.png",
+        "/images/icons/sad.png",
+        "/images/icons/neutral.png",
+        "/images/icons/schedule.png",
+        "/images/icons/stars.png"
+      ]
+    },
+    {
+      "question": "मैं खुद को एक महत्वाकांक्षी व्यक्ति मानता हूँ और हमेशा आगे बढ़ना चाहता हूँ।",
+      "answers": [
+        "मैं जैसा हूँ वैसा संतुष्ट हूँ",
+        "मैं ज़्यादा नहीं सोचता",
+        "कभी-कभी प्रगति के बारे में सोचता हूँ",
+        "मैं आगे बढ़ना चाहता हूँ",
+        "मैं हमेशा सफलता के शिखर तक पहुंचने का लक्ष्य रखता हूँ"
+      ],
+      "icons": [
+        "/images/icons/padlock.png",
+        "/images/icons/neutral.png",
+        "/images/icons/thinking.png",
+        "/images/icons/target.png",
+        "/images/icons/rocket.png"
+      ]
+    }
+  ],
+  "Conventional": [
+    {
+      "question": "मुझे स्पष्ट निर्देशों और नियमों के साथ काम करना ज़्यादा पसंद है।",
+      "answers": [
+        "मुझे नियम बिल्कुल पसंद नहीं हैं",
+        "मैं जहाँ तक हो सके नियमों से बचता हूँ",
+        "कभी-कभी ठीक होता है",
+        "मुझे स्पष्ट निर्देश पसंद हैं",
+        "नियम और स्पष्टता मेरे लिए अत्यंत आवश्यक हैं"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/nervous.png",
+        "/images/icons/balance.png",
+        "/images/icons/check.png",
+        "/images/icons/padlock.png"
+      ]
+    },
+    {
+      "question": "अव्यवस्थित काम करने के बजाय मैं सब कुछ व्यवस्थित और योजना बनाकर करता हूँ।",
+      "answers": [
+        "मुझे योजना बनाने से बोरियत होती है",
+        "मैं अक्सर आखिरी मिनट में काम करता हूँ",
+        "कभी-कभी योजना बनाता हूँ",
+        "मुझे व्यवस्थित काम करना पसंद है",
+        "मैं हर चीज़ की पहले से योजना बनाकर व्यवस्थित करता हूँ"
+      ],
+      "icons": [
+        "/images/icons/stars.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/take-note.png",
+        "/images/icons/schedule.png"
+      ]
+    },
+    {
+      "question": "किसी भी काम में छोटी-छोटी बातों (Details) पर ध्यान देना मेरी ताकत है।",
+      "answers": [
+        "मैं सिर्फ बड़ी तस्वीर पर ध्यान देता हूँ",
+        "मैं अक्सर छोटी गलतियां करता हूँ",
+        "कभी-कभी बारीकियों को देखता हूँ",
+        "मैं अक्सर ध्यान से काम करता हूँ",
+        "मैं हर छोटी चीज़ पर सटीक ध्यान देता हूँ"
+      ],
+      "icons": [
+        "/images/icons/stars.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/search.png",
+        "/images/icons/check.png"
+      ]
+    },
+    {
+      "question": "डेटा एंट्री, रिकॉर्ड रखने या सटीक गणितीय काम करने में मुझे कोई समस्या नहीं होती।",
+      "answers": [
+        "मुझे ऐसे कामों से बहुत बोरियत होती है",
+        "मैं जहाँ तक हो सके टालता हूँ",
+        "मैं थोड़ा बहुत कर सकता हूँ",
+        "मुझे ऐसे काम ठीक लगते हैं",
+        "मुझे रिकॉर्ड रखना और सटीक काम करना बहुत पसंद है"
+      ],
+      "icons": [
+        "/images/icons/sad.png",
+        "/images/icons/nervous.png",
+        "/images/icons/neutral.png",
+        "/images/icons/take-note.png",
+        "/images/icons/bar-chart.png"
+      ]
+    },
+    {
+      "question": "मैं अपना खुद का निर्धारित कार्यक्रम और दिनचर्या (Routine) का पालन करना पसंद करता हूँ।",
+      "answers": [
+        "मुझे रोज़ कुछ नया चाहिए",
+        "मुझे निर्धारित रूटीन पसंद नहीं है",
+        "मैं कुछ हद तक रूटीन का पालन करता हूँ",
+        "मुझे कार्यक्रम पसंद है",
+        "मैं हमेशा अपने निर्धारित कार्यक्रम के अनुसार ही काम करता हूँ"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/stars.png",
+        "/images/icons/neutral.png",
+        "/images/icons/schedule.png",
+        "/images/icons/padlock.png"
+      ]
+    },
+    {
+      "question": "बिना किसी बाधा के शांत जगह पर काम करना मुझे सबसे ज़्यादा पसंद है।",
+      "answers": [
+        "मुझे भीड़-भाड़ वाली जगह पसंद है",
+        "मुझे लोगों से बातचीत करना पसंद है",
+        "दोनों ठीक हैं",
+        "मुझे शांति पसंद है",
+        "मैं केवल शांत वातावरण में ही अच्छा काम कर सकता हूँ"
+      ],
+      "icons": [
+        "/images/icons/team.png",
+        "/images/icons/chat.png",
+        "/images/icons/balance.png",
+        "/images/icons/padlock.png",
+        "/images/icons/schedule.png"
+      ]
+    },
+    {
+      "question": "जब तक सभी आंकड़े, रिकॉर्ड और जानकारी सटीक और व्यवस्थित नहीं होती, तब तक मुझे संतुष्टि नहीं मिलती।",
+      "answers": [
+        "जानकारी जैसी भी हो, मेरे लिए ठीक है",
+        "मैं ज्यादा ध्यान नहीं देता",
+        "कभी-कभी ठीक होता है",
+        "मुझे सटीक जानकारी पसंद है",
+        "सटीकता और व्यवस्था मेरे लिए सब कुछ है"
+      ],
+      "icons": [
+        "/images/icons/color-palette.png",
+        "/images/icons/sad.png",
+        "/images/icons/neutral.png",
+        "/images/icons/check.png",
+        "/images/icons/bar-chart.png"
+      ]
+    }
+  ]
+}

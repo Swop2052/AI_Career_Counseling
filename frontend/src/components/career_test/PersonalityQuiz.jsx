@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { categoryScore, categoryStatsFor, buildAnswerSummary } from "../../data/scoring.js";
 import { useTimers } from "../../hooks/useTimers.js";
 import { useQuizSounds } from "../../hooks/useQuizSounds.js";
+import { useLanguage } from "../../translations/LanguageContext";
 
 import QuizAnimations from "./QuizAnimations.jsx";
 import TopBar from "./TopBar.jsx";
@@ -20,6 +21,14 @@ const FONT_HREF =
 
 export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
   const { CATEGORY_INFO, FEEDBACK_BY_RANK, MASCOT_MESSAGES, TOAST_HOLD_MS, MASCOT_HOLD_MS } = appConfig || {};
+  const { language } = useLanguage();
+
+  const getVideoSrc = (category, lang) => {
+    if (!category) return "";
+    const prefix = lang || "en";
+    const catLower = category.toLowerCase();
+    return `/category_videos/${prefix}_${catLower}.mp4`;
+  };
 
   const [questions, setQuestions] = useState([]);
   const [loadingQuestions, setLoadingQuestions] = useState(true);
@@ -53,7 +62,8 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
   }, []);
 
   useEffect(() => {
-    fetch('/api/questions')
+    setLoadingQuestions(true);
+    fetch(`/api/questions?lang=${language}`)
       .then(res => res.json())
       .then(data => {
         const STANDARD_LABELS = ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"];
@@ -108,7 +118,7 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
         console.error("Failed to load questions", err);
         setLoadingQuestions(false);
       });
-  }, []);
+  }, [language]);
 
   const q = questions[renderIndex];
   const info = CATEGORY_INFO?.[q?.category] || {};
@@ -318,7 +328,7 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
             })()
           ) : showCategoryVideo ? (
             <IntroVideo
-              src={info.videoSrc || "/RIASEC_Realistic_R_Career_Th.mp4"}
+              src={getVideoSrc(q.category, language)}
               category={q.category}
               onFinish={() => {
                 playTapClick();

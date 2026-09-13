@@ -16,7 +16,7 @@ const TONE_STYLES = {
 };
 
 const historyLog = [
-  { label: 'Completed Personality Test', detail: 'Found your RIASEC traits', when: '2 days ago', icon: CheckCircle2 },
+  { label: 'Completed Personality Test', detail: 'Found your top traits', when: '2 days ago', icon: CheckCircle2 },
   { label: 'Explored Software Engineering', detail: 'Viewed the career roadmap', when: '1 day ago', icon: Compass },
   { label: 'Chatted with VERA', detail: 'Asked about college prep', when: '12 hours ago', icon: MessageCircle }
 ];

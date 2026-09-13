@@ -4,41 +4,42 @@ import {
   BookOpen, Cpu, Palette, Zap
 } from 'lucide-react';
 import SparkMascot from '../../assets/spark-mascot.png';
+import { useLanguage } from '../../translations/LanguageContext';
 
-const QUICK_TOPICS = [
+const getQuickTopics = (t) => [
   {
-    label: 'Stream Decision',
+    label: t('streamDecision'),
     icon: BookOpen,
-    query: 'Help me choose between Science, Commerce, and Arts with pros and cons.'
+    query: t('streamQuery')
   },
   {
-    label: 'Future Tech & AI',
+    label: t('futureTech'),
     icon: Cpu,
-    query: 'What are emerging high-growth career opportunities in AI, Cyber & Data?'
+    query: t('techQuery')
   },
   {
-    label: 'Creative & Design',
+    label: t('creativeDesign'),
     icon: Palette,
-    query: 'What are high-paying creative fields like UI/UX and 3D Game Design?'
+    query: t('creativeQuery')
   },
   {
-    label: 'College Roadmap',
+    label: t('collegeRoadmap'),
     icon: Zap,
-    query: 'How do I start preparing a portfolio and entrance strategy for top colleges?'
+    query: t('collegeQuery')
   },
-];
-
-const INITIAL_MESSAGES = [
-  {
-    id: 1,
-    sender: 'bot',
-    text: "Hello! I'm VERA your AI Career Guide",
-    time: 'Just now'
-  }
 ];
 
 export default function AICounselorPage({ onBack, currentUser }) {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const { t, language } = useLanguage();
+  
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      sender: 'bot',
+      text: t('veraWelcome'),
+      time: 'Just now'
+    }
+  ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
@@ -75,7 +76,7 @@ export default function AICounselorPage({ onBack, currentUser }) {
     setIsTyping(true);
 
     try {
-      const payload = { message: text, language: 'en' };
+      const payload = { message: text, language: language };
       if (currentUser?.email) {
         payload.email = currentUser.email;
       }
@@ -212,7 +213,7 @@ export default function AICounselorPage({ onBack, currentUser }) {
           
           {/* Quick Topics Pills */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none select-none">
-            {QUICK_TOPICS.map((topic) => {
+            {getQuickTopics(t).map((topic) => {
               const Icon = topic.icon;
               return (
                 <button
@@ -245,15 +246,25 @@ export default function AICounselorPage({ onBack, currentUser }) {
             }}
             className="relative flex items-center bg-white rounded-3xl p-1.5 shadow-[0_12px_30px_rgba(4,48,46,0.08)] border border-white"
           >
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={inputValue}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask VERA anything..."
-              className="flex-1 bg-transparent px-4 py-2.5 text-xs sm:text-sm text-[#04211F] placeholder-gray-400 outline-none resize-none max-h-32 leading-relaxed"
-            />
+            <div className="flex-1 bg-white border border-[#09A3A3]/20 rounded-2xl shadow-sm focus-within:border-[#09A3A3] focus-within:ring-2 focus-within:ring-[#09A3A3]/10 transition-all flex items-end">
+              <textarea
+                ref={textareaRef}
+                value={inputValue}
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  e.target.style.height = 'auto';
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder={t('placeholderText')}
+                className="w-full max-h-[120px] bg-transparent text-sm text-[#04211F] placeholder:text-[#0B3D3D]/40 outline-none resize-none py-3.5 px-4 scrollbar-thin"
+              />
+            </div>
 
             <button
               type="submit"

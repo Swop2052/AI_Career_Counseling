@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Compass, ArrowLeft, FileText, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../../translations/LanguageContext';
 
 export default function PrivacyPolicy({ onBack, onHome }) {
+  const { t } = useLanguage();
   const [activeSection, setActiveSection] = useState('intro');
 
   const scrollToSection = (id) => {
@@ -38,7 +40,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
             <span className="text-lg font-bold tracking-tight text-[#04211F] leading-none">
               SkillSense<span className="text-[#09A3A3]">.</span>
             </span>
-            <span className="text-[10px] font-semibold text-[#09A3A3] mt-0.5">Privacy Policy</span>
+            <span className="text-[10px] font-semibold text-[#09A3A3] mt-0.5">{t('privacyHeading')}</span>
           </div>
         </div>
 
@@ -173,7 +175,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
         {/* RIGHT CONTENT AREA */}
         <section className="flex-1 min-w-0 bg-white rounded-3xl shadow-sm border border-[#E3EFEC] p-6 sm:p-10">
           <div className="mb-10 pb-8 border-b border-[#E3EFEC]">
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#04211F] mb-4 tracking-tight">Privacy Policy</h1>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#04211F] mb-4 tracking-tight">{t('privacyHeading')}</h1>
             <p className="text-sm font-semibold text-[#5B7975] uppercase tracking-wider">Governed by DPDP Act 2023 & Indian Laws</p>
           </div>
           
@@ -251,7 +253,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
                 <p>3.2 Psychometric & Assessment Data</p>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>Responses to the 42-question RIASEC-based career assessment</span>
+                  <span>Responses to the 42-question career assessment</span>
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
@@ -338,7 +340,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>Administering the RIASEC career assessment and generating personalised Career Roadmaps</span>
+                  <span>Administering the career assessment and generating personalised Career Roadmaps</span>
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>

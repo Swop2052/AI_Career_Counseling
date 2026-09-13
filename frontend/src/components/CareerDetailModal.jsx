@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useLanguage } from '../translations/LanguageContext';
 import {
   X, Briefcase, GraduationCap, DollarSign, BookOpen,
   MapPin, Building, Trophy, TrendingUp, Sparkles, Brain, Landmark, UserCheck, Loader2
@@ -13,6 +14,7 @@ const GOLD = '#E8B04B';
 export default function CareerDetailModal({ career, onClose }) {
   const [enrichedRaw, setEnrichedRaw] = useState(career?.rawData || {});
   const [isLoading, setIsLoading] = useState(false);
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (!career || !career.title) return;
@@ -29,7 +31,7 @@ export default function CareerDetailModal({ career, onClose }) {
         const response = await fetch('http://localhost:5000/api/career-detail', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ career_name: career.title })
+          body: JSON.stringify({ career_name: career.title, language: language })
         });
         const data = await response.json();
         if (data && data.career) {

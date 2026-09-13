@@ -5,25 +5,26 @@ import demoVideo from '../../assets/demo_video.mp4';
 import notebookIcon from '../../assets/notebook.png';
 import mindIcon from '../../assets/mind.png';
 import roadmapIcon from '../../assets/roadmap.png';
+import { useLanguage } from '../../translations/LanguageContext';
 
-const STEPS = [
+const getSteps = (t) => [
   {
     icon: notebookIcon,
-    title: 'Take Assessment',
+    title: t('step1Title'),
     time: '10 min',
-    desc: 'Answer fun, easy questions about yourself — there are no wrong answers!',
+    desc: t('step1Desc'),
   },
   {
     icon: mindIcon,
-    title: 'Prepare Your Mind, Body and Soul',
+    title: t('step2Title'),
     time: 'Instant',
-    desc: 'Our AI studies your personality, interests, and strengths to build your profile.',
+    desc: t('step2Desc'),
   },
   {
     icon: roadmapIcon,
-    title: 'Personalised Roadmap',
+    title: t('step3Title'),
     time: 'Anytime',
-    desc: 'See careers, subjects, and a roadmap made just for you.',
+    desc: t('step3Desc'),
   },
 ];
 
@@ -89,6 +90,9 @@ function FoldStep({ children, index }) {
 }
 
 export default function HowItWorks() {
+  const { t } = useLanguage();
+  const steps = getSteps(t);
+
   return (
     <section
       id="how-it-works"
@@ -111,14 +115,13 @@ export default function HowItWorks() {
       <div className="max-w-6xl mx-auto relative z-10">
         <Reveal className="text-center mb-6 sm:mb-10">
           <div className="text-[11px] sm:text-xs font-semibold tracking-widest text-[#078686] uppercase mb-2 sm:mb-3">
-            The Process
+            {t('processBadge')}
           </div>
           <h2 className="font-display font-semibold text-2xl sm:text-3xl md:text-4xl text-[#04211F] tracking-tight">
-            Three easy steps to your future
+            {t('processHeading')}
           </h2>
           <p className="text-sm sm:text-base text-[#0B3D3D]/65 mt-2 sm:mt-3 max-w-md mx-auto">
-           Instantly see your top career choices, required college degrees, course budgets, and the exact steps to get there. 
-
+           {t('processDesc')}
           </p>
         </Reveal>
 
@@ -150,7 +153,7 @@ export default function HowItWorks() {
             {/* Line connecting steps */}
             <div className="hidden sm:block absolute top-6 bottom-6 left-6 border-l-2 border-dashed border-[#09A3A3]/25" />
 
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <FoldStep key={s.title} index={i}>
                 <div className="relative flex gap-4 sm:gap-5 bg-white hover:bg-white/95 rounded-2xl p-4 sm:p-5 border border-[#09A3A3]/15 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#09A3A3]/15">
                   {/* Step icon */}
