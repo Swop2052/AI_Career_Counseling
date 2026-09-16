@@ -147,16 +147,17 @@ class ConversationMemory:
             user_email = f"anon_{test_id}@skillsense.local"
             user_fullname = 'Anonymous Student'
             
+        import uuid
+        user_id_gen = f"usr_{uuid.uuid4().hex[:8]}"
         cursor.execute(
-            "INSERT INTO users (email, password_hash) VALUES (%s, 'anon') ON CONFLICT (email) DO NOTHING RETURNING user_id",
-            (user_email,)
+            "INSERT INTO users (id, email, password_hash) VALUES (%s, %s, 'anon') ON CONFLICT (email) DO NOTHING RETURNING id",
+            (user_id_gen, user_email)
         )
         user_row = cursor.fetchone()
         if user_row:
             user_id = user_row[0]
         else:
-            anon_email = None
-            cursor.execute("SELECT user_id FROM users WHERE email = %s", (anon_email,))
+            cursor.execute("SELECT id FROM users WHERE email = %s", (user_email,))
             user_id = cursor.fetchone()[0]
             
         # Create student

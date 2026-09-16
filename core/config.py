@@ -19,6 +19,7 @@ class Config:
     # Flask
     flask_env: str = os.getenv("FLASK_ENV", "development")
     secret_key: str = os.getenv("SECRET_KEY", "")
+    cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     
     def __post_init__(self):
         if not self.secret_key:
@@ -73,7 +74,7 @@ class Config:
     
     # Conversation
     max_chat_history: int = 12
-    max_history_for_prompt: int = 8
+    max_history_for_prompt: int = 4
     
     # Fallback
     enable_fallback: bool = True

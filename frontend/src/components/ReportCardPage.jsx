@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import LinkedInShareCard from './LinkedInShareCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lock, ArrowRight, ShieldCheck,
@@ -224,13 +226,15 @@ function AmbientBackground() {
 /* ------------------------------------------------------------------ */
 export default function ReportCardPage({ isPurchased = false, onCreateAccount, user = null, reportData = null }) {
   const { language } = useLanguage();
+  const shareCardRef = useRef(null);
   const t = repT[language] || repT.en;
 
   const [selectedCareer, setSelectedCareer] = useState(null);
   const [showEcrTooltip, setShowEcrTooltip] = useState(false);
   const [defaultCareers, setDefaultCareers] = useState(null);
   const [defaultRIASEC, setDefaultRIASEC] = useState(null);
-  
+  const [preGeneratedBlob, setPreGeneratedBlob] = useState(null);
+
   useEffect(() => {
     // If we don't have reportData from a completed test, fetch dynamic defaults from Data.json (backend)
     if (!reportData) {
@@ -331,6 +335,23 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
     };
   }) : defaultCareers;
 
+  // Pre-generate the LinkedIn Share Card image in the background
+  useEffect(() => {
+    if (shareCardRef.current && dynamicCareers && dynamicCareers.length > 0) {
+      // Delay slightly to ensure fonts and layout are fully painted
+      const timer = setTimeout(() => {
+        html2canvas(shareCardRef.current, { backgroundColor: '#ffffff', scale: 2, logging: false })
+          .then(canvas => {
+            canvas.toBlob(blob => {
+              if (blob) setPreGeneratedBlob(blob);
+            }, 'image/png');
+          })
+          .catch(err => console.error("Failed to pre-generate share card", err));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [dynamicCareers]);
+
   if (!dynamicCareers || !dynamicRIASEC) {
     return (
       <div className="w-full min-h-screen flex items-center justify-center bg-[#CFEDED]">
@@ -360,11 +381,79 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
   };
 
   // LinkedIn Share Function
-  const handleLinkedInShare = () => {
+  const handleLinkedInShare = async () => {
     const appUrl = window.location.origin;
-    const shareText = `I just discovered my top career match is ${topMatch?.title || 'amazing'} using SkillSense! Find your path today. 🚀`;
-    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText + ' ' + appUrl)}`;
-    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    const matchScore = topMatch?.match || 96;
+    const personality = personalityCode || 'ECR';
+    
+    const topTraits = dynamicRIASEC 
+      ? [...dynamicRIASEC].sort((a, b) => b.score - a.score).slice(0, 3).map(d => d.label).join(', ')
+      : 'Organized, Detail Oriented, Structured';
+      
+    const hobbies = user?.hobbies || 'reading';
+    const interests = user?.interests || 'Technology';
+    
+    const careerList = (dynamicCareers || []).slice(0, 6)
+      .map((c, i) => `${i + 1}️⃣ ${c.title}`)
+      .join('\n');
+      
+    const careerTags = (dynamicCareers || []).slice(0, 3)
+      .map(c => `#${c.title.replace(/[^a-zA-Z0-9]/g, '')}`)
+      .join(' ');
+      
+    const rawName = user?.name || 'Student';
+    const nameOnly = rawName.includes('@') ? rawName.split('@')[0] : rawName;
+    const nameNoSpaces = nameOnly.replace(/[^a-zA-Z0-9]/g, '');
+
+    const shareText = `🌟 Let's Connect! My SkillSense Career Assessment Results! 🚀\n\n${nameOnly} is a ${topTraits} individual with hobbies like ${hobbies.toLowerCase()} and interests in ${interests}. Based on their profile, they are highly aligned with careers like ${(dynamicCareers || []).slice(0,3).map(c=>c.title).join(', ')}.\n\n🧠 Key Traits: ${topTraits}\n📊 Personality Code: ${personality}\n\n🎯 Top Recommended Careers:\n${careerList}\n\nExplore your path at ${appUrl}!\n\n#VitalsAndVectors #SkillSense #CareerGuidance #AIGuidance #${nameNoSpaces} ${careerTags}`;
+
+    // Directly open LinkedIn Popup (synchronously to avoid blockers)
+    const linkedInWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (linkedInWindow) {
+      linkedInWindow.document.write('<html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f3f2ef;"><h2 style="text-align:center;color:#0a66c2;">Preparing your SkillSense post...</h2></body></html>');
+    }
+
+    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
+
+    try {
+      if (preGeneratedBlob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': preGeneratedBlob })
+        ]);
+        alert("✅ Image copied! On the LinkedIn page, please press Ctrl+V (or Cmd+V) to attach it.");
+      } else {
+        alert("⏳ Image is still generating. You can manually download it later or try clicking share again in a moment.");
+      }
+
+      if (linkedInWindow) {
+        linkedInWindow.location.href = linkedInUrl;
+      } else {
+        window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (err) {
+      console.error("Clipboard share failed", err);
+      // Fallback: If clipboard write fails, download the image
+      if (preGeneratedBlob) {
+          try {
+            const dataUrl = URL.createObjectURL(preGeneratedBlob);
+            const link = document.createElement('a');
+            link.download = `SkillSense-Report-${nameNoSpaces}.png`;
+            link.href = dataUrl;
+            link.click();
+            alert("✅ Image downloaded! Please attach it to your LinkedIn post.");
+          } catch(e) {
+            console.error("Download fallback failed", e);
+          }
+      } else {
+          alert("Note: Could not copy image. You can paste the text now.");
+      }
+
+      if (linkedInWindow) {
+        linkedInWindow.location.href = linkedInUrl;
+      } else {
+        window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
   };
 
   return (
@@ -678,6 +767,17 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
           </div>
         )}
       </motion.div>
+
+      {/* Hidden card for LinkedIn sharing snapshot */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <LinkedInShareCard 
+          ref={shareCardRef}
+          user={user}
+          dynamicCareers={dynamicCareers}
+          personalityCode={personalityCode}
+          dynamicRIASEC={dynamicRIASEC}
+        />
+      </div>
     </div>
   );
 }

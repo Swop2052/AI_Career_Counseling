@@ -397,7 +397,7 @@ export default function CareerDetailModal({ career, onClose }) {
                   {growthSteps.map((step, idx) => (
                     <React.Fragment key={idx}>
                       <div className="bg-white border border-blue-200 shadow-sm px-4 py-2 rounded-lg text-sm font-medium text-blue-900 text-center flex-1 max-w-[200px] whitespace-normal">
-                        {step}
+                        {typeof step === 'object' && step !== null ? (step.title || Object.values(step).flat().join(' → ')) : step}
                       </div>
                       {idx < growthSteps.length - 1 && (
                         <div className="text-blue-300 font-bold px-2">➔</div>
@@ -420,16 +420,18 @@ export default function CareerDetailModal({ career, onClose }) {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                 
                 <h4 className="text-lg font-bold mb-1" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  {successStory.name || 'Professional Example'}
+                  {typeof successStory === 'string' ? 'Professional Example' : (successStory.name || 'Professional Example')}
                 </h4>
-                {successStory.current_role && (
+                {typeof successStory === 'object' && (successStory.current_role || successStory.organization) && (
                   <p className="text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
-                    {successStory.current_role}
+                    {successStory.current_role || successStory.organization} {successStory.location ? ` • ${successStory.location}` : ''}
                   </p>
                 )}
-                <p className="text-sm text-gray-300 leading-relaxed">
-                  {successStory.details || successStory.description || JSON.stringify(successStory)}
-                </p>
+                <div className="text-sm text-gray-300 leading-relaxed">
+                  {typeof successStory === 'string' 
+                    ? successStory 
+                    : (successStory.career_journey || successStory.achievement || successStory.details || successStory.description || "An inspiring example from this field.")}
+                </div>
               </div>
             </section>
           )}

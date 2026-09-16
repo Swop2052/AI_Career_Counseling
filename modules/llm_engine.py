@@ -95,22 +95,155 @@ class NovaEngine:
                 temp = temperature if temperature is not None else self.temperature
                 max_tok = max_tokens if max_tokens is not None else self.max_tokens
                 
-                # claude-sonnet-4-6 does not allow specifying both temperature and top_p.
-                # We prioritize temperature for controlling randomness.
-                params = {
-                    "model": self.model,
-                    "max_tokens": max_tok,
-                    "system": system,
-                    "messages": [{"role": "user", "content": prompt}]
-                }
-                if temp is not None:
-                    params["temperature"] = temp
-                elif self.top_p is not None:
-                    params["top_p"] = self.top_p
+                # Split the prompt to use caching effectively
+                if "=== STUDENT'S QUESTION ===" in prompt:
+                    parts = prompt.split("=== STUDENT'S QUESTION ===")
+                    context_part = parts[0].strip()
+                    question_part = "=== STUDENT'S QUESTION ===\n" + parts[1].strip()
+                    
+                    messages = [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": context_part,
+                                    "cache_control": {"type": "ephemeral"}
+                                },
+                                {
+                                    "type": "text",
+                                    "text": question_part
+                                }
+                            ]
+                        }
+                    ]
+                elif "=== AVAILABLE CAREERS IN DATABASE ===" in prompt and "\n=== STUDENT PERSONAL & ACADEMIC PROFILE ===" in prompt:
+                    parts = prompt.split("\n=== STUDENT PERSONAL & ACADEMIC PROFILE ===")
+                    context_part = parts[0].strip()
+                    student_part = "\n=== STUDENT PERSONAL & ACADEMIC PROFILE ===\n" + parts[1].strip()
+                    
+                    messages = [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": context_part,
+                                    "cache_control": {"type": "ephemeral"}
+                                },
+                                {
+                                    "type": "text",
+                                    "text": student_part
+                                }
+                            ]
+                        }
+                    ]
+                else:
+                    messages = [{"role": "user", "content": prompt}]
 
-                response = self._client.messages.create(**params)
-                print("[SUCCESS] Response generated successfully via Anthropic Client!")
-                return response.content[0].text
+                # Define the tool
+                tools = [
+                    {
+                        "name": "search_careers_db",
+                        "description": "Search the local ChromaDB for careers based on a text query. Use this tool if the user asks about a specific field not provided in your current context.",
+                        "input_schema": {
+                            "type": "object",
+                            "properties": {
+                                "query": {
+                                    "type": "string",
+                                    "description": "The search query (e.g. 'software engineering in healthcare')"
+                                }
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                ]
+
+                # Main tool execution loop
+                while True:
+                    params = {
+                        "model": self.model,
+                        "max_tokens": max_tok,
+                        "system": system,
+                        "messages": messages,
+                        "tools": tools,
+                        "extra_headers": {"anthropic-beta": "prompt-caching-2024-07-31"}
+                    }
+                    if temp is not None:
+                        params["temperature"] = temp
+                    elif self.top_p is not None:
+                        params["top_p"] = self.top_p
+
+                    response = self._client.messages.create(**params)
+                    
+                    # Check if the model wants to use a tool
+                    if response.stop_reason == "tool_use":
+                        print("[INFO] LLM triggered tool use.")
+                        # Append the assistant's tool call to messages
+                        messages.append({
+                            "role": "assistant",
+                            "content": response.content
+                        })
+                        
+                        # Process tool calls
+                        tool_results = []
+                        from modules.vector_store import vector_store
+                        
+                        for content_block in response.content:
+                            if content_block.type == "tool_use":
+                                tool_name = content_block.name
+                                tool_input = content_block.input
+                                tool_id = content_block.id
+                                
+                                if tool_name == "search_careers_db":
+                                    query = tool_input.get("query", "")
+                                    print(f"[INFO] Executing search_careers_db with query: {query}")
+                                    results = vector_store.search_careers(query, n_results=6)
+                                    
+                                    # Summarize results to save tokens
+                                    summarized = []
+                                    for r in results:
+                                        summarized.append({
+                                            "career_name": r.get("career_name", ""),
+                                            "description": r.get("description", ""),
+                                            "educational_pathway": r.get("educational_pathway", ""),
+                                            "salary": r.get("salary", {})
+                                        })
+                                        
+                                    tool_results.append({
+                                        "type": "tool_result",
+                                        "tool_use_id": tool_id,
+                                        "content": json.dumps(summarized)
+                                    })
+                        
+                        # Append tool results to messages and loop back to the API
+                        messages.append({
+                            "role": "user",
+                            "content": tool_results
+                        })
+                    else:
+                        # Generation finished naturally
+                        print("[SUCCESS] Response generated successfully via Anthropic Client!")
+                        if hasattr(response, 'usage'):
+                            usage_data = {
+                                "input_tokens": response.usage.input_tokens,
+                                "output_tokens": response.usage.output_tokens,
+                                "cache_creation_input_tokens": getattr(response.usage, 'cache_creation_input_tokens', 0),
+                                "cache_read_input_tokens": getattr(response.usage, 'cache_read_input_tokens', 0)
+                            }
+                            print(f"[METRICS] Usage: {usage_data}")
+                            try:
+                                with open("scratch_metrics.json", "w") as f:
+                                    json.dump(usage_data, f)
+                            except Exception as e:
+                                print(f"Error saving metrics: {e}")
+                        
+                        # Extract the text content from the final response
+                        final_text = ""
+                        for block in response.content:
+                            if block.type == "text":
+                                final_text += block.text
+                        return final_text
                 
             except Exception as e:
                 error_msg = str(e)

@@ -251,7 +251,11 @@ class PromptBuilder:
         import json
         exclude_keys = {
             'pages', 'source_page', 'source_pages', 'ranking_information', 
-            'reference_ranking_website', 'source', 'emoji'
+            'reference_ranking_website', 'source', 'emoji',
+            # Token optimization exclusions:
+            'success_story', 'ai_insights', 'entrepreneurship',
+            'differently_abled_opportunities', 'related_careers',
+            'scholarships', 'loans'
         }
         
         for i, match in enumerate(career_matches[:self._max_careers_in_prompt], 1):
@@ -310,9 +314,11 @@ class PromptBuilder:
             lines.append("9. MANDATORY BOUNDARY: You MUST ONLY answer questions related to careers, education, colleges, subjects, and skill development. If a user asks about anything outside of education and careers (e.g., politics, coding scripts, trivia, cooking, general knowledge), politely decline and remind them you are solely an AI Career Counselor.")
             lines.append("10. Use the specific match scores and trait information provided.")
             lines.append("11. If educational details are missing in the database, use your general knowledge but ensure the response is 100% accurate, ethical, and clearly marked as general information.")
+            lines.append("12. TOOL USAGE: You have access to a 'search_careers_db' tool. If the user asks about a specific career field, industry, or job that is NOT in the currently AVAILABLE CAREERS list, you MUST use this tool to search the database for accurate information before replying.")
         else:
             lines.append("8. Focus strictly on the student's profile and general career/educational guidance.")
             lines.append("9. MANDATORY BOUNDARY: You MUST ONLY answer questions related to careers, education, colleges, and skills. Do NOT answer off-topic questions. Decline them politely.")
+            lines.append("10. TOOL USAGE: You have access to a 'search_careers_db' tool. Use it if you need specific career information to answer the user's question accurately.")
             
         lines.append("")
         lines.append("SAFETY & ETHICAL GUARDRAILS (MANDATORY):")

@@ -157,9 +157,17 @@ class RetrievalPipeline:
                 clean_text = clean_text.strip()
                 
             try:
-                data = json.loads(clean_text)
-                profile_names = data.get("profile_matches", [])
-                riasec_names = data.get("riasec_matches", [])
+                # Extract JSON block using regex if conversational text is included
+                import re
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                else:
+                    json_str = response_text
+                    
+                result = json.loads(json_str)
+                profile_names = result.get("profile_matches", [])
+                riasec_names = result.get("riasec_matches", [])
                 
                 # Resolve names to careers
                 def resolve_names(names):
@@ -219,7 +227,10 @@ class RetrievalPipeline:
         preferences = persona.get("preferences", {})
         
         # Build student profile context
-        lines = ["=== STUDENT PERSONAL & ACADEMIC PROFILE ==="]
+        lines = ["=== AVAILABLE CAREERS IN DATABASE ==="]
+        lines.append(", ".join(sorted(all_career_names)))
+        
+        lines.append("\n=== STUDENT PERSONAL & ACADEMIC PROFILE ===")
         lines.append(f"Name: {student_info.get('name', 'Student')}")
         lines.append(f"Age: {student_info.get('age', 'Not specified')}")
         lines.append(f"Class: {student_info.get('class', 'Not specified')}")
@@ -256,8 +267,7 @@ class RetrievalPipeline:
         if riasec.get('traits'):
             lines.append(f"Personality Traits: {', '.join(riasec['traits'])}")
             
-        lines.append("\n=== AVAILABLE CAREERS IN DATABASE ===")
-        lines.append(", ".join(sorted(all_career_names)))
+
         
         lines.append("\n=== INSTRUCTION ===")
         lines.append(

@@ -2,6 +2,7 @@ import os
 import json
 import sqlite3
 import hashlib
+import time
 from deep_translator import GoogleTranslator
 
 # Get absolute path to the database relative to this file
@@ -47,6 +48,7 @@ def get_cached_translation(text, target_lang):
             
         # If not cached, translate it
         try:
+            time.sleep(0.3) # Rate limit protection
             translated = GoogleTranslator(source='auto', target=target_lang).translate(text)
             if translated:
                 cursor.execute("INSERT OR REPLACE INTO translations (hash_key, source_text, target_lang, translated_text) VALUES (?, ?, ?, ?)",
@@ -107,7 +109,7 @@ Return ONLY valid JSON and nothing else. Do not use markdown formatting blocks.
 
 {json.dumps(career, ensure_ascii=False)}"""
 
-        translated_text = nova.generate_response(prompt=prompt, system_prompt="You are a JSON translator. Output strictly valid JSON.", max_tokens=3500)
+        translated_text = nova.generate_response(prompt=prompt, system_prompt="You are a JSON translator. Output strictly valid JSON.", max_tokens=4000)
         
         if translated_text and "🚨" not in translated_text:
             translated_text = translated_text.strip(' \n`')

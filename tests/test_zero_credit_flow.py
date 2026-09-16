@@ -13,7 +13,7 @@ except Exception:
     pass
 
 sys.path.insert(0, r"E:\projects\AI_Career_Counseling")
-from app import app, prepare_questions
+from app import app, prepare_questions, QUESTIONS_DATA
 from database.schema import get_db_connection
 from services.pricing_service import pricing_service
 from services.wallet_service import wallet_service
@@ -34,9 +34,9 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
                     VALUES (%s, %s, 'hash', 'USER', 1, 0, %s, %s)
                 """, (self.test_user_id, self.test_email, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.execute("""
-                    INSERT INTO user_profiles (user_id, full_name, created_at, updated_at)
-                    VALUES (%s, 'Zero Credit Student', %s, %s)
-                """, (self.test_user_id, datetime.now().isoformat(), datetime.now().isoformat()))
+                    INSERT INTO user_profiles (id, user_id, full_name, created_at, updated_at)
+                    VALUES (%s, %s, 'Zero Credit Student', %s, %s)
+                """, (f"prf_{uuid.uuid4().hex[:8]}", self.test_user_id, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.execute("""
                     INSERT INTO credit_wallets (id, user_id, balance, updated_at)
                     VALUES (%s, %s, 0, %s)
@@ -163,7 +163,7 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
 
     def test_5_assessment_questions_integrity(self):
         """Verify all 42 RIASEC questions and scoring logic remain 100% intact."""
-        questions = prepare_questions()
+        questions = prepare_questions(QUESTIONS_DATA)
         self.assertEqual(len(questions), 42)
         print("[PASS] Test 5: Assessment integrity 100% preserved (all 42 questions intact).")
 
