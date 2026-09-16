@@ -100,15 +100,20 @@ function LanguageDropdown({ compact }) {
 function AvatarBadge({ size = 'md', user }) {
   const dims = size === 'sm' ? 'w-8 h-8 text-[10px]' : 'w-9 h-9 text-xs';
   const initials = user?.initials || (user?.name ? user.name.slice(0, 2).toUpperCase() : 'SK');
+  const avatar = user?.avatar || user?.profilePhoto;
   
   return (
     <div
-      className={`relative ${dims} shrink-0 rounded-full bg-gradient-to-b from-[#0f5a56] via-[#04302e] to-[#021c1b] flex items-center justify-center border-t border-l border-white/30 border-b border-r border-black/40 shadow-[0_4px_10px_rgba(4,48,46,0.3),inset_0_1px_1px_rgba(255,255,255,0.35)]`}
+      className={`relative ${dims} shrink-0 rounded-full bg-gradient-to-b from-[#0f5a56] via-[#04302e] to-[#021c1b] flex items-center justify-center border-t border-l border-white/30 border-b border-r border-black/40 shadow-[0_4px_10px_rgba(4,48,46,0.3),inset_0_1px_1px_rgba(255,255,255,0.35)] overflow-hidden`}
     >
-      <span className="font-black text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
-        {initials}
-      </span>
-      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#3ecf8e] border-2 border-white shadow-sm" />
+      {avatar ? (
+        <img src={avatar} className="w-full h-full object-cover" alt="Profile" />
+      ) : (
+        <span className="font-black text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+          {initials}
+        </span>
+      )}
+      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#3ecf8e] border-2 border-white shadow-sm z-10" />
     </div>
   );
 }

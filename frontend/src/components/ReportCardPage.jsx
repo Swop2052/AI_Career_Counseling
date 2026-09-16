@@ -360,7 +360,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
              
              <div className="w-[280px] h-[280px] rounded-full border-8 border-white shadow-xl overflow-hidden relative z-10 bg-[#CFEDED] flex items-center justify-center">
                {profilePhoto ? (
-                  <img src={profilePhoto} className="w-full h-full object-cover" />
+                  <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" />
                ) : (
                   <span className="text-7xl font-bold text-[#09A3A3] font-['Sora']">{studentName.charAt(0)}</span>
                )}
@@ -378,7 +378,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
                 <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-[20px] shadow-sm border border-gray-100 w-full">
                   <div className="w-10 h-10 bg-[#04302E] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0">
                      {profilePhoto ? (
-                       <img src={profilePhoto} className="w-full h-full object-cover" alt="Profile" />
+                       <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" alt="Profile" />
                      ) : (
                        fullName.slice(0, 2).toUpperCase()
                      )}
@@ -468,7 +468,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
                 </div>
                 {/* Quote Block */}
                 <div className="w-[140px] bg-[#EEF8F7] rounded-[24px] p-5 flex flex-col justify-center relative overflow-hidden shrink-0 border border-[#CFEDED]/50 shadow-inner">
-                   <img src={LeavesIllustration} alt="Decoration" className="absolute -bottom-8 -right-8 w-40 h-40 object-contain opacity-20 mix-blend-multiply" />
+                   <img src={LeavesIllustration} crossOrigin="anonymous" alt="Decoration" className="absolute -bottom-8 -right-8 w-40 h-40 object-contain opacity-30" />
                    <span className="text-5xl text-[#09A3A3] font-serif absolute top-4 left-3 opacity-40">"</span>
                    <p className="text-[15px] font-['Sora'] font-semibold text-[#04302E] relative z-10 leading-snug mt-6">
                      A unique blend of traits that makes you, <br/><span className="text-[#09A3A3] text-lg block mt-1">YOU.</span>

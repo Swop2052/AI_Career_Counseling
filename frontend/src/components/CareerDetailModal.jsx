@@ -12,44 +12,11 @@ const PURPLE = '#6D5AE0';
 const GOLD = '#E8B04B';
 
 export default function CareerDetailModal({ career, onClose }) {
-  const [enrichedRaw, setEnrichedRaw] = useState(career?.rawData || {});
-  const [isLoading, setIsLoading] = useState(false);
   const { language } = useLanguage();
-
-  useEffect(() => {
-    if (!career || !career.title) return;
-    
-    // Check if we need to fetch enriched data
-    if (career.rawData?.skill_development_plan) {
-      setEnrichedRaw(career.rawData);
-      return;
-    }
-
-    const fetchDetail = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('http://localhost:5000/api/career-detail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ career_name: career.title, language: language })
-        });
-        const data = await response.json();
-        if (data && data.career) {
-          setEnrichedRaw(data.career);
-        }
-      } catch (err) {
-        console.error("Failed to fetch enriched career details:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDetail();
-  }, [career]);
 
   if (!career) return null;
 
-  const raw = enrichedRaw;
+  const raw = career?.rawData || {};
 
   // Extract / Normalize fields
   const description = raw.description || career.description || '';
@@ -168,25 +135,7 @@ export default function CareerDetailModal({ career, onClose }) {
             </section>
           )}
 
-          {/* Skill Development Plan */}
-          <section className="space-y-4 relative">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
-                <Sparkles className="w-5 h-5" style={{ color: GOLD }} />
-                Skill Development Plan
-              </h3>
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
-            </div>
-            {skillPlan ? (
-              <div className="bg-[#F8FAFC] border border-gray-200 rounded-2xl p-5 sm:p-6 text-sm text-gray-700 leading-relaxed" style={{ whiteSpace: 'pre-line' }}>
-                {skillPlan}
-              </div>
-            ) : (
-              <div className="bg-[#F8FAFC] border border-gray-200 rounded-2xl p-5 sm:p-6 text-sm text-gray-400 italic">
-                {isLoading ? "Generating your personalized skill plan..." : "No specific skill plan available for this career."}
-              </div>
-            )}
-          </section>
+
 
           {/* Section 3: Educational Pathway */}
           {eduSteps.length > 0 && (
