@@ -103,6 +103,7 @@ class AuthService:
                     'role': row['role'],
                     'full_name': row['full_name'] or 'Student',
                     'balance': row['balance'] or 0,
+                    'is_active': row['is_active'],
                     'can_manage_developers': (row['role'] == 'SUPER_ADMIN' or bool(row['can_manage_developers']))
                 }
             return None
@@ -177,6 +178,24 @@ class AuthService:
 
 
     @staticmethod
+    def _is_expired(expires_at) -> bool:
+        """Check if an expiration timestamp is past without timezone mismatch issues."""
+        if not expires_at:
+            return True
+        if isinstance(expires_at, datetime):
+            exp = expires_at
+        else:
+            try:
+                exp = datetime.fromisoformat(str(expires_at))
+            except Exception:
+                return True
+        if exp.tzinfo is not None:
+            now_dt = datetime.now(exp.tzinfo)
+        else:
+            now_dt = datetime.now()
+        return now_dt > exp
+
+    @staticmethod
     def create_password_reset_otp(email: str) -> bool:
         """Generate, store, and send a 6-digit OTP for password recovery."""
         email_clean = email.strip().lower()
@@ -194,13 +213,13 @@ class AuthService:
                 print(f"[INFO] Password reset requested for non-existing email: {email_clean}")
                 return True
 
-            # Check rate limiting: max 5 requests per 10 minutes
-            ten_mins_ago = (datetime.now() - timedelta(minutes=10)).isoformat()
+            # Check rate limiting: max 5 requests per 10 minutes using PostgreSQL native interval
             cursor.execute("""
-                SELECT COUNT(*) FROM password_resets
-                WHERE email = %s AND created_at > %s
-            """, (email_clean, ten_mins_ago))
-            recent_count = cursor.fetchone()[0]
+                SELECT COUNT(*) as cnt FROM password_resets
+                WHERE email = %s AND created_at > (NOW() - INTERVAL '10 minutes')
+            """, (email_clean,))
+            count_row = cursor.fetchone()
+            recent_count = count_row['cnt'] if isinstance(count_row, dict) else (count_row[0] if count_row else 0)
 
             if recent_count >= 5:
                 raise ValueError("Too many verification code requests. Please wait 10 minutes before trying again.")
@@ -229,10 +248,13 @@ class AuthService:
             conn.close()
 
     @staticmethod
-    def verify_otp_and_reset_password(email: str, otp_code: str, new_password: str) -> bool:
-        """Verify 6-digit OTP code and update user password with strict normalization."""
+    def verify_password_reset_otp(email: str, otp_code: str) -> str:
+        """
+        Verify 6-digit OTP code for email, enforce attempt limits and expiration,
+        and issue a single-use cryptographically secure reset token.
+        """
+        import secrets
         email_clean = email.strip().lower()
-        # Clean OTP: extract ONLY digits to handle pasted codes with spaces/newlines/unicode whitespace
         otp_digits = "".join(c for c in str(otp_code) if c.isdigit())
 
         if not email_clean:
@@ -241,15 +263,11 @@ class AuthService:
         if len(otp_digits) != 6:
             raise ValueError("Verification code must be exactly 6 digits.")
 
-        if not new_password or len(new_password) < 6:
-            raise ValueError("New password must be at least 6 characters long.")
-
         conn = get_db_connection()
         try:
             cursor = conn.cursor()
             now_dt = datetime.now()
 
-            # Fetch active, unused OTP for email
             cursor.execute("""
                 SELECT id, otp_hash, expires_at, attempts
                 FROM password_resets
@@ -261,36 +279,105 @@ class AuthService:
             if not row:
                 raise ValueError("No active verification code found for this email. Please request a new code.")
 
-            # Robust date parsing
-            try:
-                expires_dt = datetime.fromisoformat(row['expires_at'])
-            except Exception:
-                expires_dt = now_dt
-
-            if now_dt > expires_dt:
+            if AuthService._is_expired(row['expires_at']):
                 raise ValueError("Verification code has expired. Please request a new code.")
 
             if row['attempts'] >= 5:
                 raise ValueError("Too many failed attempts. Please request a new verification code.")
 
-            # Check OTP match against stored hash
             if not check_password_hash(row['otp_hash'], otp_digits):
                 with conn:
                     cursor.execute("UPDATE password_resets SET attempts = attempts + 1 WHERE id = %s", (row['id'],))
                 raise ValueError("Incorrect verification code. Please check your email and try again.")
 
-            # OTP verified successfully! Update user password hash
-            new_pass_hash = generate_password_hash(new_password)
+            # OTP is valid! Issue secure single-use reset token
+            reset_token = f"rst_tok_{secrets.token_urlsafe(32)}"
+            token_hash = generate_password_hash(reset_token)
+            token_expires = (now_dt + timedelta(minutes=15)).isoformat()
+            token_id = f"rst_{uuid.uuid4().hex[:12]}"
+
+            with conn:
+                # Mark original OTP as used
+                cursor.execute("UPDATE password_resets SET is_used = 1 WHERE id = %s", (row['id'],))
+                # Store issued reset token
+                cursor.execute("""
+                    INSERT INTO password_resets (id, email, otp_hash, expires_at, attempts, is_used, created_at)
+                    VALUES (%s, %s, %s, %s, 0, 0, %s)
+                """, (token_id, email_clean, token_hash, token_expires, now_dt.isoformat()))
+
+            return reset_token
+        finally:
+            conn.close()
+
+    @staticmethod
+    def reset_password_for_email(email: str, reset_token: str, new_password: str) -> bool:
+        """
+        Validate single-use reset token or verified OTP for email and update password.
+        Invalidates all outstanding reset codes upon success.
+        """
+        email_clean = email.strip().lower()
+        token_str = str(reset_token).strip()
+
+        if not email_clean:
+            raise ValueError("Email address is required.")
+        if not token_str:
+            raise ValueError("Reset token or verification code is required.")
+        if not new_password or len(new_password) < 6:
+            raise ValueError("New password must be at least 6 characters long.")
+
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            now_dt = datetime.now()
+
+            # Find unused reset records for this email
+            cursor.execute("""
+                SELECT id, otp_hash, expires_at, attempts
+                FROM password_resets
+                WHERE email = %s AND is_used = 0
+                ORDER BY created_at DESC
+            """, (email_clean,))
+            rows = cursor.fetchall()
+
+            matched_row = None
+            for row in rows:
+                if not AuthService._is_expired(row['expires_at']) and row['attempts'] < 5:
+                    if check_password_hash(row['otp_hash'], token_str):
+                        matched_row = row
+                        break
+
+            if not matched_row:
+                raise ValueError("Invalid or expired reset token. Please request a new password reset.")
+
+            # Update user password
+            new_hash = generate_password_hash(new_password)
             now_str = now_dt.isoformat()
 
             with conn:
-                cursor.execute("UPDATE users SET password_hash = %s, updated_at = %s WHERE email = %s", (new_pass_hash, now_str, email_clean))
-                cursor.execute("UPDATE password_resets SET is_used = 1 WHERE id = %s", (row['id'],))
+                cursor.execute("""
+                    UPDATE users SET password_hash = %s, updated_at = %s WHERE email = %s
+                """, (new_hash, now_str, email_clean))
+                # Invalidate ALL reset codes for this email
+                cursor.execute("UPDATE password_resets SET is_used = 1 WHERE email = %s", (email_clean,))
+
+            AuthService.write_audit_log(
+                actor_id=None,
+                actor_email=email_clean,
+                action='PASSWORD_RESET_SUCCESS',
+                target_email=email_clean,
+                details='Password updated via verified OTP / reset token'
+            )
 
             print(f"[SUCCESS] Password successfully reset for {email_clean}")
             return True
         finally:
             conn.close()
+
+    @staticmethod
+    def verify_otp_and_reset_password(email: str, otp_code: str, new_password: str) -> bool:
+        """Convenience method combining OTP verification and password update."""
+        token = AuthService.verify_password_reset_otp(email, otp_code)
+        return AuthService.reset_password_for_email(email, token, new_password)
 
     @staticmethod
     def update_user_profile(user_id: str, profile_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -368,49 +455,68 @@ class AuthService:
             """)
             rows = cursor.fetchall()
             result = []
+            now_dt = datetime.now()
             for r in rows:
                 rec = dict(r)
-                # Check if there is a pending invitation for this email
-                cursor.execute("""
-                    SELECT id, status, expires_at FROM developer_invitations
-                    WHERE email = %s AND status = 'PENDING'
-                    ORDER BY created_at DESC LIMIT 1
-                """, (rec['email'],))
-                inv_row = cursor.fetchone()
-                rec['invitation_status'] = None
-                if inv_row:
-                    inv = dict(inv_row)
-                    exp_dt = datetime.fromisoformat(inv['expires_at'])
-                    rec['invitation_status'] = 'PENDING' if datetime.now() < exp_dt else 'EXPIRED'
+                # Convert timestamps to ISO string if datetime object
+                if isinstance(rec.get('created_at'), datetime):
+                    rec['created_at'] = rec['created_at'].isoformat()
+                if isinstance(rec.get('last_login_at'), datetime):
+                    rec['last_login_at'] = rec['last_login_at'].isoformat()
+
+                if rec.get('is_active'):
+                    rec['invitation_status'] = 'ACTIVE'
+                else:
+                    cursor.execute("""
+                        SELECT id, status, expires_at FROM developer_invitations
+                        WHERE email = %s
+                        ORDER BY created_at DESC LIMIT 1
+                    """, (rec['email'],))
+                    inv_row = cursor.fetchone()
+                    if inv_row:
+                        inv = dict(inv_row)
+                        if inv['status'] == 'PENDING':
+                            rec['invitation_status'] = 'EXPIRED' if AuthService._is_expired(inv['expires_at']) else 'PENDING'
+                        else:
+                            rec['invitation_status'] = inv['status']
+                    else:
+                        rec['invitation_status'] = 'DEACTIVATED'
                 result.append(rec)
             return result
         finally:
             conn.close()
 
     @staticmethod
-    def invite_developer(email: str, full_name: str, role: str,
-                         actor_id: str, actor_email: str) -> Dict[str, Any]:
+    def invite_developer(email: str, full_name: str, role: str = 'DEVELOPER',
+                         actor_id: Optional[str] = None, actor_email: str = '',
+                         can_manage_developers: int = 0,
+                         app_base_url: str = 'http://localhost:5173') -> Dict[str, Any]:
         """
-        Create a developer account (inactive, no password) and generate a
-        secure single-use invitation token.  Returns the raw token (caller
-        must embed it in an email link; it is never stored in plaintext).
+        Create a developer or super admin account (inactive, no password) and dispatch
+        a secure single-use invitation token via SMTP email.
         """
         import secrets
         email_clean = email.strip().lower()
         if not email_clean:
             raise ValueError("Email address is required.")
         if role not in ('DEVELOPER', 'SUPER_ADMIN'):
-            raise ValueError("Invalid role. Must be DEVELOPER or SUPER_ADMIN.")
+            raise ValueError("Invalid role. Role must be DEVELOPER or SUPER_ADMIN.")
+
+        # Super Admins always have can_manage_developers enabled
+        can_manage_val = 1 if (role == 'SUPER_ADMIN' or bool(can_manage_developers)) else 0
 
         conn = get_db_connection()
         try:
             cursor = conn.cursor()
 
             # Check if email already exists in users
-            cursor.execute("SELECT id, role FROM users WHERE email = %s", (email_clean,))
+            cursor.execute("SELECT id, role, is_active FROM users WHERE email = %s", (email_clean,))
             existing = cursor.fetchone()
             if existing:
-                raise ValueError(f"An account with email '{email_clean}' already exists.")
+                if existing['is_active']:
+                    raise ValueError(f"An active account with email '{email_clean}' already exists.")
+                else:
+                    raise ValueError(f"An account with email '{email_clean}' already exists pending invitation setup. Use Resend Invitation instead.")
 
             # Cancel any previous pending invitations for this email
             with conn:
@@ -419,17 +525,16 @@ class AuthService:
                     WHERE email = %s AND status = 'PENDING'
                 """, (email_clean,))
 
-            # Create inactive user account (no password yet — set on first login via invitation)
+            # Create inactive user account (password set on invitation acceptance)
             user_id = f"usr_{uuid.uuid4().hex[:12]}"
-            # Placeholder hash — will be overwritten when invitation is accepted
             placeholder_hash = generate_password_hash(secrets.token_hex(32))
             now_str = datetime.now().isoformat()
 
             with conn:
                 conn.execute("""
                     INSERT INTO users (id, email, password_hash, role, is_active, can_manage_developers, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, 0, 0, %s, %s)
-                """, (user_id, email_clean, placeholder_hash, role, now_str, now_str))
+                    VALUES (%s, %s, %s, %s, 0, %s, %s, %s)
+                """, (user_id, email_clean, placeholder_hash, role, can_manage_val, now_str, now_str))
 
                 # Create profile
                 profile_id = f"prf_{uuid.uuid4().hex[:12]}"
@@ -445,7 +550,7 @@ class AuthService:
                     VALUES (%s, %s, 0, %s)
                 """, (wallet_id, user_id, now_str))
 
-            # Generate secure token
+            # Generate secure single-use token (48 url-safe characters)
             raw_token = secrets.token_urlsafe(48)
             token_hash = generate_password_hash(raw_token)
             expires_at = (datetime.now() + timedelta(hours=24)).isoformat()
@@ -458,20 +563,43 @@ class AuthService:
                     VALUES (%s, %s, %s, %s, %s, %s, %s, 'PENDING')
                 """, (inv_id, email_clean, role, token_hash, expires_at, actor_id, now_str))
 
+            # Dispatch branded invitation email
+            from services.email_service import email_service
+            base = (app_base_url or 'http://localhost:5173').rstrip('/')
+            setup_url = f"{base}/#accept-invite?token={raw_token}"
+            email_sent = email_service.send_invitation_email(
+                recipient_email=email_clean,
+                full_name=full_name.strip(),
+                setup_url=setup_url,
+                role=role,
+                expires_hours=24
+            )
+
+            if not email_sent:
+                # Roll back created records so failed invitations are not reported as sent
+                with conn:
+                    conn.execute("DELETE FROM developer_invitations WHERE id = %s", (inv_id,))
+                    conn.execute("DELETE FROM user_profiles WHERE user_id = %s", (user_id,))
+                    conn.execute("DELETE FROM credit_wallets WHERE user_id = %s", (user_id,))
+                    conn.execute("DELETE FROM users WHERE id = %s", (user_id,))
+                raise ValueError(f"Failed to deliver invitation email to '{email_clean}'. Please verify SMTP configuration.")
+
             # Audit log
             AuthService.write_audit_log(
                 actor_id=actor_id,
-                actor_email=actor_email,
-                action='INVITED_DEVELOPER',
+                actor_email=actor_email or 'system',
+                action='INVITED_USER',
                 target_email=email_clean,
                 target_id=user_id,
-                details=f"Role: {role}"
+                details=f"Invited account with role: {role}, can_manage_developers: {can_manage_val}"
             )
 
             return {
                 'user_id': user_id,
                 'email': email_clean,
+                'role': role,
                 'raw_token': raw_token,
+                'setup_url': setup_url,
                 'invitation_id': inv_id,
                 'expires_at': expires_at
             }
@@ -479,9 +607,10 @@ class AuthService:
             conn.close()
 
     @staticmethod
-    def resend_invitation(target_email: str, actor_id: str, actor_email: str) -> Dict[str, Any]:
+    def resend_invitation(target_email: str, actor_id: Optional[str] = None, actor_email: str = '',
+                          app_base_url: str = 'http://localhost:5173') -> Dict[str, Any]:
         """
-        Cancel any existing pending invitation and create a new one.
+        Cancel any existing pending invitation and create a new one, dispatching email via SMTP.
         The user account must already exist and be inactive (pending setup).
         """
         import secrets
@@ -489,12 +618,19 @@ class AuthService:
         conn = get_db_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, role, is_active FROM users WHERE email = %s", (email_clean,))
+            cursor.execute("""
+                SELECT u.id, u.role, u.is_active, p.full_name
+                FROM users u
+                LEFT JOIN user_profiles p ON u.id = p.user_id
+                WHERE u.email = %s
+            """, (email_clean,))
             user = cursor.fetchone()
             if not user:
                 raise ValueError(f"No account found for '{email_clean}'.")
             if user['is_active']:
                 raise ValueError("This account is already active. Resend is only for pending setup accounts.")
+
+            full_name = user['full_name'] or email_clean.split('@')[0]
 
             # Cancel previous pending invitations
             with conn:
@@ -517,18 +653,36 @@ class AuthService:
                     VALUES (%s, %s, %s, %s, %s, %s, %s, 'PENDING')
                 """, (inv_id, email_clean, user['role'], token_hash, expires_at, actor_id, now_str))
 
+            # Dispatch invitation email
+            from services.email_service import email_service
+            base = (app_base_url or 'http://localhost:5173').rstrip('/')
+            setup_url = f"{base}/#accept-invite?token={raw_token}"
+            email_sent = email_service.send_invitation_email(
+                recipient_email=email_clean,
+                full_name=full_name,
+                setup_url=setup_url,
+                role=user['role'],
+                expires_hours=24
+            )
+
+            if not email_sent:
+                with conn:
+                    conn.execute("UPDATE developer_invitations SET status = 'CANCELLED' WHERE id = %s", (inv_id,))
+                raise ValueError(f"Failed to deliver invitation email to '{email_clean}' via SMTP.")
+
             AuthService.write_audit_log(
                 actor_id=actor_id,
-                actor_email=actor_email,
+                actor_email=actor_email or 'system',
                 action='RESENT_INVITATION',
                 target_email=email_clean,
                 target_id=user['id'],
-                details='Previous invitation cancelled; new invitation issued'
+                details=f"Previous invitation cancelled; new invitation dispatched for role {user['role']}"
             )
 
             return {
                 'email': email_clean,
                 'raw_token': raw_token,
+                'setup_url': setup_url,
                 'invitation_id': inv_id,
                 'expires_at': expires_at
             }
@@ -567,11 +721,7 @@ class AuthService:
                 raise ValueError("Invalid or expired invitation link. Please request a new invitation.")
 
             # Check expiry
-            try:
-                expires_dt = datetime.fromisoformat(matched['expires_at'])
-            except Exception:
-                expires_dt = now_dt
-            if now_dt > expires_dt:
+            if AuthService._is_expired(matched['expires_at']):
                 with conn:
                     conn.execute("UPDATE developer_invitations SET status = 'EXPIRED' WHERE id = %s",
                                  (matched['id'],))
@@ -605,7 +755,12 @@ class AuthService:
                 details='Account activated via invitation link'
             )
 
-            return {'email': matched['email'], 'role': matched['role']}
+            return {
+                'id': user_row['id'],
+                'email': matched['email'],
+                'role': matched['role'],
+                'is_active': 1
+            }
         finally:
             conn.close()
 
@@ -855,6 +1010,71 @@ class AuthService:
             return {'id': user_id, 'email': email_clean, 'role': 'SUPER_ADMIN', 'can_manage_developers': True}
         finally:
             conn.close()
+
+
+
+    @classmethod
+    def authenticate(cls, email: str, password: str):
+        return cls.authenticate_user(email, password)
+
+    @classmethod
+    def list_developers(cls):
+        return cls.list_developer_accounts()
+
+    @classmethod
+    def get_audit_logs(cls, limit: int = 100):
+        return cls.get_audit_log(limit)
+
+    @classmethod
+    def update_developer_permissions(cls, target_id: str, can_manage_developers, actor_id=None, actor_email=''):
+        grant = bool(can_manage_developers in (1, '1', True, 'true'))
+        return cls.set_can_manage_developers(target_id, grant, actor_id or '', actor_email or '')
+
+    @classmethod
+    def request_password_reset(cls, email: str):
+        return cls.create_password_reset_otp(email)
+
+    @classmethod
+    def verify_otp(cls, email: str, otp_code: str) -> str:
+        return cls.verify_password_reset_otp(email, otp_code)
+
+    @classmethod
+    def reset_password(cls, email: str, token: str, new_password: str) -> bool:
+        return cls.reset_password_for_email(email=email.strip(), reset_token=token.strip(), new_password=new_password)
+
+    @classmethod
+    def reset_password_with_token(cls, token: str, new_password: str, email: Optional[str] = None) -> bool:
+        token_str = str(token).strip()
+        if email:
+            return cls.reset_password_for_email(email=email.strip(), reset_token=token_str, new_password=new_password)
+        # Fallback for backward compatibility if email is not provided
+        if len(token_str) == 6 and token_str.isdigit():
+            conn = get_db_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT email FROM password_resets WHERE is_used = 0 ORDER BY created_at DESC")
+                for row in cursor.fetchall():
+                    try:
+                        if cls.reset_password_for_email(row['email'], token_str, new_password):
+                            return True
+                    except Exception:
+                        pass
+            finally:
+                conn.close()
+        res = cls.accept_invitation(token_str, new_password)
+        return bool(res)
+
+    @classmethod
+    def resend_account_invitation(cls, email: str, actor_id: Optional[str] = None, actor_email: str = '', app_base_url: str = 'http://localhost:5173'):
+        return cls.resend_invitation(email, actor_id=actor_id, actor_email=actor_email, app_base_url=app_base_url)
+
+    @classmethod
+    def setup_invited_account(cls, token: str, password: str, full_name: str = ''):
+        user = cls.accept_invitation(token, password)
+        if full_name and user and user.get('id'):
+            cls.update_user_profile(user['id'], {'full_name': full_name})
+            user['full_name'] = full_name
+        return user
 
 
 import random

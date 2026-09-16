@@ -4,8 +4,8 @@ import io
 
 # Force stdout/stderr to use UTF-8 encoding on Windows to prevent Unicode/Emoji print crashes
 if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace', line_buffering=True)
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace', line_buffering=True)
 
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
@@ -32,6 +32,7 @@ from core.exceptions import (
     RetrievalError, LLMError, ValidationError
 )
 from modules.vector_store import vector_store
+from services.assessment_service import assessment_service
 
 # ============================================================
 # SETUP FLASK
@@ -87,31 +88,25 @@ from career_retrieval_engine import retrieve_careers, clear_career_cache
 # ============================================================
 
 def load_career_database():
-    """Load career database from active SQLite database or fallback JSON."""
+    """Load career database from active PostgreSQL database or fallback JSON."""
     try:
         from modules.conversation_memory import conversation_memory
-        db_careers = conversation_memory.get_all_careers()
-        
-        # Load from Data.json to see if we need to seed
-        fallback_careers = []
+        if getattr(conversation_memory, '_db_available', False):
+            db_careers = conversation_memory.get_all_careers()
+            if db_careers:
+                print(f"[SUCCESS] Loaded {len(db_careers)} careers from database.")
+                return db_careers
+                
+        # Load from Data.json fallback
         try:
             with open(config.career_db_path, "r", encoding="utf-8-sig") as file:
                 data = json.load(file)
             fallback_careers = data.get("careers", [])
+            print(f"[INFO] Loaded {len(fallback_careers)} careers from Data.json.")
+            return fallback_careers
         except Exception as e:
             print(f"[WARNING] Could not read local Data.json: {e}")
-
-        # If SQLite has fewer careers than Data.json (e.g. fresh start or test override), seed SQLite
-        if len(db_careers) < len(fallback_careers) and fallback_careers:
-            print(f"[INFO] SQLite 'careers' table has {len(db_careers)} records, seeding {len(fallback_careers)} careers from Data.json...")
-            conversation_memory.upsert_careers(fallback_careers)
-            db_careers = conversation_memory.get_all_careers()
-            
-        if db_careers:
-            print(f"[SUCCESS] Loaded {len(db_careers)} careers from SQLite 'careers' table.")
-            return db_careers
-            
-        return fallback_careers
+            return []
     except Exception as e:
         print(f"[ERROR] Career Database Error: {e}")
         return []
@@ -356,46 +351,87 @@ UI_TRANSLATIONS_EN = {
     "title-exams": "Entrance Exams"
 }
 
-# Dynamic translation of UI at startup
-def translate_ui_to(lang_code):
-    translated_ui = {}
-    print(f"[INFO] Translating static UI to {lang_code}...")
-    try:
-        from deep_translator import GoogleTranslator
-        translator = GoogleTranslator(source='en', target=lang_code)
-        ui_keys = list(UI_TRANSLATIONS_EN.keys())
-        ui_vals = [UI_TRANSLATIONS_EN[k] for k in ui_keys]
-        batch_ui_str = "\n".join(ui_vals)
-        translated_batch_ui = translator.translate(batch_ui_str)
-        translated_ui_vals = [t.strip() for t in translated_batch_ui.split('\n') if t.strip()]
-        
-        if len(translated_ui_vals) == len(ui_keys):
-            for i, k in enumerate(ui_keys):
-                translated_ui[k] = translated_ui_vals[i]
-        else:
-            raise ValueError("Mismatch")
-    except Exception:
-        print(f"[WARNING] UI translation failed. Fallback to English.")
-        translated_ui = UI_TRANSLATIONS_EN.copy()
-    
-    return translated_ui
+# Cached static UI translations (fast, non-blocking startup)
+_UI_CACHE = {}
 
-UI_MR = translate_ui_to('mr')
-UI_HI = translate_ui_to('hi')
+def get_ui_translations_dict(lang_code):
+    if lang_code == 'en':
+        return UI_TRANSLATIONS_EN
+    if lang_code in _UI_CACHE:
+        return _UI_CACHE[lang_code]
+        
+    cache_path = os.path.join(config.base_dir, "data", f"ui_translations_{lang_code}.json")
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r", encoding="utf-8") as f:
+                _UI_CACHE[lang_code] = json.load(f)
+                return _UI_CACHE[lang_code]
+        except Exception:
+            pass
+            
+    # Clean instant fallback to base English dictionary
+    _UI_CACHE[lang_code] = UI_TRANSLATIONS_EN.copy()
+    return _UI_CACHE[lang_code]
+
+UI_MR = UI_TRANSLATIONS_EN.copy()
+UI_HI = UI_TRANSLATIONS_EN.copy()
 SCALE_MR = QUESTIONS_DATA_MR.get('response_scale', {}) if QUESTIONS_DATA_MR else {}
 SCALE_HI = QUESTIONS_DATA_HI.get('response_scale', {}) if QUESTIONS_DATA_HI else {}
+
+@app.route('/', defaults={'path': ''}, methods=['GET'])
+@app.route('/<path:path>', methods=['GET'])
+def serve_frontend_or_api(path):
+    """Serves frontend static assets/SPA directly from dist or redirects to Vite dev server."""
+    if path.startswith('api/') or path == 'health':
+        return jsonify({'error': 'Not Found', 'path': f'/{path}'}), 404
+
+    accept = request.headers.get('Accept', '')
+    dist_dir = os.path.join(app.root_path, 'frontend', 'dist')
+    if os.path.exists(dist_dir):
+        from flask import send_from_directory
+        target_file = os.path.join(dist_dir, path)
+        if path and os.path.exists(target_file) and os.path.isfile(target_file):
+            return send_from_directory(dist_dir, path)
+        index_html = os.path.join(dist_dir, 'index.html')
+        if os.path.exists(index_html):
+            return send_from_directory(dist_dir, 'index.html')
+
+    if 'text/html' in accept:
+        from flask import redirect
+        return redirect('http://localhost:5173/' + path)
+
+    return jsonify({
+        "status": "online",
+        "service": "SkillSense AI Career Counseling API",
+        "version": "2.0.0",
+        "frontend_url": "http://localhost:5173/",
+        "endpoints": {
+            "health": "/health",
+            "config": "/api/config",
+            "questions": "/api/questions",
+            "auth": "/api/auth/me",
+            "assessments": "/api/assessments"
+        }
+    })
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint."""
+    return jsonify({"status": "healthy", "timestamp": time.time()})
 
 @app.route('/api/ui-translations', methods=['GET'])
 def get_ui_translations():
     """Get Static UI translations for the requested language."""
     lang = request.args.get('lang', 'en')
-    
-    if lang == 'mr':
-        return jsonify(UI_MR)
-    elif lang == 'hi':
-        return jsonify(UI_HI)
-    else:
-        return jsonify(UI_TRANSLATIONS_EN)
+    return jsonify(get_ui_translations_dict(lang))
+
+@app.route('/api/all-careers', methods=['GET'])
+def get_all_careers_api():
+    """Return all available careers for frontend report card placeholders and exploration."""
+    return jsonify({
+        "status": "success",
+        "careers": CAREER_DB
+    })
 
 @app.route('/api/config', methods=['GET'])
 def get_config():
@@ -723,7 +759,9 @@ def submit_answers():
         for match in career_matches[:6]:
             top_careers.append({
                 'name': match.career_name,
+                'career_name': match.career_name,
                 'match_score': round(match.match_score, 1),
+                'score': round(match.match_score, 1),
                 'riasec_score': round(match.riasec_match, 1),
                 'personality_score': round(match.profile_match, 1),
                 'subject_score': round(match.subject_match, 1),
@@ -758,8 +796,9 @@ def submit_answers():
         attempt_id = None
         try:
             submission_token = data.get('submission_token')
+            current_user_id = session.get('user_id')
             save_res = assessment_service.save_assessment_attempt(
-                user_id=session.get('user_id'),
+                user_id=current_user_id,
                 guest_session_id=session_id,
                 student_profile=student_info,
                 riasec_answers=detailed_answers,
@@ -768,17 +807,27 @@ def submit_answers():
                 top_careers=top_careers,
                 submission_token=submission_token
             )
-            attempt_id = save_res['attempt_id']
+            attempt_id = save_res.get('attempt_id')
+            if not current_user_id and attempt_id:
+                session['pending_attempt_id'] = attempt_id
+            print(f"[SUCCESS] Assessment attempt saved successfully with ID: {attempt_id} (user={current_user_id})")
         except Exception as e:
-            print(f"[ERROR] Failed to save assessment attempt: {e}")
+            err_msg = f"[ERROR] Failed to save assessment attempt: {e}"
+            print(err_msg, flush=True)
             import traceback
             traceback.print_exc()
+            try:
+                with open(r'E:\projects\SkillSense_Final\AI_Career_Counseling\submit_debug.log', 'a', encoding='utf-8') as f_err:
+                    f_err.write(err_msg + '\n' + traceback.format_exc() + '\n')
+            except Exception:
+                pass
         
         response_data = {
             'profile': profile,
             'scores': scores,
             'top_careers': top_careers,
-            'attempt_id': attempt_id
+            'attempt_id': attempt_id,
+            'is_unlocked': 0
         }
         
         elapsed_time = time.time() - start_time
@@ -811,8 +860,8 @@ def career_detail():
             search_name = str(career_name).strip().lower()
             for career in CAREER_DB:
                 db_name = str(career.get('career_name', '')).strip().lower()
-                if db_name == search_name:
-                    print(f"[DEBUG] Found career in CAREER_DB: '{career_name}'")
+                if db_name == search_name or search_name in db_name or db_name in search_name:
+                    print(f"[DEBUG] Found career in CAREER_DB: '{career_name}' (matched '{db_name}')")
                     target_record = career
                     break
         
@@ -1061,344 +1110,35 @@ def chat():
 
 
 # ============================================================
-# ACCOUNT ROUTES
+# MODULAR BLUEPRINT REGISTRATION
 # ============================================================
-from services.wallet_service import wallet_service
+from routes.auth_routes import auth_bp
+from routes.assessment_routes import assessment_bp
+from routes.payment_routes import payment_bp
+from routes.developer_routes import developer_bp
 
-@app.route('/api/account/summary', methods=['GET'])
-def account_summary():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    user_id = session['user_id']
-    try:
-        attempts = assessment_service.get_user_attempts(user_id)
-        wallet = wallet_service.get_balance(user_id)
-        return jsonify({
-            'status': 'success',
-            'attempts': attempts,
-            'wallet': {'balance': wallet}
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+app.register_blueprint(auth_bp)
+app.register_blueprint(assessment_bp)
+app.register_blueprint(payment_bp)
+app.register_blueprint(developer_bp)
 
 # ============================================================
-# ASSESSMENT ROUTES
+# CLI BOOTSTRAP: INITIAL SUPER ADMIN
 # ============================================================
+import click
 
-@app.route('/api/assessment/<attempt_id>/teaser', methods=['GET'])
-def assessment_teaser(attempt_id):
+@app.cli.command('create-super-admin')
+@click.option('--email', prompt='Super Admin Email', help='Email for the initial Super Admin account')
+@click.option('--password', prompt=True, hide_input=True, confirmation_prompt=True, help='Secure password (min 8 chars)')
+@click.option('--name', prompt='Full Name', default='Super Administrator', help='Full name of administrator')
+def create_super_admin_cmd(email, password, name):
+    """Securely bootstrap the first Super Admin account via CLI."""
+    from services.auth_service import AuthService
     try:
-        lang = request.args.get('lang', 'en')
-        teaser = assessment_service.get_teaser(attempt_id)
-        if not teaser:
-            return jsonify({'error': 'Not found'}), 404
-            
-        owner_id = teaser.get('user_id')
-        if owner_id:
-            curr_user = session.get('user_id')
-            if not curr_user:
-                return jsonify({'error': 'Unauthorized'}), 401
-            if str(curr_user) != str(owner_id) and session.get('role') != 'SUPER_ADMIN':
-                return jsonify({'error': 'Forbidden'}), 403
-
-        if lang != 'en':
-            teaser = translate_teaser_data(teaser, lang)
-            
-        return jsonify(teaser)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@app.route('/api/assessment/<attempt_id>/full', methods=['GET'])
-def assessment_full(attempt_id):
-    user_id = session.get('user_id')
-    try:
-        lang = request.args.get('lang', 'en')
-        data = assessment_service.get_assessment_full(user_id, attempt_id)
-        if not data:
-            return jsonify({'error': 'Not found'}), 404
-            
-        if lang != 'en' and 'full_result_data' in data:
-            if 'career_matches' in data['full_result_data']:
-                matches = data['full_result_data']['career_matches']
-                data['full_result_data']['career_matches'] = [translate_career_data(m, lang) for m in matches]
-                
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 403
-
-@app.route('/api/assessment/<attempt_id>/unlock', methods=['POST'])
-def assessment_unlock(attempt_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    user_id = session['user_id']
-    try:
-        res = assessment_service.unlock_assessment(user_id, attempt_id)
-        return jsonify(res)
+        res = AuthService.create_super_admin_via_cli(email=email, password=password, full_name=name)
+        click.echo(f"[SUCCESS] Super Admin created: {res['email']} (ID: {res['id']})")
     except ValueError as e:
-        msg = str(e)
-        if "not found" in msg.lower():
-            return jsonify({'error': msg}), 404
-        if "unauthorized" in msg.lower():
-            return jsonify({'error': msg}), 403
-        return jsonify({'error': msg}), 400
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-# ============================================================
-# AUTH ROUTES
-# ============================================================
-from services.auth_service import AuthService
-from services.assessment_service import AssessmentService
-
-auth_service = AuthService()
-assessment_service = AssessmentService()
-
-@app.route('/api/auth/signup', methods=['POST'])
-def signup():
-    data = request.json or {}
-    email = data.get('email')
-    password = data.get('password')
-    full_name = data.get('full_name')
-    phone = data.get('phone')
-    education_level = data.get('education_level')
-    attempt_id = data.get('attempt_id')
-    
-    try:
-        user = auth_service.create_user(email, password, full_name, phone, education_level)
-        session['user_id'] = user['id']
-        session['role'] = user['role']
-        
-        redirect_url = '/account'
-        if attempt_id:
-            try:
-                assessment_service.claim_guest_assessment(attempt_id=attempt_id, user_id=user['id'])
-                redirect_url = f'/pricing?attempt_id={attempt_id}'
-            except Exception as e:
-                print(f"[WARNING] Failed to claim attempt {attempt_id}: {e}")
-                
-        return jsonify({'status': 'success', 'user': user, 'redirect': redirect_url})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    data = request.json or {}
-    email = data.get('email')
-    password = data.get('password')
-    attempt_id = data.get('attempt_id')
-    
-    try:
-        user = auth_service.authenticate_user(email, password)
-        if not user:
-            return jsonify({'error': 'Invalid credentials'}), 401
-            
-        session['user_id'] = user['id']
-        session['role'] = user['role']
-        
-        redirect_url = '/account'
-        if attempt_id:
-            try:
-                assessment_service.claim_guest_assessment(attempt_id=attempt_id, user_id=user['id'])
-                redirect_url = f'/pricing?attempt_id={attempt_id}'
-            except Exception as e:
-                print(f"[WARNING] Failed to claim attempt {attempt_id}: {e}")
-                
-        return jsonify({'status': 'success', 'user': user, 'redirect': redirect_url})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
-
-@app.route('/api/auth/logout', methods=['POST'])
-def logout():
-    session.clear()
-    return jsonify({'status': 'success'})
-
-@app.route('/api/auth/me', methods=['GET'])
-def get_me():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    return jsonify({'user': {'id': session['user_id'], 'role': session.get('role', 'USER')}})
-
-@app.route('/api/all-careers', methods=['GET'])
-def all_careers():
-    """Get all careers."""
-    try:
-        return jsonify({
-            'careers': [normalize_career_record(career) for career in CAREER_DB]
-        })
-    except Exception as e:
-        print(f"[ERROR] Error in all_careers: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/clear-session', methods=['POST'])
-def clear_session():
-    """Clear the current session cookie to start a fresh attempt without deleting old records."""
-    try:
-        session.clear()
-        return jsonify({'status': 'success'})
-    except Exception as e:
-        print(f"[ERROR] Error in clear_session: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/contact', methods=['POST'])
-def save_contact():
-    """Receive and save a contact form submission."""
-    if not check_rate_limit(request.remote_addr):
-        return jsonify({'error': 'Too many requests. Please try again later.'}), 429
-    try:
-        data = request.get_json() or {}
-        fullname = data.get('fullname') or data.get('name')
-        email = data.get('email')
-        company = data.get('company')
-        subject = data.get('subject')
-        message = data.get('message')
-        
-        if not fullname or not email or not subject or not message:
-            return jsonify({'error': 'Required fields are missing.'}), 400
-            
-        conversation_memory.add_contact_message(
-            # pyrefly: ignore [unexpected-keyword]
-            fullname=str(fullname).strip(),
-            email=str(email).strip(),
-            company=str(company).strip() if company else None,
-            subject=str(subject).strip(),
-            message=str(message).strip()
-        )
-        return jsonify({'status': 'success', 'message': 'Contact form saved successfully.'})
-    except Exception as e:
-        print(f"[ERROR] Error in save_contact: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-@app.route('/api/feedback', methods=['POST'])
-def save_feedback():
-    """Receive and save student guide feedback."""
-    try:
-        data = request.get_json() or {}
-        liked_result = data.get('liked_result')
-        feedback_category = data.get('feedback_category') or 'career_match'
-        comment = data.get('comment') or ''
-        career_id = data.get('career_id')
-        
-        # Retrieve session_id
-        session_id = session.get('session_id')
-        if not session_id:
-            return jsonify({'error': 'No active session found.'}), 400
-            
-        if liked_result is None or not career_id:
-            return jsonify({'error': 'Required feedback parameters are missing.'}), 400
-            
-        # liked_result should be saved as integer (1 for True, 0 for False)
-        liked_val = 1 if liked_result else 0
-        
-        conversation_memory.add_feedback(
-            session_id,
-            {
-                'career_id': str(career_id).strip(),
-                'liked_result': liked_val,
-                'feedback_category': str(feedback_category).strip(),
-                'comment': str(comment).strip()
-            }
-        )
-        return jsonify({'status': 'success', 'message': 'Feedback saved successfully.'})
-    except Exception as e:
-        print(f"[ERROR] Error in save_feedback: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-# ============================================================
-# PAYMENT ROUTES
-# ============================================================
-
-from services.payment_service import payment_service
-
-@app.route('/api/payments/create-order', methods=['POST'])
-def create_payment_order():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-    
-    data = request.json or {}
-    plan_id = data.get('plan_id')
-    referral_code = data.get('referral_code')
-    attempt_id = data.get('attempt_id')
-    
-    if not plan_id:
-        return jsonify({'error': 'plan_id is required'}), 400
-        
-    try:
-        res = payment_service.create_payment_order(
-            user_id=session['user_id'],
-            plan_id=plan_id,
-            referral_code=referral_code,
-            attempt_id=attempt_id
-        )
-        return jsonify(res)
-    except Exception as e:
-        print(f"[ERROR] create_payment_order: {e}")
-        return jsonify({'error': str(e)}), 400
-
-
-@app.route('/api/payments/verify', methods=['POST'])
-def verify_payment():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-        
-    data = request.json or {}
-    order_id = data.get('razorpay_order_id')
-    payment_id = data.get('razorpay_payment_id')
-    signature = data.get('razorpay_signature')
-    attempt_id = data.get('attempt_id')
-    
-    if not order_id or not payment_id or not signature:
-        return jsonify({'error': 'Missing verification data'}), 400
-        
-    try:
-        res = payment_service.verify_and_process_payment(
-            user_id=session['user_id'],
-            razorpay_order_id=order_id,
-            razorpay_payment_id=payment_id,
-            razorpay_signature=signature,
-            attempt_id=attempt_id
-        )
-        return jsonify(res)
-    except Exception as e:
-        print(f"[ERROR] verify_payment: {e}")
-        return jsonify({'error': str(e)}), 400
-
-
-@app.route('/api/payments/cancel', methods=['POST'])
-def cancel_payment():
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-        
-    data = request.json or {}
-    order_id = data.get('order_id')
-    if not order_id:
-        return jsonify({'error': 'order_id is required'}), 400
-        
-    try:
-        success = payment_service.mark_payment_cancelled(session['user_id'], order_id)
-        return jsonify({'success': success})
-    except Exception as e:
-        print(f"[ERROR] cancel_payment: {e}")
-        return jsonify({'error': str(e)}), 400
-
-
-@app.errorhandler(404)
-def not_found(error):
-    """Handle 404 errors."""
-    return jsonify({'error': 'Not found'}), 404
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    """Handle 500 errors."""
-    print(f"[ERROR] Internal server error: {error}")
-    return jsonify({'error': 'Internal server error'}), 500
-
+        click.echo(f"[ERROR] {e}", err=True)
 
 # ============================================================
 # IMAGE UPLOAD (PERMANENT HOSTING)
@@ -1447,85 +1187,21 @@ def serve_upload(filename):
     upload_folder = os.path.join(app.root_path, 'data', 'uploads')
     return send_from_directory(upload_folder, filename)
 
-# ============================================================
-# DEVELOPER / ADMIN DASHBOARD ROUTES
-# ============================================================
-from services.stats_service import stats_service
-from services.auth_service import auth_service
 
-def require_developer():
-    """Helper to enforce developer role"""
-    user_id = session.get('user_id')
-    role = session.get('role')
-    if not user_id:
-        return jsonify({'status': 'error', 'message': 'Unauthorized'}), 401
-    
-    # Super admins are always allowed, otherwise check for developer flag
-    if role == 'SUPER_ADMIN':
-        return None
-        
-    user = auth_service.get_user_by_id(user_id)
-    if not user or user.get('role') not in ('DEVELOPER', 'SUPER_ADMIN') or not user.get('is_active'):
-        return jsonify({'status': 'error', 'message': 'Forbidden'}), 403
-    return None
-
-@app.route('/api/developer/stats', methods=['GET'])
-def dev_stats():
-    err = require_developer()
-    if err: return err
-    return jsonify(stats_service.get_dashboard_stats())
-
-@app.route('/api/developer/users', methods=['GET'])
-def dev_users():
-    err = require_developer()
-    if err: return err
-    return jsonify({'users': auth_service.list_all_users()})
-
-@app.route('/api/developer/plans', methods=['GET'])
-def dev_plans():
-    err = require_developer()
-    if err: return err
-    return jsonify({'status': 'success', 'data': []})
-
-@app.route('/api/developer/campaigns', methods=['GET'])
-def dev_campaigns():
-    err = require_developer()
-    if err: return err
-    return jsonify({'status': 'success', 'data': []})
-
-@app.route('/api/developer/audit-log', methods=['GET'])
-def dev_audit():
-    err = require_developer()
-    if err: return err
-    return jsonify({'status': 'success', 'data': []})
-
-@app.route('/api/developer/accounts', methods=['GET'])
-def dev_accounts():
-    err = require_developer()
-    if err: return err
-    return jsonify({'status': 'success', 'data': []})
-
-@app.route('/api/developer/accounts/invite', methods=['POST'])
-def dev_accounts_invite():
-    err = require_developer()
-    if err: return err
-    return jsonify({'status': 'success', 'message': 'Invited'})
 
 # ============================================================
-# MAIN
-# ============================================================
-
 if __name__ == '__main__':
-    print("\n" + "=" * 60)
-    print("[STARTUP] SkillSense SERVER STARTING... (Production Ready)")
-    print("=" * 60)
-    print(f"[INFO] Loaded {len(CAREER_DB)} careers")
-    print(f"[INFO] Loaded {len(QUESTIONS)} questions")
-    print(f"[INFO] Nova Engine: {'Ready' if nova._client else 'Fallback Mode'}")
-    print(f"[INFO] Ranking Weights: {retrieval_pipeline._to_career_matches.__code__.co_filename if hasattr(retrieval_pipeline, '_to_career_matches') else 'Configured'}")
-    print("[INFO] Server running at http://localhost:5000")
-    print("=" * 60 + "\n")
-    
-    print("[INFO] Starting Waitress Production WSGI Server...")
+    # Print clear clickable URLs immediately
+    print("\n" + "=" * 70)
+    print("  >> SkillSense Backend Server Ready")
+    print("=" * 70)
+    print("  --> Click here to visit website:  http://localhost:5173/")
+    print("  --> Backend API URL:              http://localhost:5000/")
+    print("=" * 70)
+    print("  [STATUS] Server listening on http://0.0.0.0:5000")
+    print("  [INFO] Press CTRL+C anytime to stop.")
+    print("=" * 70 + "\n")
+    sys.stdout.flush()
+
     from waitress import serve
     serve(app, host='0.0.0.0', port=5000, threads=6)

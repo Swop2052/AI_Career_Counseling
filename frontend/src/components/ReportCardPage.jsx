@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Lock, ArrowRight, ShieldCheck,
+  Lock, Unlock, ArrowRight, ShieldCheck,
   Brain, Heart, GraduationCap, Trophy,
   Rocket, TrendingUp, Award, Target,
   Sparkles, Info, X, DollarSign, BookOpen,
@@ -222,7 +222,7 @@ function AmbientBackground() {
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
-export default function ReportCardPage({ isPurchased = false, onCreateAccount, user = null, reportData = null }) {
+export default function ReportCardPage({ isPurchased = false, onCreateAccount, onGoToPricing, onUnlockReport, user = null, currentUser = null, reportData = null }) {
   const { language } = useLanguage();
   const t = repT[language] || repT.en;
 
@@ -280,18 +280,83 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
             ]);
           }
         })
-        .catch(err => console.error("Failed to load placeholder careers from backend:", err));
+        .catch(err => {
+          console.error("Failed to load placeholder careers from backend:", err);
+          setDefaultCareers([
+            {
+              rank: 1,
+              title: "Software Engineer / Tech Architect",
+              stream: "Science / Engineering",
+              match: 95,
+              salary: "₹1,50,000 - ₹3,50,000 / mo",
+              fee: "₹2,00,000 - ₹8,00,000",
+              description: "Designs, codes, and architect modern scalable software systems.",
+              traits: "Problem solving, logical reasoning",
+              growthPath: "Junior -> Senior -> Tech Lead -> Principal Architect",
+              icon: Rocket,
+              color: PURPLE,
+            },
+            {
+              rank: 2,
+              title: "Data Scientist & AI Specialist",
+              stream: "Science / Mathematics",
+              match: 92,
+              salary: "₹1,80,000 - ₹4,00,000 / mo",
+              fee: "₹3,00,000 - ₹10,00,000",
+              description: "Builds predictive statistical models and cutting-edge artificial intelligence.",
+              traits: "Analytical mindset, curiosity",
+              growthPath: "Analyst -> Senior Data Scientist -> Head of AI",
+              icon: TrendingUp,
+              color: TEAL,
+            },
+            {
+              rank: 3,
+              title: "Cybersecurity Analyst",
+              stream: "Information Technology",
+              match: 89,
+              salary: "₹1,20,000 - ₹2,80,000 / mo",
+              fee: "₹1,50,000 - ₹5,00,000",
+              description: "Guards network boundaries, cloud infrastructure, and organizational data.",
+              traits: "Vigilance, investigative depth",
+              growthPath: "Security Engineer -> Security Architect -> CISO",
+              icon: Award,
+              color: GOLD,
+            },
+            {
+              rank: 4,
+              title: "Product Manager",
+              stream: "Any Stream / Management",
+              match: 86,
+              salary: "₹1,40,000 - ₹3,20,000 / mo",
+              fee: "₹2,00,000 - ₹9,00,000",
+              description: "Guides product strategy, roadmaps, and cross-functional execution.",
+              traits: "Leadership, communication",
+              growthPath: "Associate PM -> Senior PM -> VP Product",
+              icon: Compass,
+              color: '#2E86AB',
+            }
+          ]);
+          setDefaultRIASEC([
+            { key: 'R', label: 'Realistic', score: 65, color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
+            { key: 'I', label: 'Investigative', score: 78, color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
+            { key: 'A', label: 'Artistic', score: 70, color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
+            { key: 'S', label: 'Social', score: 85, color: TEAL, desc: t.socialDesc, example: t.socialEx },
+            { key: 'E', label: 'Enterprising', score: 94, color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
+            { key: 'C', label: 'Conventional', score: 82, color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
+          ]);
+        });
     }
   }, [reportData, t]);
 
-  // Dynamic RIASEC Scores
-  const dynamicRIASEC = reportData?.scores ? [
-    { key: 'R', label: 'Realistic', score: Math.round((reportData.scores['R'] / 35) * 100), color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
-    { key: 'I', label: 'Investigative', score: Math.round((reportData.scores['I'] / 35) * 100), color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
-    { key: 'A', label: 'Artistic', score: Math.round((reportData.scores['A'] / 35) * 100), color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
-    { key: 'S', label: 'Social', score: Math.round((reportData.scores['S'] / 35) * 100), color: TEAL, desc: t.socialDesc, example: t.socialEx },
-    { key: 'E', label: 'Enterprising', score: Math.round((reportData.scores['E'] / 35) * 100), color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
-    { key: 'C', label: 'Conventional', score: Math.round((reportData.scores['C'] / 35) * 100), color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
+  // Dynamic RIASEC Scores (supports both .scores and .riasec_scores)
+  const rawScores = reportData?.scores || reportData?.riasec_scores;
+  const dynamicRIASEC = rawScores ? [
+    { key: 'R', label: 'Realistic', score: Math.round(((rawScores['R'] || 0) / 35) * 100), color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
+    { key: 'I', label: 'Investigative', score: Math.round(((rawScores['I'] || 0) / 35) * 100), color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
+    { key: 'A', label: 'Artistic', score: Math.round(((rawScores['A'] || 0) / 35) * 100), color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
+    { key: 'S', label: 'Social', score: Math.round(((rawScores['S'] || 0) / 35) * 100), color: TEAL, desc: t.socialDesc, example: t.socialEx },
+    { key: 'E', label: 'Enterprising', score: Math.round(((rawScores['E'] || 0) / 35) * 100), color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
+    { key: 'C', label: 'Conventional', score: Math.round(((rawScores['C'] || 0) / 35) * 100), color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
   ] : defaultRIASEC;
 
   // Calculate 3-letter personality code
@@ -301,33 +366,37 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
 
   // Dynamic Careers
   const dynamicCareers = reportData?.top_careers ? reportData.top_careers.map((c, idx) => {
-    const minSalary = c.data?.expected_income?.minimum_monthly_salary || '';
-    const maxSalary = c.data?.expected_income?.maximum_monthly_salary || '';
+    const careerData = (c.data && typeof c.data === 'object' && Object.keys(c.data).length > 0) ? c.data : c;
+    const minSalary = careerData?.expected_income?.minimum_monthly_salary || careerData?.minimum_monthly_salary || '';
+    const maxSalary = careerData?.expected_income?.maximum_monthly_salary || careerData?.maximum_monthly_salary || '';
     const salaryStr = (minSalary && maxSalary) ? `${minSalary} – ${maxSalary} / mo` : (minSalary || maxSalary || '₹1,50,000 – ₹3,00,000 / mo');
     
-    const feeInfo = c.data?.course_fee?.estimated_total_fee || c.data?.course_fee?.fee_range || '₹50,000 – ₹2,00,000';
+    const feeInfo = careerData?.course_fee?.estimated_total_fee || careerData?.course_fee?.fee_range || careerData?.estimated_total_fee || '₹50,000 – ₹2,00,000';
     let streamInfo = 'Any Stream';
-    if (c.data?.educational_pathway && c.data.educational_pathway.length > 0) {
-        streamInfo = c.data.educational_pathway[0]?.stream || c.data.educational_pathway[0]?.degree || 'Any Stream';
+    if (careerData?.educational_pathway && Array.isArray(careerData.educational_pathway) && careerData.educational_pathway.length > 0) {
+        streamInfo = careerData.educational_pathway[0]?.stream || careerData.educational_pathway[0]?.degree || 'Any Stream';
     }
 
-    const traits = c.data?.personality_traits?.join(', ') || c.data?.personality_traits || 'Problem solving, logical reasoning';
-    const growthPath = Array.isArray(c.data?.growth_path) ? c.data.growth_path.join(' → ') : (c.data?.growth_path || 'Junior → Senior → Lead');
+    const traits = Array.isArray(careerData?.personality_traits) ? careerData.personality_traits.join(', ') : (careerData?.personality_traits || 'Problem solving, logical reasoning');
+    const growthPath = Array.isArray(careerData?.growth_path) ? careerData.growth_path.join(' → ') : (careerData?.growth_path || 'Junior → Senior → Lead');
+
+    const rawScore = c.match_score ?? c.score ?? c.fit_score ?? 85;
+    const matchScore = Math.round(Number(rawScore) || 85);
 
     return {
       rank: idx + 1,
-      title: c.name,
+      title: c.name || c.career_name || 'Career Match',
       stream: streamInfo,
-      match: Math.round(c.match_score),
+      match: matchScore,
       salary: salaryStr,
       fee: feeInfo,
-      description: c.data?.description || c.reason || '',
+      description: careerData?.description || c.reason || '',
       traits: traits,
       growthPath: growthPath,
       icon: [Rocket, TrendingUp, Award, Compass, Target, Briefcase][idx % 6],
       color: [PURPLE, TEAL, GOLD, '#2E86AB', TEAL, PURPLE][idx % 6],
-      rawData: c.data || c,
-      reason: c.reason || c.data?.reason || ''
+      rawData: careerData,
+      reason: c.reason || careerData?.reason || ''
     };
   }) : defaultCareers;
 
@@ -494,7 +563,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
               </div>
               <div>
                 <p className="text-[10px] text-gray-400 font-medium">Career paths mapped</p>
-                <p className="text-lg font-extrabold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>6</p>
+                <p className="text-lg font-extrabold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>{dynamicCareers?.length || 6}</p>
               </div>
             </div>
           </div>
@@ -656,24 +725,75 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, u
                 Unlock {fullName}'s report
               </h2>
 
-              <p className="text-sm text-gray-500 max-w-[320px] mx-auto mb-6 leading-relaxed">
-                Create a free account to see the full trait analysis, subject recommendations, and career roadmap.
-              </p>
+              {/* Guest user: show account creation CTA */}
+              {!currentUser && (
+                <>
+                  <p className="text-sm text-gray-500 max-w-[320px] mx-auto mb-6 leading-relaxed">
+                    Create a free account to see the full trait analysis, subject recommendations, and career roadmap.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={onCreateAccount}
+                    className="w-full py-4 rounded-[12px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl"
+                    style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
+                  >
+                    Create account to unlock
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
+                    Instant access \u00b7 100% free signup
+                  </p>
+                </>
+              )}
 
-              <button
-                type="button"
-                onClick={onCreateAccount}
-                className="w-full py-4 rounded-[12px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl"
-                style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
-              >
-                Create account to unlock
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
-                Instant access · 100% free signup
-              </p>
+              {/* Logged-in user: show unlock or purchase CTA */}
+              {currentUser && (
+                <>
+                  <p className="text-sm text-gray-500 max-w-[320px] mx-auto mb-4 leading-relaxed">
+                    Use 1 assessment credit to unlock the full trait analysis, subject recommendations, and career roadmap.
+                  </p>
+                  <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 mb-5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
+                    <span>Available Balance:</span>
+                    <span className="font-bold">{currentUser?.balance ?? 0} {(currentUser?.balance ?? 0) === 1 ? 'Credit' : 'Credits'}</span>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {(currentUser?.balance ?? 0) >= 1 ? (
+                      <>
+                        {onUnlockReport && (
+                          <button
+                            type="button"
+                            onClick={onUnlockReport}
+                            className="w-full py-4 rounded-[12px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl"
+                            style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
+                          >
+                            Unlock with 1 Credit
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {onGoToPricing && (
+                          <button
+                            type="button"
+                            onClick={onGoToPricing}
+                            className="w-full py-4 rounded-[12px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl"
+                            style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
+                          >
+                            Buy Credits to Unlock
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
+                    Secure \u00b7 Credits never expire
+                  </p>
+                </>
+              )}
             </motion.div>
           </div>
         )}

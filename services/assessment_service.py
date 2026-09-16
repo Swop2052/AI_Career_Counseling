@@ -9,6 +9,48 @@ from services.wallet_service import wallet_service
 
 
 class AssessmentService:
+    @staticmethod
+    def _normalize_report_careers(full_data: dict) -> dict:
+        """Ensure every career object in top_careers has match_score, score, and complete normalized data."""
+        if not isinstance(full_data, dict):
+            return {}
+        try:
+            from modules.career_normalizer import normalize_career_record, CAREER_DB
+        except ImportError:
+            normalize_career_record = lambda x: x or {}
+            CAREER_DB = []
+
+        top_careers = full_data.get('top_careers') or []
+        normalized_careers = []
+        for c in top_careers:
+            if not isinstance(c, dict):
+                continue
+            c_copy = dict(c)
+            val = c_copy.get('match_score') if c_copy.get('match_score') is not None else c_copy.get('score', 85.0)
+            try:
+                f_score = round(float(val), 1)
+            except (ValueError, TypeError):
+                f_score = 85.0
+            c_copy['match_score'] = f_score
+            c_copy['score'] = f_score
+            c_name = c_copy.get('name') or c_copy.get('career_name') or 'Career Match'
+            c_copy['name'] = c_name
+            c_copy['career_name'] = c_name
+
+            c_data = c_copy.get('data') or c_copy.get('career_data') or {}
+            if (not c_data or not isinstance(c_data, dict) or len(c_data) < 3) and CAREER_DB and c_name:
+                c_clean = c_name.strip().lower()
+                for db_c in CAREER_DB:
+                    db_name = (db_c.get('career_name') or '').strip().lower()
+                    if db_name == c_clean or c_clean in db_name or db_name in c_clean:
+                        c_data = db_c.get('career_data') or db_c
+                        break
+            c_copy['data'] = normalize_career_record(c_data) if c_data else {}
+            normalized_careers.append(c_copy)
+
+        full_data['top_careers'] = normalized_careers
+        return full_data
+
     """Manages assessment attempt storage, server-side paywall authorization, and credit unlocks."""
 
     @staticmethod
@@ -68,7 +110,9 @@ class AssessmentService:
             c_data = m.get('career_data') or m.get('data') or {}
             top_careers.append({
                 'name': c_name,
+                'career_name': c_name,
                 'score': round(float(c_score), 1),
+                'match_score': round(float(c_score), 1),
                 'riasec_score': round(float(m.get('riasec_match') or 80.0), 1),
                 'personality_score': round(float(m.get('profile_match') or 14.0), 1),
                 'subject_score': round(float(m.get('subject_match') or 100.0), 1),
@@ -343,7 +387,9 @@ class AssessmentService:
             for match in career_matches[:6]:
                 top_careers.append({
                     'name': match.career_name,
+                    'career_name': match.career_name,
                     'score': round(match.match_score, 1),
+                    'match_score': round(match.match_score, 1),
                     'riasec_score': round(match.riasec_match, 1),
                     'personality_score': round(match.profile_match, 1),
                     'subject_score': round(match.subject_match, 1),
@@ -449,37 +495,16 @@ class AssessmentService:
 
             full_data = json.loads(attempt['full_result_data']) if isinstance(attempt['full_result_data'], str) else (attempt['full_result_data'] or {})
 
-            # Reconstitute report if missing or empty
-            if not full_data or not full_data.get('top_careers'):
+            # Reconstitute report if missing or sparse (< 3 careers)
+            top_careers = full_data.get('top_careers') or []
+            if not full_data or len(top_careers) < 3:
                 reconstituted = AssessmentService._reconstruct_full_report(dict(attempt))
-                if reconstituted and reconstituted.get('top_careers'):
+                if reconstituted and len(reconstituted.get('top_careers') or []) >= 3:
                     full_data = reconstituted
                     with conn:
                         conn.execute("UPDATE assessment_attempts SET full_result_data = %s WHERE id = %s", (json.dumps(full_data), attempt['id']))
 
-            # Ensure every career item in full_data has valid 'data' schema
-            try:
-                from modules.career_normalizer import normalize_career_record, CAREER_DB
-            except ImportError:
-                normalize_career_record = lambda x: x or {}
-                CAREER_DB = []
-
-            top_careers = full_data.get('top_careers') or []
-            for c in top_careers:
-                if not isinstance(c, dict):
-                    continue
-                c_name = c.get('name') or c.get('career_name') or ''
-                c_data = c.get('data') or c.get('career_data') or {}
-                if (not c_data or not isinstance(c_data, dict)) and CAREER_DB and c_name:
-                    for db_c in CAREER_DB:
-                        if db_c.get('career_name') == c_name:
-                            c_data = db_c.get('career_data') or db_c
-                            break
-                c['data'] = normalize_career_record(c_data) if c_data else {}
-                if 'name' not in c and c_name:
-                    c['name'] = c_name
-                if 'career_name' not in c and c_name:
-                    c['career_name'] = c_name
+            full_data = AssessmentService._normalize_report_careers(full_data)
 
             return {
                 'status': 'success',
@@ -545,15 +570,27 @@ class AssessmentService:
                 except Exception:
                     ans_list = []
                 if isinstance(ans_list, list) and len(ans_list) >= 10:
-                    ans_json = json.dumps(ans_list)
                     cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT id, full_result_data, unlocked_at, created_at FROM assessment_attempts
-                        WHERE user_id = %s AND riasec_answers::jsonb = %s::jsonb AND riasec_code = %s AND is_unlocked = 1
-                    """, (user_id, ans_json, attempt['riasec_code']))
-                    candidates = cursor.fetchall()
+                    try:
+                        cursor.execute("""
+                            SELECT id, full_result_data, unlocked_at, created_at, riasec_answers FROM assessment_attempts
+                            WHERE user_id = %s AND riasec_code = %s AND is_unlocked = 1
+                        """, (user_id, attempt['riasec_code']))
+                        candidates = cursor.fetchall()
+                    except Exception as e:
+                        print(f"[WARN] Candidate duplicate fetch error: {e}")
+                        candidates = []
+
                     for cand in candidates:
                         try:
+                            cand_ans = cand['riasec_answers']
+                            if isinstance(cand_ans, str):
+                                try:
+                                    cand_ans = json.loads(cand_ans)
+                                except Exception:
+                                    pass
+                            if cand_ans != ans_list:
+                                continue
                             # Handle both string (SQLite) and datetime (PostgreSQL via psycopg2)
                             t1_raw = cand['created_at']
                             t2_raw = attempt['created_at']
@@ -631,12 +668,13 @@ class AssessmentService:
                     conn.execute("UPDATE assessment_attempts SET is_unlocked = 0, unlocked_at = NULL WHERE id = %s", (attempt['id'],))
                 raise e
 
+            normalized_report = AssessmentService._normalize_report_careers(full_data)
             return {
                 'status': 'success',
                 'message': 'Career Roadmap unlocked successfully!',
                 'attempt_id': attempt['id'],
                 'credits_remaining': new_balance,
-                'full_report': full_data
+                'full_report': normalized_report
             }
         finally:
             conn.close()
@@ -699,8 +737,14 @@ class AssessmentService:
                             cl_ans = cl.get('riasec_answers')
                             if cl_ans == r_ans:
                                 try:
-                                    t1 = datetime.fromisoformat(cl['created_at'].replace('Z', '+00:00'))
-                                    t2 = datetime.fromisoformat(r['created_at'].replace('Z', '+00:00'))
+                                    t1_raw = cl['created_at']
+                                    t2_raw = r['created_at']
+                                    t1 = t1_raw if isinstance(t1_raw, datetime) else datetime.fromisoformat(str(t1_raw).replace('Z', '+00:00'))
+                                    t2 = t2_raw if isinstance(t2_raw, datetime) else datetime.fromisoformat(str(t2_raw).replace('Z', '+00:00'))
+                                    if t1.tzinfo is None and t2.tzinfo is not None:
+                                        t1 = t1.replace(tzinfo=t2.tzinfo)
+                                    elif t2.tzinfo is None and t1.tzinfo is not None:
+                                        t2 = t2.replace(tzinfo=t1.tzinfo)
                                     if abs((t1 - t2).total_seconds()) <= 5:
                                         matched_cluster = cl
                                         break
@@ -742,8 +786,9 @@ class AssessmentService:
                 results.append({
                     'id': r['id'],
                     'is_unlocked': is_unlocked,
-                    'created_at': r['created_at'],
-                    'unlocked_at': r['unlocked_at'],
+                    'created_at': r['created_at'].isoformat() if hasattr(r['created_at'], 'isoformat') else str(r['created_at'] or ''),
+                    'completed_at': r['completed_at'].isoformat() if hasattr(r['completed_at'], 'isoformat') else str(r['completed_at'] or r['created_at'] or ''),
+                    'unlocked_at': r['unlocked_at'].isoformat() if hasattr(r['unlocked_at'], 'isoformat') else (str(r['unlocked_at']) if r['unlocked_at'] else None),
                     'primary_career_title': career_title or 'Career Roadmap Match',
                     # Server-side paywall: protect numerical match score on locked assessments
                     'primary_match_score': (match_score or 85.0) if is_unlocked else None,

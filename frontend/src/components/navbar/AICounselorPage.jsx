@@ -119,7 +119,14 @@ export default function AICounselorPage({ onBack, currentUser }) {
   };
 
   const handleClear = () => {
-    setMessages(INITIAL_MESSAGES);
+    setMessages([
+      {
+        id: 1,
+        sender: 'bot',
+        text: t('veraWelcome'),
+        time: 'Just now'
+      }
+    ]);
   };
 
   const handleKeyDown = (e) => {

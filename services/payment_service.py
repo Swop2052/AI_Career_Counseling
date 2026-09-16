@@ -56,8 +56,8 @@ class RazorpayProvider(BasePaymentProvider):
                 'key_id': self.key_id
             }
         except Exception as e:
-            # Only allow dummy simulated order in development mode
-            if config.flask_env == "development":
+            # Only allow dummy simulated order if explicit mock key is configured
+            if config.flask_env == "development" and self.key_id.startswith("rzp_test_512345"):
                 order_id = f"order_rzp_{uuid.uuid4().hex[:14]}"
                 return {
                     'order_id': order_id,
@@ -65,7 +65,14 @@ class RazorpayProvider(BasePaymentProvider):
                     'currency': currency,
                     'key_id': self.key_id
                 }
-            raise ValueError(f"Razorpay order creation failed: {e}")
+            err_str = str(e)
+            if "minimum amount allowed" in err_str.lower() or (amount_in_subunits > 0 and amount_in_subunits < 100 and currency.upper() == "INR"):
+                raise ValueError(
+                    f"Order creation failed: The payable amount (₹{amount_in_subunits / 100:.2f}) is below the Razorpay minimum transaction limit of ₹1.00. "
+                    "For zero-cost testing, please use a 100% discount coupon (e.g. FREE100), or select a plan with at least ₹1.00 payable."
+                )
+            print(f"[ERROR] Razorpay order creation failed: {err_str}")
+            raise ValueError(f"Razorpay order creation failed: {err_str}")
 
     def verify_signature(self, params: Dict[str, str]) -> bool:
         """Verify Razorpay payment signature using HMAC-SHA256."""
@@ -170,6 +177,15 @@ class PaymentService:
         amount_subunits = int(round(final_price * 100))
         receipt_id = f"rcpt_{uuid.uuid4().hex[:10]}"
 
+        # Enforce gateway minimum limit for INR
+        if 0 < amount_subunits < 100 and plan.get('currency', 'INR').upper() == 'INR':
+            raise ValueError(
+                f"The payable amount after discount is ₹{final_price:.2f}, which is below the Razorpay minimum transaction limit of ₹1.00. "
+                "For zero-cost testing, please use a 100% discount coupon (e.g. FREE100), or select a plan with at least ₹1.00 payable."
+            )
+
+        print(f"[PAYMENT] Creating order for user={user_id}, plan={plan_id}, amount={amount_subunits} paise (₹{final_price:.2f}), coupon={campaign_name or 'None'}")
+
         notes = {
             'user_id': user_id,
             'plan_id': plan_id,
@@ -187,6 +203,7 @@ class PaymentService:
 
         payment_id = f"pay_{uuid.uuid4().hex[:12]}"
         now_str = datetime.now().isoformat()
+        print(f"[PAYMENT] Order successfully created: id={payment_id}, order_id={order_res['order_id']}, amount={amount_subunits} paise")
 
         conn = get_db_connection()
         try:
@@ -412,6 +429,17 @@ class PaymentService:
         try:
             with conn:
                 cursor = conn.cursor()
+                # Server-side transaction guard: Check one_use_per_user inside database transaction
+                cursor.execute("SELECT one_use_per_user, max_uses, used_count FROM campaign_codes WHERE id = %s", (campaign_code_id,))
+                c_check = cursor.fetchone()
+                if c_check and c_check['one_use_per_user']:
+                    cursor.execute(
+                        "SELECT id FROM campaign_redemptions WHERE campaign_code_id = %s AND user_id = %s",
+                        (campaign_code_id, user_id)
+                    )
+                    if cursor.fetchone():
+                        raise ValueError(f"You have already redeemed referral code '{disc_res['code']}'.")
+
                 # Create zero-amount payment record
                 cursor.execute("""
                     INSERT INTO payments (

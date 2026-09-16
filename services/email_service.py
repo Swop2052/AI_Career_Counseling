@@ -82,10 +82,20 @@ class EmailService:
             print(f"[ERROR] Failed to send SMTP email to {recipient_email}: {e}")
             return False
 
-    def send_developer_invitation(self, recipient_email: str, full_name: str,
-                                   setup_url: str, expires_hours: int = 24) -> bool:
-        """Send developer account invitation email with a secure one-time setup link."""
-        subject = "You've been invited to SkillSense — Complete your account setup"
+    def send_invitation_email(self, recipient_email: str, full_name: str,
+                              setup_url: str, role: str = 'DEVELOPER',
+                              expires_hours: int = 24) -> bool:
+        """Send role-tailored account invitation email with a secure one-time setup link."""
+        is_super = (role == 'SUPER_ADMIN')
+        role_label = 'Super Admin' if is_super else 'Developer'
+        access_label = 'Super Admin Console' if is_super else 'Developer Console'
+        badge_bg = '#faf5ff' if is_super else '#f0fdf4'
+        badge_color = '#7c3aed' if is_super else '#00A86B'
+        badge_border = '#e9d5ff' if is_super else '#bbf7d0'
+        btn_gradient = 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' if is_super else 'linear-gradient(135deg, #00A86B 0%, #00c47d 100%)'
+        btn_shadow = 'rgba(124, 58, 237, 0.3)' if is_super else 'rgba(0, 168, 107, 0.3)'
+
+        subject = f"You've been invited to SkillSense as {role_label} — Complete your account setup"
 
         html_body = f"""
         <!DOCTYPE html>
@@ -93,77 +103,80 @@ class EmailService:
         <head>
             <meta charset="utf-8">
             <style>
-                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4fbf7; margin: 0; padding: 20px; color: #1c1c1e; }}
-                .card {{ max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 40px 32px; border: 1px solid rgba(0, 168, 107, 0.15); box-shadow: 0 4px 20px rgba(0,0,0,0.04); }}
-                .brand {{ font-size: 1.5rem; font-weight: 800; color: #00A86B; margin-bottom: 28px; text-align: center; letter-spacing: -0.02em; }}
-                .badge {{ display: inline-block; background: #f0fdf4; color: #00A86B; border: 1px solid #bbf7d0; border-radius: 999px; padding: 4px 14px; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px; }}
-                .title {{ font-size: 1.4rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; line-height: 1.3; }}
+                body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4fbf7; margin: 0; padding: 24px; color: #1c1c1e; }}
+                .card {{ max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 40px 32px; border: 1px solid rgba(0, 168, 107, 0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }}
+                .brand {{ font-size: 1.6rem; font-weight: 800; color: #00A86B; margin-bottom: 24px; text-align: center; letter-spacing: -0.02em; }}
+                .brand span {{ color: #04302E; }}
+                .badge {{ display: inline-block; background: {badge_bg}; color: {badge_color}; border: 1px solid {badge_border}; border-radius: 999px; padding: 5px 16px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px; }}
+                .title {{ font-size: 1.45rem; font-weight: 800; color: #0f172a; margin-bottom: 12px; line-height: 1.3; }}
                 .body-text {{ font-size: 0.95rem; color: #52525b; line-height: 1.7; margin-bottom: 24px; }}
-                .info-box {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin-bottom: 28px; }}
-                .info-row {{ display: flex; gap: 12px; align-items: baseline; margin-bottom: 6px; font-size: 0.9rem; }}
-                .info-label {{ color: #71717a; font-weight: 600; min-width: 100px; }}
+                .info-box {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 22px; margin-bottom: 28px; }}
+                .info-row {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.92rem; }}
+                .info-row:last-child {{ margin-bottom: 0; }}
+                .info-label {{ color: #71717a; font-weight: 600; }}
                 .info-value {{ color: #0f172a; font-weight: 700; }}
-                .cta-btn {{ display: block; width: 100%; max-width: 300px; margin: 0 auto 24px; padding: 16px 28px; background: linear-gradient(135deg, #00A86B 0%, #00c47d 100%); color: #ffffff !important; text-align: center; font-size: 1rem; font-weight: 800; border-radius: 14px; text-decoration: none; letter-spacing: -0.01em; box-shadow: 0 4px 14px rgba(0, 168, 107, 0.3); }}
-                .expiry-note {{ font-size: 0.84rem; color: #71717a; text-align: center; margin-bottom: 28px; }}
+                .cta-btn {{ display: block; width: 100%; max-width: 320px; margin: 0 auto 24px; padding: 16px 28px; background: {btn_gradient}; color: #ffffff !important; text-align: center; font-size: 1rem; font-weight: 800; border-radius: 14px; text-decoration: none; letter-spacing: -0.01em; box-shadow: 0 4px 14px {btn_shadow}; }}
+                .expiry-note {{ font-size: 0.84rem; color: #71717a; text-align: center; margin-bottom: 24px; line-height: 1.5; }}
                 .divider {{ border: none; border-top: 1px solid #f1f5f9; margin: 24px 0; }}
                 .footer {{ font-size: 0.8rem; color: #94a3b8; text-align: center; line-height: 1.6; }}
-                .url-fallback {{ word-break: break-all; font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 12px; }}
+                .url-fallback {{ word-break: break-all; font-size: 0.78rem; color: #94a3b8; text-align: center; margin-top: 12px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; }}
             </style>
         </head>
         <body>
             <div class="card">
-                <div class="brand">SkillSense</div>
+                <div class="brand">SkillSense<span>.</span></div>
                 <div style="text-align:center">
-                    <span class="badge">Developer Account</span>
+                    <span class="badge">{role_label} Invitation</span>
                 </div>
                 <div class="title">Welcome, {full_name}!</div>
                 <p class="body-text">
-                    Your SkillSense Developer account has been created by an administrator.
-                    Click the button below to complete your account setup by creating a secure password.
+                    You have been invited to join the SkillSense administration team as a <strong>{role_label}</strong>.
+                    Please click the button below to set up your password and access your dashboard.
                 </p>
                 <div class="info-box">
                     <div class="info-row">
-                        <span class="info-label">Login Email</span>
+                        <span class="info-label">Email Address</span>
                         <span class="info-value">{recipient_email}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Role</span>
-                        <span class="info-value">Developer</span>
+                        <span class="info-label">Assigned Role</span>
+                        <span class="info-value">{role_label}</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Access</span>
-                        <span class="info-value">Developer Dashboard</span>
+                        <span class="info-label">Access Level</span>
+                        <span class="info-value">{access_label}</span>
                     </div>
                 </div>
-                <a href="{setup_url}" class="cta-btn">Set Up My Account →</a>
+                <a href="{setup_url}" class="cta-btn">Set Up Account & Password &rarr;</a>
                 <p class="expiry-note">
-                    This setup link expires in <strong>{expires_hours} hours</strong> and can only be used once.<br>
+                    This invitation link is one-time use and expires in <strong>{expires_hours} hours</strong>.<br>
                     If you did not expect this invitation, you can safely ignore this email.
                 </p>
                 <hr class="divider">
                 <div class="footer">
                     SkillSense Career Counseling Platform<br>
-                    If the button above doesn't work, copy and paste this link into your browser:
+                    If the button above does not work, copy and paste this link into your browser:
+                    <div class="url-fallback">{setup_url}</div>
                 </div>
-                <div class="url-fallback">{setup_url}</div>
             </div>
         </body>
         </html>
         """
 
         text_body = (
-            f"SkillSense Developer Account Invitation\n\n"
+            f"SkillSense Account Invitation\n\n"
             f"Hello {full_name},\n\n"
-            f"Your SkillSense Developer account has been created.\n"
-            f"Login Email: {recipient_email}\n\n"
-            f"Complete your account setup by visiting this link:\n{setup_url}\n\n"
+            f"You have been invited to join SkillSense as a {role_label}.\n"
+            f"Login Email: {recipient_email}\n"
+            f"Assigned Role: {role_label}\n"
+            f"Access: {access_label}\n\n"
+            f"Complete your account setup by opening this link:\n{setup_url}\n\n"
             f"This link expires in {expires_hours} hours and can only be used once.\n\n"
-            f"If you did not expect this invitation, you can safely ignore this email.\n\n"
             f"SkillSense Career Counseling Platform"
         )
 
         if not self.smtp_user or not self.smtp_password:
-            print(f"[INFO] [MOCK EMAIL] Developer invitation for {recipient_email}: {setup_url}")
+            print(f"[INFO] [MOCK EMAIL] Invitation for {recipient_email} ({role_label}): {setup_url}")
             return True
 
         try:
@@ -171,22 +184,33 @@ class EmailService:
             msg["Subject"] = subject
             msg["From"] = self.smtp_from
             msg["To"] = recipient_email
-            msg.attach(MIMEText(text_body, "plain"))
-            msg.attach(MIMEText(html_body, "html"))
+            msg.attach(MIMEText(text_body, "plain", "utf-8"))
+            msg.attach(MIMEText(html_body, "html", "utf-8"))
 
             if self.smtp_secure:
-                server = smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=10)
+                server = smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=12)
             else:
-                server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10)
+                server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=12)
                 server.starttls()
 
             server.login(self.smtp_user, self.smtp_password)
             server.sendmail(self.smtp_from, [recipient_email], msg.as_string())
             server.quit()
-            print(f"[SUCCESS] Sent developer invitation email to {recipient_email}")
+            print(f"[SUCCESS] Sent {role_label} invitation email to {recipient_email}")
             return True
         except Exception as e:
             print(f"[ERROR] Failed to send invitation email to {recipient_email}: {e}")
             return False
+
+    def send_developer_invitation(self, recipient_email: str, full_name: str,
+                                   setup_url: str, expires_hours: int = 24) -> bool:
+        """Backward-compatible wrapper for send_invitation_email."""
+        return self.send_invitation_email(
+            recipient_email=recipient_email,
+            full_name=full_name,
+            setup_url=setup_url,
+            role='DEVELOPER',
+            expires_hours=expires_hours
+        )
 
 email_service = EmailService()

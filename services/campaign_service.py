@@ -141,13 +141,15 @@ class CampaignService:
                 code_id = f"cmp_{uuid.uuid4().hex[:12]}"
                 now_str = datetime.now().isoformat()
 
+                safe_max_uses = int(max_uses) if (max_uses is not None and str(max_uses).strip()) else 300
+                safe_one_use = int(one_use_per_user) if one_use_per_user is not None else 1
                 cursor.execute("""
                     INSERT INTO campaign_codes (
                         id, code, campaign_name, discount_type, discount_value, benefit_type, benefit_value,
                         valid_from, valid_until, max_uses, used_count, one_use_per_user, is_active, created_at, updated_at, created_by
                     )
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, %s, 1, %s, %s, %s)
-                """, (code_id, code_clean, campaign_name.strip(), d_type, d_val, d_type, d_val, valid_from_str, valid_until_str, int(max_uses), int(one_use_per_user), now_str, now_str, created_by))
+                """, (code_id, code_clean, campaign_name.strip(), d_type, d_val, d_type, d_val, valid_from_str, valid_until_str, safe_max_uses, safe_one_use, now_str, now_str, created_by))
 
             return CampaignService.get_campaign_by_id(code_id)
         finally:
@@ -198,6 +200,8 @@ class CampaignService:
                 if raise_exception: raise err
                 return err.to_dict()
 
+            code_row = dict(code_row)
+
             # Active / Inactive check
             if not code_row['is_active']:
                 err = CampaignValidationError("This referral code has been deactivated.", status='inactive_code', details={'code': code_clean})
@@ -238,14 +242,18 @@ class CampaignService:
             raw_d_val = code_row['discount_value'] if ('discount_value' in code_row.keys() and code_row['discount_value'] is not None) else code_row['benefit_value']
             d_val = float(raw_d_val) if raw_d_val is not None else 0.0
 
-            if d_type == 'FIXED':
+            if d_type in ('FIXED', 'FLAT'):
                 discount_amount = round(min(d_val, original_price), 2)
-            elif d_type == 'PERCENTAGE':
+            elif d_type in ('PERCENTAGE', 'PERCENT'):
                 discount_amount = round(original_price * (min(d_val, 100.0) / 100.0), 2)
             else:
                 discount_amount = 0.0
 
             final_price = round(max(0.0, original_price - discount_amount), 2)
+
+            discount_percent = float(d_val) if d_type in ('PERCENTAGE', 'PERCENT') else (
+                round((discount_amount / original_price) * 100, 1) if original_price > 0 else 0.0
+            )
 
             return {
                 'valid': True,
@@ -255,12 +263,14 @@ class CampaignService:
                 'campaign_name': code_row['campaign_name'],
                 'discount_type': d_type,
                 'discount_value': d_val,
+                'discount_percent': discount_percent,
                 'original_price': original_price,
                 'discount_amount': discount_amount,
                 'final_price': final_price,
                 'currency': plan.get('currency', 'INR'),
                 'credits': plan['credits'],
                 'plan_name': plan['name'],
+                'one_use_per_user': bool(code_row.get('one_use_per_user', False)),
                 'message': f"Referral code '{code_clean}' applied successfully."
             }
         finally:

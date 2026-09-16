@@ -19,7 +19,7 @@ import TraitPopup from "./TraitPopup.jsx";
 const FONT_HREF =
   "https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap";
 
-export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
+export default function PersonalityQuiz({ appConfig, onCompleteTest, onFinish, onComplete, onExit, onBack }) {
   const { CATEGORY_INFO, FEEDBACK_BY_RANK, MASCOT_MESSAGES, TOAST_HOLD_MS, MASCOT_HOLD_MS } = appConfig || {};
   const { language } = useLanguage();
 
@@ -44,6 +44,22 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
   const [done, setDone] = useState(false);
   const [popup, setPopup] = useState(null);
   const [mascot, setMascot] = useState(null);
+
+  const handleFinishQuiz = (finalAnswers = answers) => {
+    setDone(true);
+    const formatted = questions.map((item, idx) => ({
+      question_id: idx + 1,
+      category: item.category,
+      value: finalAnswers[idx] ?? 3
+    }));
+
+    const finishFn = onCompleteTest || onFinish || onComplete;
+    if (finishFn) {
+      finishFn(formatted);
+    } else {
+      window.location.hash = 'report';
+    }
+  };
 
   // State to show a video before each category starts
   const [showCategoryVideo, setShowCategoryVideo] = useState(true);
@@ -175,9 +191,7 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
         setRenderIndex((prev) => prev + 1);
         setShowCategoryVideo(true); // the new category's video will start
       } else {
-        setDone(true);
-        if (onCompleteTest) onCompleteTest();
-        else window.location.hash = 'report';
+        handleFinishQuiz();
       }
     }, 240);
   };
@@ -188,9 +202,7 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
       setMascot(null);
       if (renderIndex < total - 1) slideTo(renderIndex + 1, 1);
       else {
-        setDone(true);
-        if (onCompleteTest) onCompleteTest();
-        else window.location.hash = 'report';
+        handleFinishQuiz();
       }
     }, 220);
   };
@@ -238,9 +250,8 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
       }
       if (renderIndex < total - 1) slideTo(renderIndex + 1, 1);
       else {
-        setDone(true);
-        if (onCompleteTest) onCompleteTest();
-        else window.location.hash = 'report';
+        const finalAnswers = { ...answers, [renderIndex]: opt.value };
+        handleFinishQuiz(finalAnswers);
       }
     }, TOAST_HOLD_MS);
   };
@@ -321,11 +332,13 @@ export default function PersonalityQuiz({ appConfig, onCompleteTest }) {
         {/* Category Intro Video OR Questions Card */}
         <div className={`w-full ${showCategoryVideo ? "max-w-2xl mx-auto" : "flex-1 max-w-lg"} flex flex-col justify-stretch`}>
           {done ? (
-            (() => {
-              if (onCompleteTest) onCompleteTest();
-              else window.location.hash = 'report';
-              return null;
-            })()
+            <div className="w-full min-h-[400px] flex flex-col items-center justify-center p-8 bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-[#09A3A3]/20 text-center">
+              <div className="w-14 h-14 border-4 border-[#09A3A3] border-t-transparent rounded-full animate-spin mb-5" />
+              <h3 className="text-xl font-extrabold text-[#04211F]">Analyzing Your Responses</h3>
+              <p className="text-sm text-gray-500 mt-2 max-w-xs leading-relaxed">
+                Calculating your RIASEC profile and generating your personalized career roadmap...
+              </p>
+            </div>
           ) : showCategoryVideo ? (
             <IntroVideo
               src={getVideoSrc(q.category, language)}

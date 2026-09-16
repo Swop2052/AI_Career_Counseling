@@ -1,0 +1,16 @@
+[ERROR] Failed to save assessment attempt: could not extend file "base/22791/23290": No space left on device
+HINT:  Check free disk space.
+
+Traceback (most recent call last):
+  File "E:\projects\SkillSense_Final\AI_Career_Counseling\app.py", line 800, in submit_answers
+    save_res = assessment_service.save_assessment_attempt(
+  File "E:\projects\SkillSense_Final\AI_Career_Counseling\services\assessment_service.py", line 284, in save_assessment_attempt
+    conn.execute("""
+  File "E:\projects\SkillSense_Final\AI_Career_Counseling\database\schema.py", line 53, in execute
+    cur.execute(query, vars)
+  File "E:\projects\SkillSense_Final\AI_Career_Counseling\.venv\lib\site-packages\psycopg2\extras.py", line 236, in execute
+    return super().execute(query, vars)
+psycopg2.errors.DiskFull: could not extend file "base/22791/23290": No space left on device
+HINT:  Check free disk space.
+
+

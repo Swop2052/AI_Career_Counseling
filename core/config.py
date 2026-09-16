@@ -68,7 +68,8 @@ class Config:
     def database_url(self) -> str:
         import urllib.parse
         encoded_pwd = urllib.parse.quote_plus(self.db_password)
-        return f"postgresql://{self.db_user}:{encoded_pwd}@{self.db_host}:{self.db_port}/{self.db_name}"
+        host = "127.0.0.1" if self.db_host in ("localhost", "127.0.0.1") else self.db_host
+        return f"postgresql://{self.db_user}:{encoded_pwd}@{host}:{self.db_port}/{self.db_name}?connect_timeout=2"
     db_retention_hours: int = int(os.getenv("DB_RETENTION_HOURS", 24))
     
     # Conversation

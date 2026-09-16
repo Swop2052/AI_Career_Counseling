@@ -10,12 +10,12 @@ const FUN_MASCOT_QUOTES = [
 ];
 
 export default function MascotBubble({ mascot, onDismiss, color, tint }) {
-  if (!mascot) return null;
   const brandColor = color || "#3B82F6"; // Blue theme for new robot mascot
 
   const [activeMessage, setActiveMessage] = useState("");
 
   useEffect(() => {
+    if (!mascot) return;
     if (mascot.message) {
       setActiveMessage(mascot.message);
     } else {
@@ -24,6 +24,8 @@ export default function MascotBubble({ mascot, onDismiss, color, tint }) {
       setActiveMessage(randomMsg);
     }
   }, [mascot]);
+
+  if (!mascot) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4 pointer-events-none select-none">

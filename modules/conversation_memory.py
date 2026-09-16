@@ -19,18 +19,28 @@ class ConversationMemory:
     
     def __init__(self):
         self._max_history = config.max_chat_history
-        self._init_db()
-        self.cleanup_old_sessions()
+        self._db_available = False
+        try:
+            self._init_db()
+            self.cleanup_old_sessions()
+        except Exception:
+            pass
         
     def _get_connection(self):
         """Get a connection to the PostgreSQL database."""
         try:
-            conn = psycopg2.connect(config.database_url)
+            import socket
+            host = getattr(config, 'db_host', '127.0.0.1')
+            port = int(getattr(config, 'db_port', 5434))
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(0.2)
+            s.connect((host, port))
+            s.close()
+            conn = psycopg2.connect(config.database_url, connect_timeout=1)
             psycopg2.extras.register_default_jsonb(conn)
             psycopg2.extras.register_default_json(conn)
             return conn
         except Exception as e:
-            print(f"[ERROR] Database connection failed: {e}")
             raise e
         
     def _init_db(self):
@@ -50,10 +60,11 @@ class ConversationMemory:
             with conn:
                 with conn.cursor() as cursor:
                     cursor.execute(schema_sql)
+            self._db_available = True
             print("[SUCCESS] PostgreSQL database successfully initialized.")
         except Exception as e:
-            print(f"[ERROR] Failed to initialize PostgreSQL database: {e}")
-            # Don't raise, might just be a connection failure in dev
+            self._db_available = False
+            print(f"[WARNING] PostgreSQL unavailable on {config.db_host}:{config.db_port}: {e}")
         finally:
             if conn:
                 conn.close()
@@ -331,6 +342,8 @@ class ConversationMemory:
                 
     def cleanup_old_sessions(self):
         """Clean up old uncompleted assessments."""
+        if not getattr(self, '_db_available', False):
+            return
         conn = None
         try:
             conn = self._get_connection()
@@ -338,7 +351,7 @@ class ConversationMemory:
                 with conn.cursor() as cursor:
                     retention_hours = getattr(config, 'db_retention_hours', 24)
                     cursor.execute(
-                        "DELETE FROM assessments WHERE assessment_status = 'draft' AND created_at < NOW() - INTERVAL '%s hours'",
+                        "DELETE FROM assessment_attempts WHERE completed_at IS NULL AND created_at < NOW() - INTERVAL '%s hours'",
                         (retention_hours,)
                     )
         except Exception as e:
@@ -350,6 +363,8 @@ class ConversationMemory:
 
 
     def get_all_careers(self) -> List[Dict]:
+        if not getattr(self, '_db_available', False):
+            return []
         conn = None
         try:
             conn = self._get_connection()
@@ -363,6 +378,8 @@ class ConversationMemory:
             if conn: conn.close()
 
     def upsert_careers(self, careers: List[Dict]):
+        if not getattr(self, '_db_available', False):
+            return
         conn = None
         try:
             conn = self._get_connection()

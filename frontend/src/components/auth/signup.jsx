@@ -1,3 +1,4 @@
+import { authApi } from '../../api/authApi';
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -45,30 +46,52 @@ export default function SignupPage({ onSignup, onSuccess, onSwitchToLogin, onHom
     }
 
     setIsSubmitting(true);
+    setError('');
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-
-      const initials = formData.fullName
-        .trim()
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2) || 'U';
-
-      const createdUserData = {
-        name: formData.fullName,
-        email: formData.email,
-        initials: initials,
-      };
-
-      if (onSuccess) {
-        onSuccess(createdUserData);
-      } else if (onSignup) {
-        onSignup(createdUserData);
+    let pendingAttemptId = null;
+    try {
+      const rawFlow = sessionStorage.getItem('skillsense_active_assessment_flow');
+      if (rawFlow) {
+        const parsed = JSON.parse(rawFlow);
+        if (parsed && parsed.attemptId && !parsed.dismissed) {
+          pendingAttemptId = parsed.attemptId;
+        }
       }
-    }, 850);
+    } catch {
+      pendingAttemptId = null;
+    }
+
+    authApi.signup(formData.email, formData.password, formData.fullName, pendingAttemptId)
+      .then((res) => {
+        setIsSubmitting(false);
+        const user = res.user || {
+          name: formData.fullName,
+          email: formData.email,
+          initials: formData.fullName.trim().split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
+        };
+        const claimedId = res.claimed_attempt_id || null;
+        if (claimedId) {
+          try {
+            const rawFlow = sessionStorage.getItem('skillsense_active_assessment_flow');
+            const flow = rawFlow ? JSON.parse(rawFlow) : {};
+            sessionStorage.setItem('skillsense_active_assessment_flow', JSON.stringify({
+              ...flow,
+              attemptId: claimedId,
+              flowState: 'pending_assessment_locked',
+              completedAt: flow.completedAt || Date.now(),
+              dismissed: false
+            }));
+          } catch (e) {
+            console.warn('Failed to update active assessment flow:', e);
+          }
+        }
+        if (onSuccess) onSuccess(user, claimedId);
+        else if (onSignup) onSignup(user, claimedId);
+      })
+      .catch((err) => {
+        setIsSubmitting(false);
+        setError(err.message || 'Failed to create account. Please try again.');
+      });
   };
 
   return (

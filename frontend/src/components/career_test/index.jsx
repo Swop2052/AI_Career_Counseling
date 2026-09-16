@@ -1,23 +1,15 @@
 import React from 'react';
 import PersonalityQuiz from './PersonalityQuiz';
 import { useLanguage } from '../../translations/LanguageContext';
+import { assessmentApi } from '../../api/assessmentApi';
 
 export default function CareerTestModule({ userMetadata, appConfig, onCompleteTest, onExit }) {
   const { language } = useLanguage();
 
-  // जेव्हा टेस्ट पूर्ण होईल, तेव्हा रिझल्ट API ला पाठवेल आणि मग App.jsx ला देईल
+  // When test finishes, submit answers via central API client (including auth session cookies)
   const handleQuizFinish = async (answers) => {
     try {
-      const response = await fetch('/api/submit-answers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          answers: answers,
-          student_info: userMetadata || {},
-          language: language
-        })
-      });
-      const data = await response.json();
+      const data = await assessmentApi.submitAnswers(answers, userMetadata || {}, language);
       if (onCompleteTest) {
         onCompleteTest(data);
       }
@@ -34,6 +26,7 @@ export default function CareerTestModule({ userMetadata, appConfig, onCompleteTe
         appConfig={appConfig}
         onFinish={handleQuizFinish}
         onComplete={handleQuizFinish}
+        onCompleteTest={handleQuizFinish}
         onExit={onExit}
         onBack={onExit}
       />

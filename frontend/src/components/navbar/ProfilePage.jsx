@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import { assessmentApi } from '../../api/assessmentApi';
+import { paymentApi } from '../../api/paymentApi';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   CreditCard, Lock, CheckCircle2, Check, Award, BookOpen, Compass,
   Sparkles, TrendingUp, User, FileText, Bot, Edit3, X, Mail, Phone,
-  Calendar, MapPin, GraduationCap, Heart, Briefcase, Pencil, MessageCircle, History as HistoryIcon, Clock
+  Calendar, MapPin, GraduationCap, Heart, Briefcase, Pencil, MessageCircle, History as HistoryIcon, Clock, ChevronRight
 } from 'lucide-react';
 
 
@@ -15,11 +17,7 @@ const TONE_STYLES = {
   purple: { bg: '#EBDBFB', text: '#6633A3', border: '#D6BAF5' },
 };
 
-const historyLog = [
-  { label: 'Completed Personality Test', detail: 'Found your top traits', when: '2 days ago', icon: CheckCircle2 },
-  { label: 'Explored Software Engineering', detail: 'Viewed the career roadmap', when: '1 day ago', icon: Compass },
-  { label: 'Chatted with VERA', detail: 'Asked about college prep', when: '12 hours ago', icon: MessageCircle }
-];
+
 
 function TagGroup({ icon: Icon, title, items, tone }) {
   const t = TONE_STYLES[tone];
@@ -52,8 +50,37 @@ function TagGroup({ icon: Icon, title, items, tone }) {
 export default function ProfilePage({ user, onboardingData, isPurchased, onBack, onSave, onGoToPricing, onUnlockReport, onViewReport }) {
   const fileInputRef = useRef(null);
   const [avatarImage, setAvatarImage] = useState(user?.avatar || null);
-  const [credits, setCredits] = useState(1);
+  const [credits, setCredits] = useState(user?.balance ?? 0);
+  const [attempts, setAttempts] = useState([]);
+  const [showAllAttempts, setShowAllAttempts] = useState(false);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [summaryError, setSummaryError] = useState(null);
   const [workshopCode, setWorkshopCode] = useState('');
+
+  const fetchSummary = () => {
+    setLoadingSummary(true);
+    setSummaryError(null);
+    assessmentApi.getAccountSummary()
+      .then(res => {
+        if (res && res.status === 'success') {
+          if (res.wallet && typeof res.wallet.balance === 'number') {
+            setCredits(res.wallet.balance);
+          }
+          if (Array.isArray(res.attempts)) {
+            setAttempts(res.attempts);
+          }
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load account summary:", err);
+        setSummaryError(err?.message || 'Failed to load assessment history.');
+      })
+      .finally(() => setLoadingSummary(false));
+  };
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
   const [codeRedeemed, setCodeRedeemed] = useState(false);
   const [redeemError, setRedeemError] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
@@ -89,21 +116,39 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
     }
   };
 
-  const handleRedeemCode = (e) => {
+  const handleRedeemCode = async (e) => {
     e.preventDefault();
     setRedeemError('');
-    if (!workshopCode.trim()) {
-      setRedeemError('Please enter a workshop code.');
+    const cleanCode = (workshopCode || '').trim().toUpperCase();
+    if (!cleanCode) {
+      setRedeemError('Please enter a workshop or campaign code.');
       return;
     }
-    const cleanCode = workshopCode.trim().toUpperCase();
-    if (cleanCode === 'SHEGAON26' || cleanCode === 'SKILLSENSE') {
-      setCredits((prev) => prev + 1);
-      setCodeRedeemed(true);
-      setWorkshopCode('');
-      setTimeout(() => setCodeRedeemed(false), 4000);
-    } else {
-      setRedeemError('Invalid code! Try SHEGAON26');
+    try {
+      const planRes = await paymentApi.getLowestPlan();
+      const planId = planRes?.lowest_plan?.id || planRes?.plan?.id || 'plan_Standard';
+      const valRes = await paymentApi.validateCoupon(planId, cleanCode);
+      if (!valRes.valid) {
+        setRedeemError(valRes.message || 'Invalid or expired code.');
+        return;
+      }
+      if (valRes.final_price <= 0) {
+        const res = await paymentApi.redeemZero(planId, cleanCode);
+        const newBal = typeof res.new_balance === 'number' ? res.new_balance : res.balance;
+        if (typeof newBal === 'number') {
+          setCredits(newBal);
+        } else {
+          setCredits((prev) => prev + (valRes.credits || 1));
+        }
+        setCodeRedeemed(true);
+        setWorkshopCode('');
+        setTimeout(() => setCodeRedeemed(false), 4000);
+      } else {
+        setRedeemError(`Code applied! Grants discount at checkout (Final price: ₹${valRes.final_price}).`);
+      }
+    } catch (err) {
+      console.error('Code redemption error:', err);
+      setRedeemError(err.message || 'Failed to redeem code.');
     }
   };
 
@@ -141,7 +186,8 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
     { key: 'strengths', label: 'Strengths' },
   ];
 
-  const matchScore = 96;
+  const latestAttempt = attempts && attempts.length > 0 ? attempts[0] : null;
+  const matchScore = latestAttempt?.teaser?.primary_match_score || 92;
   const ringRadius = 50;
   const circumference = 2 * Math.PI * ringRadius;
   const dashOffset = circumference - (matchScore / 100) * circumference;
@@ -197,7 +243,7 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                     <img src={avatarImage} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     <span className="" style={{ color: '#0B8F86' }}>
-                      {formData.fullName.slice(0, 2).toUpperCase()}
+                      {(formData.fullName || user?.email || 'Student').slice(0, 2).toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -214,7 +260,7 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                   className="text-[11px] font-semibold px-2.5 py-1 rounded-full inline-block mb-1"
                   style={{ background: '#D8F2EC', color: '#0B8F86' }}
                 >
-                  Verified Student
+                  {user?.role === 'SUPER_ADMIN' ? 'Super Admin' : user?.role === 'DEVELOPER' ? 'Verified Developer' : 'Verified Student'}
                 </span>
                 <h1 className="text-xl sm:text-2xl font-semibold truncate" style={{ color: '#12302D' }}>
                   {formData.fullName}
@@ -450,7 +496,13 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
 
             <div className="bg-white rounded-2xl shadow-md border border-[#E3EFEC] divide-y" style={{ borderColor: '#E3EFEC' }}>
               <button
-                onClick={onViewReport}
+                onClick={() => {
+                  if (attempts && attempts.length > 0) {
+                    if (onViewReport) onViewReport(attempts[0]);
+                  } else {
+                    if (onBack) onBack();
+                  }
+                }}
                 className="w-full flex items-center gap-3 p-5 text-left hover:bg-[#CFEDED] transition-colors rounded-t-2xl"
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: isPurchased ? '#D8F2EC' : '#FCE9C6' }}>
@@ -480,31 +532,137 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
 
         {/* History card */}
         <div className="w-full bg-white rounded-2xl shadow-md border border-[#E3EFEC] p-6 sm:p-7">
-          <h3 className="text-sm font-semibold flex items-center gap-2 mb-5" style={{ color: '#12302D' }}>
-            <HistoryIcon className="w-4 h-4" style={{ color: '#0B8F86' }} />
-            History
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-            {historyLog.map((item, idx) => {
-              const ItemIcon = item.icon;
-              return (
-                <div key={idx} className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: '#CFEDED' }}>
-                    <ItemIcon className="w-4 h-4" style={{ color: '#0B8F86' }} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-semibold" style={{ color: '#12302D' }}>{item.label}</span>
-                      <span className="text-[10px] font-semibold shrink-0 flex items-center gap-1" style={{ color: '#5B7975' }}>
-                        <Clock className="w-3 h-3" /> {item.when}
-                      </span>
-                    </div>
-                    <p className="text-xs" style={{ color: '#5B7975' }}>{item.detail}</p>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#12302D' }}>
+              <HistoryIcon className="w-4 h-4" style={{ color: '#0B8F86' }} />
+              Assessment History & Reports
+            </h3>
+            <span className="text-xs font-bold text-[#0B8F86] bg-[#CFEDED] px-2.5 py-0.5 rounded-full">
+              {loadingSummary ? 'Loading...' : `${attempts.length} ${attempts.length === 1 ? 'Attempt' : 'Attempts'}`}
+            </span>
           </div>
+
+          {loadingSummary ? (
+            <div className="py-10 flex flex-col items-center justify-center gap-3">
+              <div className="animate-spin w-7 h-7 border-2 border-[#0B8F86] border-t-transparent rounded-full" />
+              <p className="text-xs text-[#5B7975]">Loading your assessment history...</p>
+            </div>
+          ) : summaryError ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-rose-500 mb-3">{summaryError}</p>
+              <button
+                type="button"
+                onClick={fetchSummary}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0B8F86] hover:bg-[#09776f] transition-all cursor-pointer"
+              >
+                Retry Loading
+              </button>
+            </div>
+          ) : attempts.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-[#5B7975] mb-3">No completed assessments recorded yet.</p>
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0B8F86] hover:bg-[#09776f] transition-all cursor-pointer"
+              >
+                Take Career Assessment
+              </button>
+            </div>
+          ) : (
+            <>
+            <div className="divide-y divide-[#E3EFEC]">
+              {(showAllAttempts ? attempts : attempts.slice(0, 3)).map((att, idx) => {
+                const dateRaw = att.completed_at || att.created_at;
+                const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recent';
+                const isUnlocked = Boolean(att.is_unlocked === 1 || att.is_unlocked === true);
+
+                return (
+                  <div key={att.id || idx} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style={{ background: isUnlocked ? '#D1FAE5' : '#CFEDED' }}>
+                        <Compass className="w-5 h-5" style={{ color: isUnlocked ? '#059669' : '#0B8F86' }} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-[#12302D]">
+                            {att.riasec_code ? `RIASEC: ${att.riasec_code}` : 'Career Assessment'}
+                          </span>
+                          <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${isUnlocked ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {isUnlocked ? 'Unlocked' : 'Locked Teaser'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#5B7975] mt-0.5">
+                          {att.primary_career_title ? `${att.primary_career_title} · ` : ''}Completed on {dateStr}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center">
+                      {isUnlocked ? (
+                        <button
+                          type="button"
+                          onClick={() => onViewReport && onViewReport(att)}
+                          className="px-3.5 py-1.5 rounded-xl bg-[#12302D] hover:bg-[#075f5c] text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>View Full Report</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (credits >= 1) {
+                              assessmentApi.unlockAttempt(att.id)
+                                .then((res) => {
+                                  setCredits(prev => Math.max(0, prev - 1));
+                                  setAttempts(prev => prev.map(a => a.id === att.id ? { ...a, is_unlocked: true } : a));
+                                  if (onViewReport) onViewReport({ ...att, is_unlocked: true, full_report: res?.full_report });
+                                })
+                                .catch(err => {
+                                  if (err?.status === 402 || err?.data?.insufficient_credits) {
+                                    if (onGoToPricing) onGoToPricing();
+                                  } else {
+                                    alert(err?.message || err?.data?.error || 'Unlock failed.');
+                                  }
+                                });
+                            } else {
+                              try {
+                                sessionStorage.setItem('skillsense_active_assessment_flow', JSON.stringify({
+                                  attemptId: att.id,
+                                  flowState: 'awaiting_credit_purchase',
+                                  completedAt: Date.now(),
+                                  dismissed: false
+                                }));
+                              } catch (e) {}
+                              localStorage.setItem('skillsense_return_to_unlock', att.id);
+                              if (onGoToPricing) onGoToPricing();
+                            }
+                          }}
+                          className="px-3.5 py-1.5 rounded-xl bg-[#0B8F86] hover:bg-[#09776f] text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>{credits >= 1 ? 'Unlock (1 Credit)' : 'Buy Credits to Unlock'}</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {attempts.length > 3 && (
+              <div className="pt-3 text-center border-t border-[#E3EFEC]">
+                <button
+                  type="button"
+                  onClick={() => setShowAllAttempts(prev => !prev)}
+                  className="text-xs font-bold text-[#0B8F86] hover:text-[#075f5c] transition-colors py-1.5 px-4 rounded-xl hover:bg-[#CFEDED]/50 cursor-pointer"
+                >
+                  {showAllAttempts ? 'Show Recent (3)' : `Show All (${attempts.length} Assessments)`}
+                </button>
+              </div>
+            )}
+            </>
+          )}
         </div>
       </div>
     </div>
