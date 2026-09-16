@@ -134,17 +134,8 @@ export default function CareerDetailModal({ career, onClose }) {
         {/* Scrollable Content */}
         <div className="overflow-y-auto p-5 sm:p-8 space-y-10">
           
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-[#09A3A3]" />
-              <p className="text-sm font-medium text-gray-500">AI is dynamically generating a personalized skill plan...</p>
-            </div>
-          )}
-
-          {!isLoading && (
-            <>
-              {/* Section 1: Overview */}
-              <section className="space-y-4">
+          {/* Section 1: Overview */}
+          <section className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
                   <Briefcase className="w-5 h-5" style={{ color: TEAL }} />
                   Career Overview
@@ -176,6 +167,26 @@ export default function CareerDetailModal({ career, onClose }) {
               </div>
             </section>
           )}
+
+          {/* Skill Development Plan */}
+          <section className="space-y-4 relative">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
+                <Sparkles className="w-5 h-5" style={{ color: GOLD }} />
+                Skill Development Plan
+              </h3>
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+            </div>
+            {skillPlan ? (
+              <div className="bg-[#F8FAFC] border border-gray-200 rounded-2xl p-5 sm:p-6 text-sm text-gray-700 leading-relaxed" style={{ whiteSpace: 'pre-line' }}>
+                {skillPlan}
+              </div>
+            ) : (
+              <div className="bg-[#F8FAFC] border border-gray-200 rounded-2xl p-5 sm:p-6 text-sm text-gray-400 italic">
+                {isLoading ? "Generating your personalized skill plan..." : "No specific skill plan available for this career."}
+              </div>
+            )}
+          </section>
 
           {/* Section 3: Educational Pathway */}
           {eduSteps.length > 0 && (
@@ -434,9 +445,6 @@ export default function CareerDetailModal({ career, onClose }) {
                 </div>
               </div>
             </section>
-          )}
-
-            </>
           )}
 
         </div>

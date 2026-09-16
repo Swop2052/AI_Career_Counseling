@@ -55,9 +55,14 @@ const LinkedInShareCard = forwardRef(({ user, dynamicCareers, personalityCode, d
             fontWeight: '800',
             fontFamily: "'Sora', sans-serif",
             boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-            border: '2px solid rgba(255,255,255,0.2)'
+            border: '2px solid rgba(255,255,255,0.2)',
+            overflow: 'hidden'
           }}>
-            {fullName.slice(0, 1).toUpperCase()}
+            {(user?.profilePhoto || user?.avatar) ? (
+              <img src={user?.profilePhoto || user?.avatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              fullName.slice(0, 1).toUpperCase()
+            )}
           </div>
           <div>
             <h1 style={{ margin: '0 0 4px 0', fontSize: '26px', fontWeight: '800', fontFamily: "'Sora', sans-serif", letterSpacing: '-0.5px' }}>

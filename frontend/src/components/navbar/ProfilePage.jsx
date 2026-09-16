@@ -79,8 +79,8 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        alert('Image size should be less than 3 MB');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image size should be less than 10 MB');
         return;
       }
       const reader = new FileReader();
