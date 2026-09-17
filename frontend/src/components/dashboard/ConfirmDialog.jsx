@@ -2,22 +2,22 @@ import Modal from './Modal';
 import { GhostButton, DangerButton } from './ui';
 import { AlertTriangle } from 'lucide-react';
 
-export default function ConfirmDialog({ open, onClose, onConfirm, title, description }) {
+export default function ConfirmDialog({ open, onClose, onConfirm, title, description, loading = false, confirmText = 'Delete' }) {
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={loading ? () => {} : onClose}
       title={title || 'Delete this item?'}
       footer={
         <>
-          <GhostButton onClick={onClose}>Cancel</GhostButton>
+          <GhostButton onClick={onClose} disabled={loading}>Cancel</GhostButton>
           <DangerButton
+            disabled={loading}
             onClick={() => {
-              onConfirm();
-              onClose();
+              if (onConfirm) onConfirm();
             }}
           >
-            Delete
+            {loading ? 'Deleting...' : confirmText}
           </DangerButton>
         </>
       }

@@ -76,8 +76,9 @@ def manage_plans():
 def update_or_delete_plan(plan_id):
     """Update an existing plan or safely delete/archive it."""
     if request.method == 'DELETE':
+        force = request.args.get('force', 'false').lower() in ('true', '1')
         try:
-            res = pricing_service.delete_or_archive_plan(plan_id)
+            res = pricing_service.delete_or_archive_plan(plan_id, force=force)
             return jsonify({'status': 'success', **res}), 200
         except ValueError as ve:
             return jsonify({'error': str(ve)}), 404

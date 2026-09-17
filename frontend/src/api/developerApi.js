@@ -28,8 +28,8 @@ export const developerApi = {
     });
   },
 
-  deletePlan: (planId) => {
-    return request(`/api/developer/plans/${planId}`, {
+  deletePlan: (planId, force = false) => {
+    return request(`/api/developer/plans/${planId}${force ? '?force=true' : ''}`, {
       method: 'DELETE'
     });
   },

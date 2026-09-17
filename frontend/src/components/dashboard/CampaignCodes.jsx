@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Tag, Calendar, Users, TicketPercent, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Tag, Calendar, Users, TicketPercent, AlertCircle, RefreshCw, Search, X } from 'lucide-react';
 import { developerApi } from '../../api/developerApi';
 import { PrimaryButton, GhostButton, Field, inputClasses, ProgressBar, StatusPill } from './ui';
 import Modal from './Modal';
@@ -34,6 +34,7 @@ export default function CampaignCodes() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_CAMPAIGN);
   const [actionLoading, setActionLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadCampaigns = () => {
     setLoading(true);
@@ -52,6 +53,19 @@ export default function CampaignCodes() {
   useEffect(() => {
     loadCampaigns();
   }, []);
+
+  const filteredCampaigns = useMemo(() => {
+    if (!searchQuery.trim()) return campaigns;
+    const q = searchQuery.toLowerCase().trim();
+    return campaigns.filter((c) => {
+      const code = (c.code || '').toLowerCase();
+      const name = (c.campaign_name || '').toLowerCase();
+      const type = (c.discount_type || '').toLowerCase();
+      const val = String(c.discount_value || '').toLowerCase();
+      const status = (c.is_active === 1 || c.is_active === true ? 'active' : 'expired').toLowerCase();
+      return code.includes(q) || name.includes(q) || type.includes(q) || val.includes(q) || status.includes(q);
+    });
+  }, [campaigns, searchQuery]);
 
   function handleSave(e) {
     if (e && e.preventDefault) e.preventDefault();
@@ -104,20 +118,50 @@ export default function CampaignCodes() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center gap-2">
+      {/* Header & Controls Toolbar */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3.5 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-2 shrink-0">
           <TicketPercent className="h-5 w-5 text-[#09A3A3]" />
-          <span className="text-sm font-semibold text-[#0B1F1D]">
-            {campaigns.length} Referral / Campaign Code{campaigns.length === 1 ? '' : 's'}
-          </span>
+          <div>
+            <span className="text-sm font-bold text-[#0B1F1D]">
+              {searchQuery.trim()
+                ? `Showing ${filteredCampaigns.length} of ${campaigns.length} Referral / Campaign Codes`
+                : `${campaigns.length} Referral / Campaign Code${campaigns.length === 1 ? '' : 's'}`}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <GhostButton onClick={loadCampaigns} className="flex items-center gap-1.5 py-2 px-3 text-xs">
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
-          </GhostButton>
-          <PrimaryButton onClick={() => setModalOpen(true)} className="flex items-center gap-1.5 py-2 px-3.5 text-xs font-bold">
-            <Plus className="h-4 w-4" /> Create Campaign Code
-          </PrimaryButton>
+
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-1 lg:max-w-xl justify-end">
+          {/* Working Search Bar */}
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search campaign code, name, or discount..."
+              className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-gray-200 bg-gray-50/60 hover:bg-white focus:bg-white focus:border-[#09A3A3] focus:ring-2 focus:ring-[#09A3A3]/20 transition-all outline-none text-[#0B1F1D] placeholder:text-gray-400 font-medium"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                title="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <GhostButton onClick={loadCampaigns} className="flex items-center gap-1.5 py-2 px-3 text-xs">
+              <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+            </GhostButton>
+            <PrimaryButton onClick={() => setModalOpen(true)} className="flex items-center gap-1.5 py-2 px-3.5 text-xs font-bold">
+              <Plus className="h-4 w-4" /> Create Campaign Code
+            </PrimaryButton>
+          </div>
         </div>
       </div>
 
@@ -132,10 +176,23 @@ export default function CampaignCodes() {
           <div className="w-8 h-8 border-3 border-[#09A3A3] border-t-transparent rounded-full animate-spin" />
           <span>Loading campaign codes from server...</span>
         </div>
+      ) : filteredCampaigns.length === 0 ? (
+        <div className="py-16 text-center text-sm text-gray-500 flex flex-col items-center justify-center gap-3 bg-white rounded-2xl border border-dashed border-gray-200 p-8">
+          <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+            <Search className="h-6 w-6" />
+          </div>
+          <div className="space-y-1">
+            <p className="font-bold text-[#0B1F1D]">No campaign codes match "{searchQuery}"</p>
+            <p className="text-xs text-gray-400">Try searching with a different coupon code name, discount, or status.</p>
+          </div>
+          <GhostButton onClick={() => setSearchQuery('')} className="text-xs mt-2">
+            Clear Search
+          </GhostButton>
+        </div>
       ) : (
         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           <AnimatePresence>
-            {campaigns.map((c, i) => {
+            {filteredCampaigns.map((c, i) => {
               const active = c.is_active === 1 || c.is_active === true;
               const uses = c.times_redeemed || 0;
               const max = c.max_uses || null;

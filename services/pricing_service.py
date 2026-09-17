@@ -180,8 +180,8 @@ class PricingService:
             conn.close()
 
     @staticmethod
-    def delete_or_archive_plan(plan_id: str) -> Dict[str, Any]:
-        """Safely delete a pricing plan if unused, or archive/deactivate it if historical transactions exist."""
+    def delete_or_archive_plan(plan_id: str, force: bool = False) -> Dict[str, Any]:
+        """Safely delete a pricing plan if unused or test only, or archive/deactivate it if historical transactions exist."""
         conn = get_db_connection()
         try:
             with conn:
@@ -190,12 +190,12 @@ class PricingService:
                 if not existing:
                     raise ValueError(f"Pricing plan '{plan_id}' not found.")
 
-                # Check if this plan has historical references in payments table
-                cursor.execute("SELECT COUNT(*) FROM payments WHERE plan_id = %s", (plan_id,))
-                pay_count = cursor.fetchone()[0]
+                # Check if this plan has successful historical payment records
+                cursor.execute("SELECT COUNT(*) FROM payments WHERE plan_id = %s AND status = 'SUCCESS'", (plan_id,))
+                success_pay_count = cursor.fetchone()[0]
 
-                if pay_count > 0:
-                    # Plan has historical transactions: DO NOT hard delete! Soft-delete / Archive it.
+                if success_pay_count > 0 and not force:
+                    # Plan has real customer transactions: archive it
                     now_str = datetime.now().isoformat()
                     cursor.execute("""
                         UPDATE pricing_plans SET
@@ -204,12 +204,17 @@ class PricingService:
                     """, (now_str, plan_id))
                     return {
                         'action': 'ARCHIVED',
-                        'message': f"Pricing plan '{existing['name']}' has historical payment records and cannot be permanently deleted. It has been deactivated and archived from active purchases.",
+                        'message': f"Pricing plan '{existing['name']}' has completed payment records and cannot be permanently deleted. It has been deactivated and archived.",
                         'plan_id': plan_id,
                         'is_active': 0
                     }
                 else:
-                    # Plan was never used in transactions: safe to hard delete
+                    # No completed payments or force requested:
+                    # Clean up uncompleted/abandoned checkout sessions so foreign keys do not block deletion
+                    if force:
+                        cursor.execute("DELETE FROM payments WHERE plan_id = %s", (plan_id,))
+                    else:
+                        cursor.execute("DELETE FROM payments WHERE plan_id = %s AND status != 'SUCCESS'", (plan_id,))
                     cursor.execute("DELETE FROM pricing_plans WHERE id = %s", (plan_id,))
                     return {
                         'action': 'DELETED',
