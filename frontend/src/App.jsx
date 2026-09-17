@@ -622,7 +622,7 @@ export default function App() {
   };
 
   const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? { name: tempStudentName || onboardingData?.fullName, grade: onboardingData?.classYear, profilePhoto: onboardingData?.profilePhoto } : null);
-  const isFullScreenPage = ['login', 'signup', 'test', 'pricing', 'terms', 'privacy', 'onboarding', 'developer', 'admin', 'accept-invite'].includes(currentPage);
+  const isFullScreenPage = ['login', 'signup', 'test', 'terms', 'privacy', 'onboarding', 'developer', 'admin', 'accept-invite'].includes(currentPage);
 
   if (!appConfig) {
     return (
