@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import LinkedInShareCard from './LinkedInShareCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 import {
   Lock, Unlock, ArrowRight, ShieldCheck,
   Brain, Heart, GraduationCap, Trophy,
@@ -286,6 +288,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
   }, [isPurchased, onBack]);
 
   const [selectedCareer, setSelectedCareer] = useState(null);
+  const [activeTrait, setActiveTrait] = useState(null);
   const [defaultCareers, setDefaultCareers] = useState(FALLBACK_CAREERS);
   const [defaultRIASEC, setDefaultRIASEC] = useState(() => getFallbackRIASEC(t));
   const [preGeneratedBlob, setPreGeneratedBlob] = useState(null);
@@ -487,25 +490,31 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     if (!reportRef.current) return;
     try {
       const canvas = await html2canvas(reportRef.current, { 
-        scale: 1.5, 
+        scale: 2, 
         useCORS: true, 
         backgroundColor: '#F6FBFA' 
       });
       
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          alert("Failed to create image blob.");
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = `SkillSense_Career_Report_${studentName}.png`;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, "image/png", 1.0);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`SkillSense_Career_Report_${studentName}.pdf`);
     } catch (err) {
       console.error("Error generating report", err);
       alert("Failed to download report. Please try again.");
@@ -513,7 +522,6 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
   };
 
   const handleLinkedInShare = async () => {
-    const appUrl = window.location.origin;
     const matchScore = topMatch?.match || 96;
     
     const topTraits = dynamicRIASEC 
@@ -528,12 +536,8 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     const nameOnly = rawName.includes('@') ? rawName.split('@')[0] : rawName;
     const nameNoSpaces = nameOnly.replace(/[^a-zA-Z0-9]/g, '');
 
-    const shareText = `🌟 Let's Connect! My SkillSense Career Assessment Results! 🚀\n\n${nameOnly} is a ${topTraits} individual. Based on their profile, they are highly aligned with careers like ${(dynamicCareers || []).slice(0,3).map(c=>c.title).join(', ')}.\n\n🧠 Key Traits: ${topTraits}\n📊 Personality Code: ${personalityCode}\n\n🎯 Top Recommended Careers:\n${careerList}\n\nExplore your path at ${appUrl}!\n\n#VitalsAndVectors #SkillSense #CareerGuidance #AIGuidance #${nameNoSpaces}`;
+    const shareText = `🌟 Let's Connect! My SkillSense Career Assessment Results! 🚀\n\n${nameOnly} is a ${topTraits} individual. Based on their profile, they are highly aligned with careers like ${(dynamicCareers || []).slice(0,3).map(c=>c.title).join(', ')}.\n\n🧠 Key Traits: ${topTraits}\n📊 Personality Code: ${personalityCode}\n\n🎯 Top Recommended Careers:\n${careerList}\n\nExplore your path at https://skillsense.aisense.co.in!\n\n#VitalsAndVectors #SkillSense #CareerGuidance #AIGuidance #${nameNoSpaces}`;
 
-    const linkedInWindow = window.open('', '_blank', 'noopener,noreferrer');
-    if (linkedInWindow) {
-      linkedInWindow.document.write('<html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f3f2ef;"><h2 style="text-align:center;color:#0a66c2;">Preparing your SkillSense post...</h2></body></html>');
-    }
     const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
 
     try {
@@ -541,30 +545,13 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': preGeneratedBlob })
         ]);
-        // Silently copied to clipboard
-      }
-      if (linkedInWindow) {
-        linkedInWindow.location.href = linkedInUrl;
-      } else {
-        window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+        alert("📸 Your report image has been copied! Just Paste (Ctrl+V) when LinkedIn opens to attach it to your post.");
       }
     } catch (err) {
-      console.error("Clipboard share failed", err);
-      if (preGeneratedBlob) {
-          try {
-            const dataUrl = URL.createObjectURL(preGeneratedBlob);
-            const link = document.createElement('a');
-            link.download = `SkillSense-Report-${nameNoSpaces}.png`;
-            link.href = dataUrl;
-            link.click();
-          } catch(e) {}
-      }
-      if (linkedInWindow) {
-        linkedInWindow.location.href = linkedInUrl;
-      } else {
-        window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
-      }
+      console.warn("Clipboard write failed:", err);
     }
+    
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
   };
 
   const getDayStr = () => {
@@ -604,92 +591,92 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
           </div>
         </div>
 
-        {/* Section 1: Hero Card */}
-        <div className="bg-[#FAF9F6] rounded-[32px] p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 mb-8 border border-gray-200/50 shadow-sm relative overflow-hidden">
+        {/* Section 1: Hero Split Cards */}
+        <div className="flex flex-col lg:flex-row gap-6 mb-8 w-full">
           
-          {/* Left: Text */}
-          <div className="flex-1 max-w-sm relative z-10 pl-2">
-            <h1 className="text-5xl font-['Sora'] font-bold text-[#04302E] leading-[1.1] mb-2 tracking-tight">
-              Career <br/><span className="text-[#09A3A3]">Readiness</span> <br/><span className="text-[#E8B04B]">Report</span>
+          {/* Left Card: Text & Avatar */}
+          <div className="bg-white rounded-[32px] p-8 lg:p-10 flex flex-col lg:flex-row items-center justify-between gap-8 flex-1 border border-gray-200/60 shadow-sm relative overflow-hidden">
+            {/* Left: Text */}
+            <div className="flex-1 max-w-sm relative z-10 pl-2">
+              <h1 className="text-5xl font-['Sora'] font-bold text-[#04302E] leading-[1.1] mb-2 tracking-tight">
+              Career <span className="text-[#E8B04B]">Report</span>
             </h1>
-            <p className="text-gray-600 mt-4 mb-6 font-medium text-[15px]">Your strengths today.<br/>A brighter tomorrow.</p>
-            
-            <div className="flex items-center gap-6 mt-8 border-t border-gray-200/60 pt-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100"><BarChart3 className="w-5 h-5 text-teal-600"/></div>
-                <div className="text-[10px] text-gray-500 leading-tight">Report Generated<br/><strong className="text-gray-900 text-xs">{getDayStr()}</strong></div>
+              <p className="text-gray-600 mt-4 mb-6 font-medium text-[15px]">Your strengths today.<br/>A brighter tomorrow.</p>
+              
+              <div className="flex items-center gap-6 mt-8 border-t border-gray-100 pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-gray-200/60"><BarChart3 className="w-5 h-5 text-teal-600"/></div>
+                  <div className="text-[10px] text-gray-500 leading-tight">Report Generated<br/><strong className="text-gray-900 text-xs">{getDayStr()}</strong></div>
+                </div>
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center border border-gray-200/60"><LineChart className="w-5 h-5 text-teal-600"/></div>
+                   <div className="text-[10px] text-gray-500 leading-tight">Career readiness<br/><strong className="text-gray-900 text-xs">For a Better You</strong></div>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100"><LineChart className="w-5 h-5 text-teal-600"/></div>
-                 <div className="text-[10px] text-gray-500 leading-tight">Career readiness report<br/><strong className="text-gray-900 text-xs">For a Better You</strong></div>
-              </div>
+            </div>
+
+            {/* Center: Avatar */}
+            <div className="relative shrink-0 flex items-center justify-center lg:ml-8 lg:mr-4">
+               <div className="absolute inset-0 bg-[#E8B04B]/15 rounded-full blur-3xl scale-150" />
+               <div className="absolute -inset-4 border-2 border-dashed border-[#09A3A3]/20 rounded-full animate-[spin_40s_linear_infinite]" />
+               
+               <div className="w-[220px] h-[220px] rounded-full border-8 border-white shadow-xl overflow-hidden relative z-10 bg-[#CFEDED] flex items-center justify-center">
+                 {profilePhoto ? (
+                    <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" />
+                 ) : (
+                    <span className="text-6xl font-bold text-[#09A3A3] font-['Sora']">{studentName.charAt(0)}</span>
+                 )}
+               </div>
+               
+               {/* Decorative Badge */}
+               <div className="absolute -bottom-4 -right-2 bg-white px-5 py-3 rounded-2xl shadow-xl border border-gray-100 rotate-[-8deg] z-20">
+                 <span className="text-[13px] font-['Sora'] font-bold text-[#09A3A3] leading-tight block">Keep Exploring!</span>
+               </div>
             </div>
           </div>
 
-          {/* Center: Avatar */}
-          <div className="relative shrink-0 flex items-center justify-center lg:ml-8">
-             <div className="absolute inset-0 bg-[#E8B04B]/15 rounded-full blur-3xl scale-150" />
-             <div className="absolute -inset-4 border-2 border-dashed border-[#09A3A3]/20 rounded-full animate-[spin_40s_linear_infinite]" />
-             
-             <div className="w-[280px] h-[280px] rounded-full border-8 border-white shadow-xl overflow-hidden relative z-10 bg-[#CFEDED] flex items-center justify-center">
-               {profilePhoto ? (
-                  <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" />
-               ) : (
-                  <span className="text-7xl font-bold text-[#09A3A3] font-['Sora']">{studentName.charAt(0)}</span>
-               )}
-             </div>
-             
-             {/* Decorative Badge */}
-             <div className="absolute -bottom-4 -right-4 bg-white px-5 py-3 rounded-2xl shadow-xl border border-gray-100 rotate-[-8deg] z-20">
-               <span className="text-[13px] font-['Sora'] font-bold text-[#09A3A3] leading-tight block">Keep<br/>Exploring<br/>You Got This!</span>
-             </div>
-          </div>
-
-          {/* Right: Profile Details & Stats */}
-          <div className="flex-1 flex flex-col gap-5 relative z-10 w-full lg:max-w-[340px]">
-             <div className="flex flex-col items-end gap-1 mb-2">
-                <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-[20px] shadow-sm border border-gray-100 w-full">
-                  <div className="w-10 h-10 bg-[#04302E] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0">
+          {/* Right Card: Profile Details & Stats */}
+          <div className="bg-white rounded-[32px] p-8 lg:p-8 flex flex-col gap-6 border border-gray-200/60 shadow-sm w-full lg:w-[380px] shrink-0">
+             <div className="flex flex-col items-start gap-1">
+                <div className="flex items-center gap-3 bg-slate-50 px-5 py-3.5 rounded-[20px] border border-gray-200/60 w-fit">
+                  <div className="w-11 h-11 bg-[#04302E] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0 shadow-sm">
                      {profilePhoto ? (
                        <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" alt="Profile" />
                      ) : (
                        fullName.slice(0, 2).toUpperCase()
                      )}
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-[#04302E] text-base">{fullName}</h3>
+                  <div className="min-w-0 pr-2">
+                    <h3 className="font-bold text-[#04302E] text-base leading-tight whitespace-nowrap">{fullName}</h3>
                   </div>
                 </div>
-                <div className="text-[11px] italic text-gray-500 font-serif mr-2 mt-1">
-                   "Better Students Brighter Futures"
-                </div>
              </div>
 
-             <div className="grid grid-cols-3 gap-2">
-                <div className="bg-white p-3 py-4 rounded-[16px] shadow-sm border border-gray-100 flex flex-col items-center text-center justify-center">
-                   <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center mb-2">
+             <div className="grid grid-cols-3 gap-2.5">
+                <div className="bg-slate-50 p-3 py-4 rounded-[16px] border border-gray-200/60 flex flex-col items-center text-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-teal-100/50 flex items-center justify-center mb-2">
                      <Target className="w-4 h-4 text-[#09A3A3]" />
                    </div>
-                   <span className="text-[9px] text-gray-400 font-medium leading-tight mb-1">Aptitude match</span>
-                   <span className="font-bold text-lg text-[#04302E] leading-none">{topMatch?.match || 96}%</span>
+                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wide leading-tight mb-1">Aptitude</span>
+                   <span className="font-black text-xl text-[#04302E] leading-none">{topMatch?.match || 96}%</span>
                 </div>
-                <div className="bg-white p-3 py-4 rounded-[16px] shadow-sm border border-gray-100 flex flex-col items-center text-center justify-center">
-                   <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center mb-2">
+                <div className="bg-slate-50 p-3 py-4 rounded-[16px] border border-gray-200/60 flex flex-col items-center text-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-purple-100/50 flex items-center justify-center mb-2">
                      <Brain className="w-4 h-4 text-[#6D5AE0]" />
                    </div>
-                   <span className="text-[9px] text-gray-400 font-medium leading-tight mb-1">Top personality</span>
-                   <span className="font-bold text-lg text-[#6D5AE0] leading-none">{personalityCode}</span>
+                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wide leading-tight mb-1">Personality</span>
+                   <span className="font-black text-xl text-[#6D5AE0] leading-none">{personalityCode}</span>
                 </div>
-                <div className="bg-white p-3 py-4 rounded-[16px] shadow-sm border border-gray-100 flex flex-col items-center text-center justify-center">
-                   <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center mb-2">
+                <div className="bg-slate-50 p-3 py-4 rounded-[16px] border border-gray-200/60 flex flex-col items-center text-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-amber-100/50 flex items-center justify-center mb-2">
                      <Compass className="w-4 h-4 text-[#E8B04B]" />
                    </div>
-                   <span className="text-[9px] text-gray-400 font-medium leading-tight mb-1">Career paths mapped</span>
-                   <span className="font-bold text-lg text-[#04302E] leading-none">6</span>
+                   <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wide leading-tight mb-1">Mapped</span>
+                   <span className="font-black text-xl text-[#04302E] leading-none">6</span>
                 </div>
              </div>
 
-             <div className="flex items-center gap-3 mt-4">
+             <div className="flex items-center gap-3 mt-auto pt-2">
                 <button onClick={handleDownloadReport} className="flex-1 bg-[#04302E] hover:bg-[#064a47] text-white py-3.5 rounded-[14px] flex items-center justify-center gap-2 text-[13px] font-semibold transition-all shadow-md hover:shadow-lg">
                   <Download className="w-4 h-4" /> Download PDF
                 </button>
@@ -713,49 +700,105 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
              </div>
              
              <div className="flex gap-6 flex-1">
-                {/* Bars */}
-                <div className="flex-1 space-y-5 mt-2">
-                   {dynamicRIASEC.map((d) => (
-                      <div key={d.key} className="flex items-center gap-3 relative group">
-                         <div className="w-[85px] shrink-0">
-                           <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-help border-b border-dashed border-gray-300 pb-0.5">{d.label}</span>
-                           <div className="absolute left-0 bottom-full mb-2 w-48 bg-[#04302E] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
-                             <div className="font-bold mb-1 text-[#09A3A3]">{d.label}</div>
-                             <div className="mb-2 text-white/90">{d.desc}</div>
-                             <div className="text-white/60 italic text-[10px]">{d.example}</div>
-                             <div className="absolute -bottom-1 left-4 w-2 h-2 bg-[#04302E] rotate-45"></div>
-                           </div>
-                         </div>
-                         <div className="flex-1 h-7 rounded-r-lg rounded-l-sm bg-gray-100 overflow-hidden">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${d.score}%` }}
-                              transition={{ duration: 1, ease: "easeOut" }}
-                              className="h-full rounded-r-lg rounded-l-sm" 
-                              style={{ backgroundColor: d.color }} 
-                            />
-                         </div>
-                         <span className="text-xs font-bold text-[#04302E] w-8 text-right">{d.score}%</span>
-                      </div>
-                   ))}
+                {/* Donut Chart */}
+                <div className="flex-1 flex flex-col justify-center relative min-h-[200px]">
+                   <div className="absolute inset-0 animate-[spin_40s_linear_infinite]">
+                     <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                         <Pie
+                           data={dynamicRIASEC}
+                           cx="50%"
+                           cy="50%"
+                           innerRadius={60}
+                           outerRadius={90}
+                           paddingAngle={4}
+                           dataKey="score"
+                           onMouseEnter={(_, index) => setActiveTrait(dynamicRIASEC[index])}
+                           onMouseLeave={() => setActiveTrait(null)}
+                           cursor="pointer"
+                           stroke="none"
+                         >
+                           {dynamicRIASEC.map((entry, index) => (
+                             <Cell 
+                                key={`cell-${index}`} 
+                                fill={entry.color} 
+                                opacity={activeTrait ? (activeTrait.key === entry.key ? 1 : 0.3) : 1} 
+                                className="transition-opacity duration-300 outline-none hover:opacity-100"
+                             />
+                           ))}
+                         </Pie>
+                       </PieChart>
+                     </ResponsiveContainer>
+                   </div>
+                   {/* Center Text in Donut */}
+                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                     <span className="text-4xl font-black text-[#04302E]">
+                        {activeTrait ? activeTrait.score + '%' : (topMatch?.match || 96) + '%'}
+                     </span>
+                     {activeTrait && (
+                       <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
+                          {activeTrait.label}
+                       </span>
+                     )}
+                   </div>
                 </div>
-                {/* Quote Block */}
-                <div className="w-[140px] bg-[#EEF8F7] rounded-[24px] p-5 flex flex-col justify-center relative overflow-hidden shrink-0 border border-[#CFEDED]/50 shadow-inner">
-                   <img src={LeavesIllustration} crossOrigin="anonymous" alt="Decoration" className="absolute -bottom-8 -right-8 w-40 h-40 object-contain opacity-30" />
-                   <span className="text-5xl text-[#09A3A3] font-serif absolute top-4 left-3 opacity-40">"</span>
-                   <p className="text-[15px] font-['Sora'] font-semibold text-[#04302E] relative z-10 leading-snug mt-6">
-                     A unique blend of traits that makes you, <br/><span className="text-[#09A3A3] text-lg block mt-1">YOU.</span>
-                   </p>
+
+                {/* Side Message / Quote Block */}
+                <div className="w-[170px] bg-[#EEF8F7] rounded-[24px] p-5 flex flex-col justify-center relative overflow-hidden shrink-0 border border-[#CFEDED]/50 shadow-inner transition-all">
+                   <img src={LeavesIllustration} crossOrigin="anonymous" alt="Decoration" className="absolute -bottom-8 -right-8 w-40 h-40 object-contain opacity-30 pointer-events-none" />
+                   
+                   <AnimatePresence mode="wait">
+                     {activeTrait ? (
+                       <motion.div 
+                         key="trait-details"
+                         initial={{ opacity: 0, y: 10 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         exit={{ opacity: 0, y: -10 }}
+                         className="relative z-10 flex flex-col h-full justify-center"
+                       >
+                         <button 
+                           onClick={() => setActiveTrait(null)}
+                           className="absolute -top-2 -right-2 p-1 bg-white rounded-full text-gray-500 hover:text-gray-800 shadow-sm z-20 cursor-pointer"
+                         >
+                           <X className="w-3 h-3" />
+                         </button>
+                         <h4 className="font-bold text-[13px] uppercase tracking-wider mb-2" style={{ color: activeTrait.color }}>{activeTrait.label}</h4>
+                         <p className="text-[11px] font-medium text-[#04302E] leading-relaxed mb-3">{activeTrait.desc}</p>
+                         <div className="text-[10px] text-gray-500 italic bg-white/60 p-2 rounded-lg border border-white">
+                           {activeTrait.example}
+                         </div>
+                       </motion.div>
+                     ) : (
+                       <motion.div 
+                         key="quote"
+                         initial={{ opacity: 0 }}
+                         animate={{ opacity: 1 }}
+                         exit={{ opacity: 0 }}
+                         className="relative z-10 flex flex-col justify-center"
+                       >
+                         <span className="text-5xl text-[#09A3A3] font-serif absolute -top-4 -left-2 opacity-40">"</span>
+                         <p className="text-[14px] font-['Sora'] font-semibold text-[#04302E] relative z-10 leading-snug mt-6">
+                           A unique blend of traits that makes you, <br/><span className="text-[#09A3A3] text-lg block mt-1">YOU.</span>
+                         </p>
+                         <p className="text-[9px] text-gray-400 font-medium mt-4 text-center">Click chart to explore</p>
+                       </motion.div>
+                     )}
+                   </AnimatePresence>
                 </div>
              </div>
 
              {/* Legend */}
-             <div className="grid grid-cols-3 gap-y-3 gap-x-2 mt-10 border-t border-gray-100 pt-6">
+             <div className="grid grid-cols-3 gap-y-3 gap-x-2 mt-8 border-t border-gray-100 pt-6">
                {dynamicRIASEC.map((d) => (
-                  <div key={d.key} className="flex items-center gap-2 text-[11px] font-medium text-gray-500">
-                     <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                  <button 
+                     key={d.key} 
+                     onMouseEnter={() => setActiveTrait(d)}
+                     onMouseLeave={() => setActiveTrait(null)}
+                     className={`flex items-center gap-2 text-[11px] font-medium text-left cursor-pointer transition-colors ${activeTrait?.key === d.key ? 'text-[#04302E] font-bold' : 'text-gray-500 hover:text-gray-700'}`}
+                  >
+                     <span className={`w-3 h-3 rounded-full shrink-0 transition-transform ${activeTrait?.key === d.key ? 'scale-125 shadow-sm' : ''}`} style={{ backgroundColor: d.color }} />
                      {d.label}
-                  </div>
+                  </button>
                ))}
              </div>
           </div>
@@ -765,7 +808,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
              <div className="flex justify-between items-start mb-8">
                <div>
                  <h2 className="text-[22px] font-['Sora'] font-bold text-[#04302E] mb-1">Top Career Matches</h2>
-                 <p className="text-sm text-gray-500 font-medium">Based on your RIASEC profile</p>
+                 <p className="text-sm text-gray-500 font-medium">Based on your trait profile</p>
                </div>
              </div>
 
@@ -855,10 +898,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
            
            {/* Left */}
            <div className="flex-1 relative z-10">
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="w-5 h-5 text-white" />
-                <span className="text-white font-bold text-sm tracking-wide">SkillSense</span>
-              </div>
+
               <h2 className="text-4xl lg:text-5xl font-['Sora'] font-bold text-white mb-5 leading-tight">
                 Turning Potential<br/><span className="text-[#E8B04B]">Into Possibilities</span>
               </h2>

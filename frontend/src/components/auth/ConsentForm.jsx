@@ -26,20 +26,21 @@ export default function ConsentForm({ onBack, onHome }) {
       <header className="sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-[#09A3A3]/20 px-6 sm:px-12 py-3.5 flex items-center justify-between shadow-xs">
         <div 
           onClick={onHome}
-          className="flex items-center gap-3 cursor-pointer group"
+          className="group flex items-center gap-0.5 cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 py-1"
           title="Go to Home"
         >
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#04302E] to-[#09A3A3] p-0.5 shadow-md group-hover:scale-105 transition-transform">
-            <div className="w-full h-full rounded-[14px] bg-[#04302E] flex items-center justify-center">
-              <Compass className="w-5 h-5 text-[#32d4d4]" strokeWidth={2.5} />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight text-[#04211F] leading-none">
-              SkillSense<span className="text-[#09A3A3]">.</span>
-            </span>
-            <span className="text-[10px] font-semibold text-[#09A3A3] mt-0.5">Consent Form</span>
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="SkillSense Icon" 
+            className="h-[42px] w-auto object-contain mix-blend-multiply drop-shadow-sm" 
+            draggable="false"
+          />
+          <img 
+            src="/logo1.png" 
+            alt="SkillSense Typography" 
+            className="h-[28px] w-auto object-contain mix-blend-multiply drop-shadow-sm mt-1" 
+            draggable="false"
+          />
         </div>
 
         <div className="flex items-center gap-3">

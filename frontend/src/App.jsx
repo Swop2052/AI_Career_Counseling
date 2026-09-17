@@ -307,6 +307,11 @@ export default function App() {
       setTempStudentName(formData.fullName);
     }
     setIsPurchased(false);
+    if (currentUser && formData?.profilePhoto) {
+       const updatedUser = { ...currentUser, profilePhoto: formData.profilePhoto };
+       setCurrentUser(updatedUser);
+       localStorage.setItem('skillsense_user', JSON.stringify(updatedUser));
+    }
     navigateTo('test', '#test');
   };
 
@@ -618,8 +623,8 @@ export default function App() {
     navigateTo('home', '');
   };
 
-  const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? { name: tempStudentName || onboardingData?.fullName, grade: onboardingData?.classYear } : null);
-  const isFullScreenPage = ['login', 'signup', 'test', 'terms', 'privacy', 'onboarding', 'developer', 'admin', 'accept-invite'].includes(currentPage);
+  const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? { name: tempStudentName || onboardingData?.fullName, grade: onboardingData?.classYear, profilePhoto: onboardingData?.profilePhoto } : null);
+  const isFullScreenPage = ['login', 'signup', 'test', 'pricing', 'terms', 'privacy', 'onboarding', 'developer', 'admin', 'accept-invite'].includes(currentPage);
 
   if (!appConfig) {
     return (
@@ -668,6 +673,8 @@ export default function App() {
           <AssessmentOnboarding
             onComplete={handleOnboardingComplete}
             onBackToHome={() => navigateTo('home', '')}
+            initialData={onboardingData}
+            currentUser={currentUser}
           />
         )}
 

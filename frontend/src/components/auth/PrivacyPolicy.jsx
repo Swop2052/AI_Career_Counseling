@@ -28,7 +28,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
       <header className="sticky top-0 z-30 w-full bg-white/90 backdrop-blur-md border-b border-[#09A3A3]/20 px-6 sm:px-12 py-3.5 flex items-center justify-between shadow-xs">
         <div 
           onClick={onHome}
-          className="flex items-center gap-1.5 cursor-pointer group hover:scale-[1.02] transition-transform"
+          className="group flex items-center gap-0.5 cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 py-1"
           title="Go to Home"
         >
           <img 
@@ -37,15 +37,12 @@ export default function PrivacyPolicy({ onBack, onHome }) {
             className="h-[42px] w-auto object-contain mix-blend-multiply drop-shadow-sm" 
             draggable="false"
           />
-          <div className="flex flex-col justify-center mt-1">
-            <img 
-              src="/logo1.png" 
-              alt="SkillSense Typography" 
-              className="h-[26px] w-auto object-contain mix-blend-multiply drop-shadow-sm" 
-              draggable="false"
-            />
-            <span className="text-[10px] font-semibold text-[#09A3A3] ml-0.5">{t('privacyHeading')}</span>
-          </div>
+          <img 
+            src="/logo1.png" 
+            alt="SkillSense Typography" 
+            className="h-[28px] w-auto object-contain mix-blend-multiply drop-shadow-sm mt-1" 
+            draggable="false"
+          />
         </div>
 
         <div className="flex items-center gap-3">

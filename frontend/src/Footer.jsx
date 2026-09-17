@@ -82,14 +82,21 @@ export default function Footer({
                 if (onHomeClick) onHomeClick();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="flex items-center gap-2 mb-4 cursor-pointer w-fit group select-none"
+              className="flex items-center gap-1 mb-4 cursor-pointer w-fit group select-none transition-transform hover:scale-[1.02] active:scale-95 bg-white/95 hover:bg-white rounded-2xl px-3 py-1.5 shadow-sm"
+              title="Return to Home"
             >
-              <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#09A3A3] to-[#0ecccc] flex items-center justify-center shadow-lg shadow-[#09A3A3]/30 transition-transform group-hover:scale-105">
-                <Compass className="w-5 h-5 text-[#04211F]" />
-              </div>
-              <span className="font-display font-semibold text-lg text-white group-hover:text-[#09A3A3] transition-colors">
-                SkillSense
-              </span>
+              <img 
+                src="/logo.png" 
+                alt="SkillSense Icon" 
+                className="h-[36px] w-auto object-contain mix-blend-multiply drop-shadow-xs" 
+                draggable="false"
+              />
+              <img 
+                src="/logo1.png" 
+                alt="SkillSense Typography" 
+                className="h-[24px] w-auto object-contain mix-blend-multiply drop-shadow-xs" 
+                draggable="false"
+              />
             </div>
             
             <p className="text-sm leading-relaxed max-w-xs text-[#CFEDED]/50 mb-5">

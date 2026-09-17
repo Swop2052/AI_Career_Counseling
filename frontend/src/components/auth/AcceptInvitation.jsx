@@ -77,15 +77,19 @@ export default function AcceptInvitation({ onLoginSuccess, onGoToLogin }) {
     <div className="min-h-screen w-full bg-[#E7F7F7]/40 flex flex-col justify-between selection:bg-[#09A3A3] selection:text-white">
       {/* Top Header */}
       <div className="w-full bg-[#ABE0E0]/60 border-b border-[#09A3A3]/20 py-4 px-6 sm:px-12 flex items-center justify-between">
-        <div className="flex items-center gap-2 select-none">
+        <div className="flex items-center gap-0.5 select-none">
           <img
             src="/logo.png"
-            alt="SkillSense"
-            className="h-9 w-auto mix-blend-multiply"
+            alt="SkillSense Icon"
+            className="h-[36px] w-auto object-contain mix-blend-multiply drop-shadow-sm"
+            draggable="false"
           />
-          <span className="font-extrabold text-lg text-[#04211F] tracking-tight">
-            SkillSense<span className="text-[#09A3A3]">.</span>
-          </span>
+          <img
+            src="/logo1.png"
+            alt="SkillSense Typography"
+            className="h-[24px] w-auto object-contain mix-blend-multiply drop-shadow-sm mt-0.5"
+            draggable="false"
+          />
         </div>
 
         <button
