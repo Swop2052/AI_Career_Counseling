@@ -201,11 +201,7 @@ export default function App() {
       else if (hash === '#privacy') setCurrentPage('privacy');
       else if (hash === '#profile') setCurrentPage('profile');
       else if (hash === '#developer') {
-        if (isSuperAdmin(activeUser)) {
-          // Super Admins should always land on the full Super Admin Console with User Management
-          setCurrentPage('admin');
-          window.history.replaceState(null, '', '#admin');
-        } else if (canAccessDeveloperConsole(activeUser)) {
+        if (canAccessDeveloperConsole(activeUser)) {
           setCurrentPage('developer');
         } else {
           setCurrentPage('home');
@@ -248,9 +244,7 @@ export default function App() {
         }
       }
     } else if (currentPage === 'developer') {
-      if (currentUser && isSuperAdmin(currentUser)) {
-        navigateTo('admin', '#admin');
-      } else if (currentUser && !canAccessDeveloperConsole(currentUser)) {
+      if (currentUser && !canAccessDeveloperConsole(currentUser)) {
         navigateTo('home', '');
       }
     }
@@ -288,9 +282,13 @@ export default function App() {
     setCurrentPage(page);
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     if (hash) {
-      window.history.pushState(null, '', hash);
+      if (window.location.hash !== hash) {
+        window.location.hash = hash;
+      }
     } else {
-      window.history.pushState(null, '', window.location.pathname);
+      if (window.location.hash) {
+        window.history.pushState(null, '', window.location.pathname + window.location.search);
+      }
     }
   };
 

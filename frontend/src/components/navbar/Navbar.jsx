@@ -194,19 +194,34 @@ function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin,
             </button>
 
             {isSuperAdmin(user) ? (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsOpen(false);
-                  if (onOpenAdmin) onOpenAdmin();
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs font-bold transition-all text-[#04302E] hover:bg-[#04302E]/10 cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-[#04302E]" />
-                <span>Super Admin Console</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOpen(false);
+                    if (onOpenAdmin) onOpenAdmin();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs font-bold transition-all text-[#04302E] hover:bg-[#04302E]/10 cursor-pointer"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#04302E]" />
+                  <span>Super Admin Console</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsOpen(false);
+                    if (onOpenDeveloper) onOpenDeveloper();
+                  }}
+                  className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs font-bold transition-all text-[#09A3A3] hover:bg-[#09A3A3]/10 cursor-pointer"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-[#09A3A3]" />
+                  <span>Developer Dashboard</span>
+                </button>
+              </>
             ) : isDeveloper(user) ? (
               <button
                 type="button"
@@ -423,7 +438,13 @@ export default function Navbar({
 
           {/* Conditional Auth Rendering */}
           {isLoggedIn ? (
-            <ProfileDropdown onOpenProfile={onOpenProfile} onOpenDeveloper={onOpenDeveloper} onLogout={onLogout} user={user} />
+            <ProfileDropdown 
+              onOpenProfile={onOpenProfile} 
+              onOpenDeveloper={onOpenDeveloper} 
+              onOpenAdmin={onOpenAdmin} 
+              onLogout={onLogout} 
+              user={user} 
+            />
           ) : (
             <div className="flex items-center gap-1.5">
               {/* Log In Button */}
@@ -449,7 +470,16 @@ export default function Navbar({
 
         {/* Mobile Controls */}
         <div className="flex items-center gap-1 xs:gap-1.5 lg:hidden shrink-0">
-          {isLoggedIn && <ProfileDropdown compact onOpenProfile={onOpenProfile} onOpenDeveloper={onOpenDeveloper} onLogout={onLogout} user={user} />}
+          {isLoggedIn && (
+            <ProfileDropdown 
+              compact 
+              onOpenProfile={onOpenProfile} 
+              onOpenDeveloper={onOpenDeveloper} 
+              onOpenAdmin={onOpenAdmin} 
+              onLogout={onLogout} 
+              user={user} 
+            />
+          )}
           <button
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
@@ -574,17 +604,30 @@ export default function Navbar({
             {/* Mobile Administrative console based on verified role */}
             {isLoggedIn && (
               isSuperAdmin(user) ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    if (onOpenAdmin) onOpenAdmin();
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#04302E] hover:bg-[#04302E]/10 mt-1 cursor-pointer"
-                >
-                  <span>Super Admin Console</span>
-                  <ShieldCheck className="w-4 h-4" />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (onOpenAdmin) onOpenAdmin();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#04302E] hover:bg-[#04302E]/10 mt-1 cursor-pointer"
+                  >
+                    <span>Super Admin Console</span>
+                    <ShieldCheck className="w-4 h-4 text-[#04302E]" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (onOpenDeveloper) onOpenDeveloper();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#09A3A3] hover:bg-[#09A3A3]/10 mt-1 cursor-pointer"
+                  >
+                    <span>Developer Dashboard</span>
+                    <LayoutDashboard className="w-4 h-4 text-[#09A3A3]" />
+                  </button>
+                </>
               ) : isDeveloper(user) ? (
                 <button
                   type="button"
@@ -595,7 +638,7 @@ export default function Navbar({
                   className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#09A3A3] hover:bg-[#09A3A3]/10 mt-1 cursor-pointer"
                 >
                   <span>Developer Dashboard</span>
-                  <LayoutDashboard className="w-4 h-4" />
+                  <LayoutDashboard className="w-4 h-4 text-[#09A3A3]" />
                 </button>
               ) : null
             )}
