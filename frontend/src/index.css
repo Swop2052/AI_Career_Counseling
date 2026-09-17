@@ -34,3 +34,21 @@ body::-webkit-scrollbar {
 .rounded-xl2 {
   border-radius: 1.25rem;
 }
+
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(9, 163, 163, 0.3) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(9, 163, 163, 0.3);
+  border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(9, 163, 163, 0.5);
+}

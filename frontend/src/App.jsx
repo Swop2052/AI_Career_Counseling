@@ -688,6 +688,7 @@ export default function App() {
             reportData={reportData}
             isPurchased={Boolean(reportData?.is_unlocked === 1 || reportData?.is_unlocked === true)}
             onCreateAccount={() => navigateTo('signup', '#signup')}
+            onBack={() => navigateTo(currentUser ? 'profile' : 'home', currentUser ? '#profile' : '')}
             onGoToPricing={() => {
               const attemptId = reportData?.attempt_id ||
                                 getActiveAssessmentFlow()?.attemptId;
