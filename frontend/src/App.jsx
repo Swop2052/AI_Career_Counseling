@@ -1050,7 +1050,7 @@ export default function App() {
 
       {/* Footer */}
       {!isFullScreenPage && <Footer onStartTest={handleStartCareerTest} />}
-      {!isFullScreenPage && currentPage === 'home' && <AICounselor />}
+      {!isFullScreenPage && currentPage === 'home' && <AICounselor currentUser={currentUser} onLoginRequest={() => navigateTo('signup', '#signup')} />}
     </div>
   );
 }

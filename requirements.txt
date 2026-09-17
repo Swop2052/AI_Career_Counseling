@@ -7,6 +7,6 @@ requests==2.34.2
 waitress==3.0.2
 gevent==23.9.1
 deep-translator==1.11.4
-
-psycopg2-binary==2.9.9
 razorpay==1.4.2
+sentence-transformers==2.7.0
+psycopg2-binary==2.9.9

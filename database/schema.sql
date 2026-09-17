@@ -206,3 +206,72 @@ CREATE TABLE IF NOT EXISTS tests (
     career_matches JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 15. Careers Table (for AI Retrieval and Vector Store seeding)
+CREATE TABLE IF NOT EXISTS careers (
+    career_id SERIAL PRIMARY KEY,
+    career_name VARCHAR(255) UNIQUE NOT NULL,
+    career_data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 16. Students Table (Legacy)
+CREATE TABLE IF NOT EXISTS students (
+    student_id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    fullname VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id)
+);
+
+-- 17. Assessments Table (Legacy)
+CREATE TABLE IF NOT EXISTS assessments (
+    assessment_id VARCHAR(255) PRIMARY KEY,
+    student_id INTEGER REFERENCES students(student_id) ON DELETE CASCADE,
+    student_profile JSONB,
+    persona JSONB,
+    assessment_status VARCHAR(50) DEFAULT 'draft',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 18. Assessment RIASEC Table (Legacy)
+CREATE TABLE IF NOT EXISTS assessment_riasec (
+    assessment_id VARCHAR(255) PRIMARY KEY REFERENCES assessments(assessment_id) ON DELETE CASCADE,
+    answers JSONB,
+    scores JSONB,
+    calculated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 19. Assessment Career Matches Table (Legacy)
+CREATE TABLE IF NOT EXISTS assessment_career_matches (
+    id SERIAL PRIMARY KEY,
+    assessment_id VARCHAR(255) REFERENCES assessments(assessment_id) ON DELETE CASCADE,
+    career_id INTEGER REFERENCES careers(career_id) ON DELETE CASCADE,
+    rank INTEGER,
+    match_score NUMERIC,
+    match_details JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 20. Student Feedback Table (Legacy)
+CREATE TABLE IF NOT EXISTS student_feedback (
+    id SERIAL PRIMARY KEY,
+    assessment_id VARCHAR(255) REFERENCES assessments(assessment_id) ON DELETE CASCADE,
+    career_id INTEGER,
+    liked_result BOOLEAN,
+    feedback_category VARCHAR(100),
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 21. Contact Messages Table (Legacy)
+CREATE TABLE IF NOT EXISTS contact_messages (
+    id SERIAL PRIMARY KEY,
+    fullname VARCHAR(255),
+    email VARCHAR(255),
+    company VARCHAR(255),
+    subject VARCHAR(255),
+    message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

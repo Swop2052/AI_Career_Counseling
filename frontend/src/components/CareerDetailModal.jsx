@@ -12,44 +12,11 @@ const PURPLE = '#6D5AE0';
 const GOLD = '#E8B04B';
 
 export default function CareerDetailModal({ career, onClose }) {
-  const [enrichedRaw, setEnrichedRaw] = useState(career?.rawData || {});
-  const [isLoading, setIsLoading] = useState(false);
   const { language } = useLanguage();
-
-  useEffect(() => {
-    if (!career || !career.title) return;
-    
-    // Check if we need to fetch enriched data
-    if (career.rawData?.skill_development_plan) {
-      setEnrichedRaw(career.rawData);
-      return;
-    }
-
-    const fetchDetail = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('http://localhost:5000/api/career-detail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ career_name: career.title, language: language })
-        });
-        const data = await response.json();
-        if (data && data.career) {
-          setEnrichedRaw(data.career);
-        }
-      } catch (err) {
-        console.error("Failed to fetch enriched career details:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDetail();
-  }, [career]);
 
   if (!career) return null;
 
-  const raw = enrichedRaw;
+  const raw = career?.rawData || {};
 
   // Extract / Normalize fields
   const description = raw.description || career.description || '';
@@ -134,17 +101,8 @@ export default function CareerDetailModal({ career, onClose }) {
         {/* Scrollable Content */}
         <div className="overflow-y-auto p-5 sm:p-8 space-y-10">
           
-          {isLoading && (
-            <div className="flex flex-col items-center justify-center py-10 space-y-4">
-              <Loader2 className="w-8 h-8 animate-spin text-[#09A3A3]" />
-              <p className="text-sm font-medium text-gray-500">AI is dynamically generating a personalized skill plan...</p>
-            </div>
-          )}
-
-          {!isLoading && (
-            <>
-              {/* Section 1: Overview */}
-              <section className="space-y-4">
+          {/* Section 1: Overview */}
+          <section className="space-y-4">
                 <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
                   <Briefcase className="w-5 h-5" style={{ color: TEAL }} />
                   Career Overview
@@ -176,6 +134,8 @@ export default function CareerDetailModal({ career, onClose }) {
               </div>
             </section>
           )}
+
+
 
           {/* Section 3: Educational Pathway */}
           {eduSteps.length > 0 && (
@@ -397,7 +357,7 @@ export default function CareerDetailModal({ career, onClose }) {
                   {growthSteps.map((step, idx) => (
                     <React.Fragment key={idx}>
                       <div className="bg-white border border-blue-200 shadow-sm px-4 py-2 rounded-lg text-sm font-medium text-blue-900 text-center flex-1 max-w-[200px] whitespace-normal">
-                        {step}
+                        {typeof step === 'object' && step !== null ? (step.title || Object.values(step).flat().join(' → ')) : step}
                       </div>
                       {idx < growthSteps.length - 1 && (
                         <div className="text-blue-300 font-bold px-2">➔</div>
@@ -420,21 +380,20 @@ export default function CareerDetailModal({ career, onClose }) {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                 
                 <h4 className="text-lg font-bold mb-1" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  {successStory.name || 'Professional Example'}
+                  {typeof successStory === 'string' ? 'Professional Example' : (successStory.name || 'Professional Example')}
                 </h4>
-                {successStory.current_role && (
+                {typeof successStory === 'object' && (successStory.current_role || successStory.organization) && (
                   <p className="text-yellow-400 text-xs font-bold uppercase tracking-wider mb-4">
-                    {successStory.current_role}
+                    {successStory.current_role || successStory.organization} {successStory.location ? ` • ${successStory.location}` : ''}
                   </p>
                 )}
-                <p className="text-sm text-gray-300 leading-relaxed">
-                  {successStory.details || successStory.description || JSON.stringify(successStory)}
-                </p>
+                <div className="text-sm text-gray-300 leading-relaxed">
+                  {typeof successStory === 'string' 
+                    ? successStory 
+                    : (successStory.career_journey || successStory.achievement || successStory.details || successStory.description || "An inspiring example from this field.")}
+                </div>
               </div>
             </section>
-          )}
-
-            </>
           )}
 
         </div>

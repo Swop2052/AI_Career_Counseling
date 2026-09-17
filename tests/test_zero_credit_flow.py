@@ -12,8 +12,8 @@ try:
 except Exception:
     pass
 
-sys.path.insert(0, r"E:\projects\AI_Career_Counseling")
-from app import app, prepare_questions
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from app import app, prepare_questions, QUESTIONS_DATA
 from database.schema import get_db_connection
 from services.pricing_service import pricing_service
 from services.wallet_service import wallet_service
@@ -31,15 +31,15 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
             with conn:
                 conn.execute("""
                     INSERT INTO users (id, email, password_hash, role, is_active, can_manage_developers, created_at, updated_at)
-                    VALUES (?, ?, 'hash', 'USER', 1, 0, ?, ?)
+                    VALUES (%s, %s, 'hash', 'USER', 1, 0, %s, %s)
                 """, (self.test_user_id, self.test_email, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.execute("""
-                    INSERT INTO user_profiles (user_id, full_name, created_at, updated_at)
-                    VALUES (?, 'Zero Credit Student', ?, ?)
-                """, (self.test_user_id, datetime.now().isoformat(), datetime.now().isoformat()))
+INSERT INTO user_profiles (id, user_id, full_name, created_at, updated_at)
+                    VALUES (%s, %s, 'Zero Credit Student', %s, %s)
+                """, (f"prf_{uuid.uuid4().hex[:8]}", self.test_user_id, datetime.now().isoformat(), datetime.now().isoformat()))
                 conn.execute("""
                     INSERT INTO credit_wallets (id, user_id, balance, updated_at)
-                    VALUES (?, ?, 0, ?)
+                    VALUES (%s, %s, 0, %s)
                 """, (f"wlt_{self.test_user_id}", self.test_user_id, datetime.now().isoformat()))
         finally:
             conn.close()
@@ -70,9 +70,11 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
         """Verify that modifying the lowest plan's price in DB immediately changes the backend response."""
         conn = get_db_connection()
         try:
+            cur_lowest = pricing_service.get_lowest_active_plan()
+            target_id = cur_lowest['id'] if cur_lowest else 'plan_Standard'
             # Change the lowest plan price to 29.0
             with conn:
-                conn.execute("UPDATE pricing_plans SET price = 29.0 WHERE id = 'plan_single'")
+                conn.execute("UPDATE pricing_plans SET price = 29.0 WHERE id = %s", (target_id,))
             
             lowest = pricing_service.get_lowest_active_plan()
             self.assertIsNotNone(lowest)
@@ -80,14 +82,14 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
 
             # Change to 39.0
             with conn:
-                conn.execute("UPDATE pricing_plans SET price = 39.0 WHERE id = 'plan_single'")
+                conn.execute("UPDATE pricing_plans SET price = 39.0 WHERE id = %s", (target_id,))
             
             lowest = pricing_service.get_lowest_active_plan()
             self.assertEqual(float(lowest['price']), 39.0)
 
             # Revert back to 1.0 (test plan)
             with conn:
-                conn.execute("UPDATE pricing_plans SET price = 1.0 WHERE id = 'plan_single'")
+                conn.execute("UPDATE pricing_plans SET price = 1.0 WHERE id = %s", (target_id,))
         finally:
             conn.close()
         print("[PASS] Test 2: Dynamic price changes (₹29, ₹39) reflected automatically without code edits.")
@@ -115,7 +117,7 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
         finally:
             try:
                 with conn:
-                    conn.execute("UPDATE pricing_plans SET is_active = 1 WHERE id = 'plan_single'")
+                    conn.execute("UPDATE pricing_plans SET is_active = 1 WHERE id = 'plan_Standard' OR id = 'plan_single'")
             except Exception:
                 pass
             conn.close()
@@ -135,7 +137,7 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
                         id, user_id, student_profile, riasec_scores, riasec_code,
                         full_result_data, teaser_data, is_unlocked, created_at, completed_at
                     )
-                    VALUES (?, ?, '{"name":"Test"}', '{"R":20}', 'R', '{"report":"full"}', '{"headline":"Match"}', 0, ?, ?)
+                    VALUES (%s, %s, '{"name":"Test"}', '{"R":20}', 'R', '{"report":"full"}', '{"headline":"Match"}', 0, %s, %s)
                 """, (attempt_id, self.test_user_id, now_str, now_str))
         finally:
             conn.close()
@@ -165,7 +167,7 @@ class TestDynamicZeroCreditFlow(unittest.TestCase):
 
     def test_5_assessment_questions_integrity(self):
         """Verify all 42 RIASEC questions and scoring logic remain 100% intact."""
-        questions = prepare_questions()
+        questions = prepare_questions(QUESTIONS_DATA)
         self.assertEqual(len(questions), 42)
         print("[PASS] Test 5: Assessment integrity 100% preserved (all 42 questions intact).")
 

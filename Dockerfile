@@ -26,4 +26,4 @@ COPY . .
 EXPOSE 5000
 
 # Run the database indexing migration, then launch Flask with Waitress WSGI server
-CMD ["sh", "-c", "python init_chromadb.py && python app.py"]
+CMD ["sh", "-c", "python -m database.migrations && python app.py"]

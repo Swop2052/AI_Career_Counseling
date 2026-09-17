@@ -1,6 +1,7 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import Cropper from 'react-easy-crop';
 import { assessmentApi } from '../../api/assessmentApi';
 import { paymentApi } from '../../api/paymentApi';
-import React, { useState, useRef, useEffect } from 'react';
 import {
   CreditCard, Lock, CheckCircle2, Check, Award, BookOpen, Compass,
   Sparkles, TrendingUp, User, FileText, Bot, Edit3, X, Mail, Phone,
@@ -103,15 +104,49 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
     state: user?.state || 'Maharashtra',
   });
 
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const getCroppedImg = async (imageSrc, pixelCrop) => {
+    const image = new Image();
+    image.src = imageSrc;
+    await new Promise(resolve => (image.onload = resolve));
+    const canvas = document.createElement('canvas');
+    canvas.width = 400; 
+    canvas.height = 400;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, 400, 400);
+    return canvas.toDataURL('image/jpeg', 0.85);
+  };
+
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleSaveCrop = async () => {
+    try {
+      const croppedImage = await getCroppedImg(cropImageSrc, croppedAreaPixels);
+      setAvatarImage(croppedImage);
+      setCropImageSrc(null);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        alert('Image size should be less than 3 MB');
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image size should be less than 10 MB');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = () => setAvatarImage(reader.result);
+      reader.onload = (event) => {
+        setCropImageSrc(event.target.result);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -665,6 +700,63 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
           )}
         </div>
       </div>
+
+      {cropImageSrc && (
+        <div className="fixed inset-0 z-[200] bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="font-bold text-lg">Crop Profile Photo</h3>
+              <button onClick={() => setCropImageSrc(null)} className="p-1 hover:bg-gray-100 rounded-full text-gray-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="relative w-full h-[300px] bg-black">
+              <Cropper
+                image={cropImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="round"
+                showGrid={false}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 mb-2 block">Zoom</label>
+                <input
+                  type="range"
+                  value={zoom}
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  aria-labelledby="Zoom"
+                  onChange={(e) => setZoom(e.target.value)}
+                  className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#09A3A3]"
+                />
+              </div>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setCropImageSrc(null)}
+                  className="flex-1 py-2.5 rounded-xl text-gray-600 font-semibold hover:bg-gray-50 transition-colors border"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveCrop}
+                  className="flex-1 bg-[#09A3A3] text-white py-2.5 rounded-xl font-semibold hover:bg-[#078585] transition-colors"
+                >
+                  Crop & Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

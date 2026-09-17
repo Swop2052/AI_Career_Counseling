@@ -41,7 +41,7 @@ export default function SignupPage({ onSignup, onSuccess, onSwitchToLogin, onHom
       return;
     }
     if (!agreedToTerms) {
-      setError('Please accept the Terms, Privacy Policy & Consent Form to continue.');
+      setError('Please accept the Terms & Privacy Policy to continue.');
       return;
     }
 
@@ -275,20 +275,13 @@ export default function SignupPage({ onSignup, onSuccess, onSwitchToLogin, onHom
                     className="text-[#04302E] font-bold underline cursor-pointer hover:text-[#09A3A3]"
                   >
                     Terms
-                  </button>,{' '}
+                  </button> &{' '}
                   <button 
                     type="button" 
                     onClick={onOpenPrivacy} 
                     className="text-[#04302E] font-bold underline cursor-pointer hover:text-[#09A3A3]"
                   >
-                    Privacy
-                  </button> &{' '}
-                  <button 
-                    type="button" 
-                    onClick={onOpenConsent} 
-                    className="text-[#04302E] font-bold underline cursor-pointer hover:text-[#09A3A3]"
-                  >
-                    Consent Form
+                    Privacy Policy
                   </button>
                 </span>
               </label>

@@ -26,7 +26,7 @@ load_dotenv()
 # ============================================================
 from core.config import config
 from core.models import Conversation, CareerMatch
-from core.translator_cache import translate_career_data, translate_teaser_data
+from core.translator_cache import translate_career_data, translate_teaser_data, get_cached_translation
 from core.exceptions import (
     IntentClassificationError, PersonaGenerationError,
     RetrievalError, LLMError, ValidationError
@@ -45,7 +45,8 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 # Security: Restrict origins and set payload size limits
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max payload
-CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"])
+allowed_origins = [origin.strip() for origin in config.cors_origins.split(",") if origin.strip()]
+CORS(app, supports_credentials=True, origins=allowed_origins)
 
 # ============================================================
 # RATE LIMITING (SECURITY GUARD)
@@ -773,8 +774,17 @@ def submit_answers():
             })
             
         if language != 'en':
-            top_careers = [translate_career_data(c, language) for c in top_careers]
-        
+            for c in top_careers:
+                # Only bulk translate the static base data
+                translated_data = translate_career_data({'data': c['data'], 'name': c['name']}, language)
+                if 'data' in translated_data:
+                    c['data'] = translated_data['data']
+                
+                # Use fast string translation for dynamic parts
+                c['name'] = get_cached_translation(c['name'], language)
+                c['reason'] = get_cached_translation(c['reason'], language)
+                c['strengths'] = [get_cached_translation(s, language) for s in c['strengths']]
+                c['improvement_areas'] = [get_cached_translation(i, language) for i in c['improvement_areas']]
         # Store in conversation memory (database)
         conversation_memory.set_career_matches(session_id, [m.to_dict() for m in career_matches])
         
@@ -883,13 +893,17 @@ def career_detail():
                 normalized['skill_development_plan'] = "Information currently unavailable."
                 
         if language != 'en':
-            # Translate the base normalized career data (excluding skill_development_plan since we already asked LLM to do it)
-            # Actually, the career translation logic applies recursively
+            # Remove skill_development_plan from normalized before translating to keep hash constant
+            skill_plan = normalized.pop('skill_development_plan', None)
+            
             translated_normalized = translate_career_data({'data': normalized, 'name': career_name}, language)
             if 'data' in translated_normalized:
                 normalized = translated_normalized['data']
-            # Reattach skill_development_plan since it wasn't in standard translate_career_data
-            if 'skill_development_plan' not in normalized and 'skill_development_plan' in target_record:
+                
+            # Reattach skill_development_plan
+            if skill_plan:
+                normalized['skill_development_plan'] = skill_plan
+            elif 'skill_development_plan' in target_record:
                 pass
                 
         return jsonify({'career': normalized})
@@ -958,16 +972,16 @@ def chat():
         
         # Cost Optimization: Apply User Rate Limits before LLM processing
         message_count = conversation_memory.get_user_message_count(session_id, email)
-        if email:
-            if message_count >= 20:
-                return jsonify({
-                    'response': "You have reached your limit of 20 messages per hour. Please wait a bit before continuing our conversation! Don't worry, your chat history is automatically saved."
-                })
-        else:
-            if message_count >= 3:
-                return jsonify({
-                    'response': "You've reached your 3 free messages as a guest! Please create an account to continue your career journey with VERA."
-                })
+        if not email:
+            return jsonify({
+                'error': 'login_required',
+                'response': "First login to connect with your AI Career Counselor!"
+            }), 401
+            
+        if message_count >= 20:
+            return jsonify({
+                'response': "You have reached your limit of 20 messages per hour. Please wait a bit before continuing our conversation! Don't worry, your chat history is automatically saved."
+            })
         
         # Get persona from SQLite session store or create default
         persona = conversation_memory.get_persona(session_id)
@@ -1073,6 +1087,8 @@ def chat():
             previous_response=previous_response,
             should_use_career_data=should_use_career_data
         )
+        
+        prompt += "\n\n[CRITICAL INSTRUCTION] You MUST keep your answer extremely concise, strictly within 3 to 4 lines maximum. Answer ethically, professionally, and straight to the point."
         
         # Inject language instruction if not english
         if language == 'hi':

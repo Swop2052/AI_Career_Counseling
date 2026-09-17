@@ -1,36 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import LinkedInShareCard from './LinkedInShareCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Lock, Unlock, ArrowRight, ShieldCheck,
   Brain, Heart, GraduationCap, Trophy,
   Rocket, TrendingUp, Award, Target,
   Sparkles, Info, X, DollarSign, BookOpen,
-  Briefcase, ChevronRight, Compass, Download, Share2
+  Briefcase, ChevronRight, Compass, Download, Share2,
+  BarChart3, LineChart, Star
 } from 'lucide-react';
 import CareerDetailModal from './CareerDetailModal';
 import { useLanguage } from '../translations/LanguageContext';
+import LeavesIllustration from '../assets/leaves_illustration.jpg';
 
 const repT = {
   en: {
     traitProfile: "Trait Profile",
-    careerPathsMapped: "Career paths mapped",
-    topMatches: "Top Career Matches",
-    tapForDetails: "Tap a card for details",
     mindText: "Leadership and persuasive traits dominate your analytical thinking.",
     bodyText: "You do best in environments that are structured and well organized.",
     soulText: "Driven by impact, leadership, and meaningful professional connection.",
     mind: "Mind",
     body: "Body",
     soul: "Soul",
-    yourCareerRoadmap: "Your Career Roadmap",
-    unlockReport: "Unlock Full Report",
-    matchScore: "Match Score",
-    expectedIncome: "Expected Income",
-    courseFee: "Course Fee",
-    recommendedPath: "Recommended Path",
-    coreTraits: "Core Personality Traits",
     downloadReport: "Download PDF",
-    shareReport: "Share Report",
     realisticDesc: "Practical, hands-on, and action-oriented.",
     realisticEx: "e.g., Engineer, Architect",
     investigativeDesc: "Analytical, intellectual, and scientific thinkers.",
@@ -46,24 +39,13 @@ const repT = {
   },
   mr: {
     traitProfile: "व्यक्तिमत्व विश्लेषण",
-    careerPathsMapped: "करिअर मार्ग शोधले",
-    topMatches: "सर्वोत्तम करिअर पर्याय",
-    tapForDetails: "अधिक माहितीसाठी कार्डवर टॅप करा",
     mindText: "विश्लेषणात्मक विचार आणि नेतृत्व करण्याची क्षमता.",
     bodyText: "सुव्यवस्थित आणि शिस्तबद्ध वातावरणात तुम्ही उत्तम काम करता.",
     soulText: "सामाजिक प्रभाव, नेतृत्व आणि व्यावसायिक संबंधांद्वारे प्रेरित.",
     mind: "बुद्धी",
     body: "शरीर",
     soul: "आत्मा",
-    yourCareerRoadmap: "तुमचा करिअर रोडमॅप",
-    unlockReport: "संपूर्ण रिपोर्ट अनलॉक करा",
-    matchScore: "मॅच स्कोअर",
-    expectedIncome: "अपेक्षित उत्पन्न",
-    courseFee: "कोर्सची फी",
-    recommendedPath: "शिफारस केलेला मार्ग",
-    coreTraits: "मुख्य व्यक्तिमत्त्व गुण",
     downloadReport: "PDF डाउनलोड करा",
-    shareReport: "रिपोर्ट शेअर करा",
     realisticDesc: "व्यावहारिक आणि कृती-देणारी कार्ये.",
     realisticEx: "उदा., इंजिनिअर, आर्किटेक्ट",
     investigativeDesc: "विश्लेषणात्मक आणि वैज्ञानिक विचार.",
@@ -79,24 +61,13 @@ const repT = {
   },
   hi: {
     traitProfile: "व्यक्तित्व विश्लेषण",
-    careerPathsMapped: "करियर विकल्प खोजे गए",
-    topMatches: "सर्वश्रेष्ठ करियर विकल्प",
-    tapForDetails: "अधिक जानकारी के लिए कार्ड पर टैप करें",
     mindText: "विश्लेषणात्मक सोच और नेतृत्व करने की क्षमता।",
     bodyText: "सुव्यवस्थित और अनुशासित वातावरण में आप बेहतर काम करते हैं।",
     soulText: "सामाजिक प्रभाव, नेतृत्व और सार्थक व्यावसायिक संबंधों से प्रेरित।",
     mind: "बुद्धि",
     body: "शरीर",
     soul: "आत्मा",
-    yourCareerRoadmap: "आपका करियर रोडमैप",
-    unlockReport: "पूरी रिपोर्ट अनलॉक करें",
-    matchScore: "मैच स्कोर",
-    expectedIncome: "अपेक्षित आय",
-    courseFee: "कोर्स की फीस",
-    recommendedPath: "सुझाया गया मार्ग",
-    coreTraits: "मुख्य व्यक्तित्व लक्षण",
     downloadReport: "PDF डाउनलोड करें",
-    shareReport: "रिपोर्ट शेयर करें",
     realisticDesc: "व्यावहारिक और कार्रवाई उन्मुख।",
     realisticEx: "उदा., इंजीनियर, आर्किटेक्ट",
     investigativeDesc: "विश्लेषणात्मक और वैज्ञानिक विचारक।",
@@ -112,144 +83,33 @@ const repT = {
   }
 };
 
-import Graphic1 from '../assets/graphics/graphic-1.png';
-
-/* ------------------------------------------------------------------ */
-/*  Palette — brand teal/gold family, purple added as the one bold    */
-/*  accent (used only on the hero chart + rank #1, everywhere else    */
-/*  stays quiet).                                                     */
-/* ------------------------------------------------------------------ */
 const DEEP = '#04302E';
 const TEAL = '#09A3A3';
-const TEAL_LIGHT = '#CFEDED';
 const GOLD = '#E8B04B';
 const PURPLE = '#6D5AE0';
-const INK = '#0B2422';
-const BG = '#F6FBFA';
 
-/* ------------------------------------------------------------------ */
-/*  Data                                                               */
-/* ------------------------------------------------------------------ */
-
-
-/* ------------------------------------------------------------------ */
-/*  Bar Graph Component                                               */
-/* ------------------------------------------------------------------ */
-function BarGraph({ data }) {
-  const maxScore = Math.max(...data.map(d => d.score));
-  const [hoveredTrait, setHoveredTrait] = useState(null);
-  
-  return (
-    <div className="w-full">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
-          Trait Profile
-        </h2>
-      </div>
-      
-      <div className="space-y-3">
-        {data.map((d, index) => (
-          <motion.div
-            key={d.key}
-            className="flex items-center gap-3 relative cursor-help"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.08, duration: 0.3 }}
-            onMouseEnter={() => setHoveredTrait(d.key)}
-            onMouseLeave={() => setHoveredTrait(null)}
-          >
-            <AnimatePresence>
-              {hoveredTrait === d.key && (
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -2 }}
-                  className="absolute bottom-[110%] left-16 w-[240px] bg-gray-900 text-white text-[11px] p-2.5 rounded-lg shadow-xl z-50 pointer-events-none"
-                >
-                  <div className="absolute -bottom-1 left-6 w-2 h-2 bg-gray-900 rotate-45" />
-                  <strong className="text-[#09A3A3]">{d.label}</strong><br/>
-                  <span className="opacity-90">{d.desc}</span><br/>
-                  <span className="text-gray-400 italic mt-1 block">{d.example}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <span className="text-[11px] font-semibold w-16 text-right text-gray-500 shrink-0">
-              {d.label}
-            </span>
-            
-            <div className="flex-1 h-6 rounded-lg bg-gray-100 overflow-hidden">
-              <motion.div
-                className="h-full rounded-lg"
-                style={{ backgroundColor: d.color }}
-                initial={{ width: 0 }}
-                animate={{ width: `${(d.score / maxScore) * 100}%` }}
-                transition={{ delay: index * 0.08, duration: 0.6, ease: 'easeOut' }}
-              />
-            </div>
-            
-            <span className="text-[11px] font-bold w-8 text-right" style={{ color: DEEP }}>
-              {d.score}%
-            </span>
-          </motion.div>
-        ))}
-      </div>
-      
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mt-4">
-        {data.map((d) => (
-          <div key={d.key} className="flex items-center gap-1.5 text-[10px] text-gray-500">
-            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
-            {d.label}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Ambient background                                                */
-/* ------------------------------------------------------------------ */
-function AmbientBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-      <div className="absolute -top-24 -left-16 w-[420px] h-[420px] bg-[#09A3A3]/10 rounded-full blur-[110px]" />
-      <div className="absolute bottom-[-80px] right-[-40px] w-[440px] h-[440px] bg-[#6D5AE0]/10 rounded-full blur-[120px]" />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Main component                                                     */
-/* ------------------------------------------------------------------ */
 export default function ReportCardPage({ isPurchased = false, onCreateAccount, onGoToPricing, onUnlockReport, user = null, currentUser = null, reportData = null }) {
   const { language } = useLanguage();
+  const shareCardRef = useRef(null);
+  const reportRef = useRef(null);
   const t = repT[language] || repT.en;
 
   const [selectedCareer, setSelectedCareer] = useState(null);
-  const [showEcrTooltip, setShowEcrTooltip] = useState(false);
   const [defaultCareers, setDefaultCareers] = useState(null);
   const [defaultRIASEC, setDefaultRIASEC] = useState(null);
-  
+  const [preGeneratedBlob, setPreGeneratedBlob] = useState(null);
+
   useEffect(() => {
-    // If we don't have reportData from a completed test, fetch dynamic defaults from Data.json (backend)
     if (!reportData) {
       fetch('/api/all-careers')
         .then(res => res.json())
         .then(data => {
           if (data && data.careers) {
-            // Select 6 default careers to show as a fallback placeholder
             const placeholderCareers = data.careers.slice(0, 6).map((c, idx) => {
-              const minSalary = c.expected_income?.minimum_monthly_salary || '';
-              const maxSalary = c.expected_income?.maximum_monthly_salary || '';
-              const salaryStr = (minSalary && maxSalary) ? `${minSalary} – ${maxSalary} / mo` : (minSalary || maxSalary || '₹1,50,000 – ₹3,00,000 / mo');
-              
-              const feeInfo = c.course_fee?.estimated_total_fee || c.course_fee?.fee_range || '₹50,000 – ₹2,00,000';
               let streamInfo = 'Any Stream';
               if (c.educational_pathway && c.educational_pathway.length > 0) {
                   streamInfo = c.educational_pathway[0]?.stream || c.educational_pathway[0]?.degree || 'Any Stream';
               }
-          
               const traits = c.personality_traits?.join(', ') || c.personality_traits || 'Problem solving, logical reasoning';
               const growthPath = Array.isArray(c.growth_path) ? c.growth_path.join(' → ') : (c.growth_path || 'Junior → Senior → Lead');
           
@@ -257,9 +117,9 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
                 rank: idx + 1,
                 title: c.career_name,
                 stream: streamInfo,
-                match: 95 - idx * 3, // Dummy match score for placeholders
-                salary: salaryStr,
-                fee: feeInfo,
+                match: 95 - idx * 3,
+                salary: '₹1,50,000 – ₹3,00,000 / mo',
+                fee: '₹50,000 – ₹2,00,000',
                 description: c.description || '',
                 traits: traits,
                 growthPath: growthPath,
@@ -269,14 +129,13 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
             });
             setDefaultCareers(placeholderCareers);
             
-            // Dummy RIASEC for fallback display
             setDefaultRIASEC([
-              { key: 'R', label: 'Realistic', score: 65, color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
-              { key: 'I', label: 'Investigative', score: 78, color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
-              { key: 'A', label: 'Artistic', score: 70, color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
-              { key: 'S', label: 'Social', score: 85, color: TEAL, desc: t.socialDesc, example: t.socialEx },
-              { key: 'E', label: 'Enterprising', score: 94, color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
-              { key: 'C', label: 'Conventional', score: 82, color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
+              { key: 'R', label: 'Realistic', score: 49, color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
+              { key: 'I', label: 'Investigative', score: 51, color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
+              { key: 'A', label: 'Artistic', score: 40, color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
+              { key: 'S', label: 'Social', score: 40, color: TEAL, desc: t.socialDesc, example: t.socialEx },
+              { key: 'E', label: 'Enterprising', score: 51, color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
+              { key: 'C', label: 'Conventional', score: 74, color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
             ]);
           }
         })
@@ -359,12 +218,10 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     { key: 'C', label: 'Conventional', score: Math.round(((rawScores['C'] || 0) / 35) * 100), color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
   ] : defaultRIASEC;
 
-  // Calculate 3-letter personality code
   const personalityCode = dynamicRIASEC 
     ? [...dynamicRIASEC].sort((a, b) => b.score - a.score).slice(0, 3).map(d => d.key).join('')
-    : 'ECR';
+    : 'CIE';
 
-  // Dynamic Careers
   const dynamicCareers = reportData?.top_careers ? reportData.top_careers.map((c, idx) => {
     const careerData = (c.data && typeof c.data === 'object' && Object.keys(c.data).length > 0) ? c.data : c;
     const minSalary = careerData?.expected_income?.minimum_monthly_salary || careerData?.minimum_monthly_salary || '';
@@ -376,7 +233,6 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     if (careerData?.educational_pathway && Array.isArray(careerData.educational_pathway) && careerData.educational_pathway.length > 0) {
         streamInfo = careerData.educational_pathway[0]?.stream || careerData.educational_pathway[0]?.degree || 'Any Stream';
     }
-
     const traits = Array.isArray(careerData?.personality_traits) ? careerData.personality_traits.join(', ') : (careerData?.personality_traits || 'Problem solving, logical reasoning');
     const growthPath = Array.isArray(careerData?.growth_path) ? careerData.growth_path.join(' → ') : (careerData?.growth_path || 'Junior → Senior → Lead');
 
@@ -400,9 +256,24 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     };
   }) : defaultCareers;
 
+  useEffect(() => {
+    if (shareCardRef.current && dynamicCareers && dynamicCareers.length > 0) {
+      const timer = setTimeout(() => {
+        html2canvas(shareCardRef.current, { backgroundColor: '#ffffff', scale: 2, logging: false })
+          .then(canvas => {
+            canvas.toBlob(blob => {
+              if (blob) setPreGeneratedBlob(blob);
+            }, 'image/png');
+          })
+          .catch(err => console.error("Failed to pre-generate share card", err));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [dynamicCareers]);
+
   if (!dynamicCareers || !dynamicRIASEC) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-[#CFEDED]">
+      <div className="w-full min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin w-8 h-8 border-4 border-[#09A3A3] border-t-transparent rounded-full"></div>
       </div>
     );
@@ -410,290 +281,454 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
 
   const fullName = user?.name || 'Student';
   const studentName = fullName.split(' ')[0];
-  const studentGrade = user?.grade || '';
+  const profilePhoto = user?.profilePhoto || user?.avatar || null;
   const topMatch = dynamicCareers[0];
-  
-  // Get profile photo from user or use default
-  const profilePhoto = user?.profilePhoto || null;
 
-  // Download Report Function
-  const handleDownloadReport = () => {
-    // In a real app, this would generate a PDF
-    // For now, we'll show a success message and download a sample
-    alert('📄 Your report is being prepared for download...');
-    
-    // You can replace this with actual PDF generation logic
-    // Example: window.print() for print version
-    // Or use libraries like jsPDF, html2canvas, etc.
-    console.log('Downloading report for:', fullName);
+  const handleDownloadReport = async () => {
+    if (!reportRef.current) return;
+    try {
+      const canvas = await html2canvas(reportRef.current, { 
+        scale: 1.5, 
+        useCORS: true, 
+        backgroundColor: '#F6FBFA' 
+      });
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          alert("Failed to create image blob.");
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `SkillSense_Career_Report_${studentName}.png`;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, "image/png", 1.0);
+    } catch (err) {
+      console.error("Error generating report", err);
+      alert("Failed to download report. Please try again.");
+    }
   };
 
-  // LinkedIn Share Function
-  const handleLinkedInShare = () => {
+  const handleLinkedInShare = async () => {
     const appUrl = window.location.origin;
-    const shareText = `I just discovered my top career match is ${topMatch?.title || 'amazing'} using SkillSense! Find your path today. 🚀`;
-    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText + ' ' + appUrl)}`;
-    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    const matchScore = topMatch?.match || 96;
+    
+    const topTraits = dynamicRIASEC 
+      ? [...dynamicRIASEC].sort((a, b) => b.score - a.score).slice(0, 3).map(d => d.label).join(', ')
+      : 'Organized, Detail Oriented, Structured';
+      
+    const careerList = (dynamicCareers || []).slice(0, 6)
+      .map((c, i) => `${i + 1}️⃣ ${c.title}`)
+      .join('\n');
+      
+    const rawName = user?.name || 'Student';
+    const nameOnly = rawName.includes('@') ? rawName.split('@')[0] : rawName;
+    const nameNoSpaces = nameOnly.replace(/[^a-zA-Z0-9]/g, '');
+
+    const shareText = `🌟 Let's Connect! My SkillSense Career Assessment Results! 🚀\n\n${nameOnly} is a ${topTraits} individual. Based on their profile, they are highly aligned with careers like ${(dynamicCareers || []).slice(0,3).map(c=>c.title).join(', ')}.\n\n🧠 Key Traits: ${topTraits}\n📊 Personality Code: ${personalityCode}\n\n🎯 Top Recommended Careers:\n${careerList}\n\nExplore your path at ${appUrl}!\n\n#VitalsAndVectors #SkillSense #CareerGuidance #AIGuidance #${nameNoSpaces}`;
+
+    const linkedInWindow = window.open('', '_blank', 'noopener,noreferrer');
+    if (linkedInWindow) {
+      linkedInWindow.document.write('<html><body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;background:#f3f2ef;"><h2 style="text-align:center;color:#0a66c2;">Preparing your SkillSense post...</h2></body></html>');
+    }
+    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
+
+    try {
+      if (preGeneratedBlob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': preGeneratedBlob })
+        ]);
+        // Silently copied to clipboard
+      }
+      if (linkedInWindow) {
+        linkedInWindow.location.href = linkedInUrl;
+      } else {
+        window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (err) {
+      console.error("Clipboard share failed", err);
+      if (preGeneratedBlob) {
+          try {
+            const dataUrl = URL.createObjectURL(preGeneratedBlob);
+            const link = document.createElement('a');
+            link.download = `SkillSense-Report-${nameNoSpaces}.png`;
+            link.href = dataUrl;
+            link.click();
+          } catch(e) {}
+      }
+      if (linkedInWindow) {
+        linkedInWindow.location.href = linkedInUrl;
+      } else {
+        window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
+  const getDayStr = () => {
+     const d = new Date();
+     return `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear()}`;
   };
 
   return (
-    <div className="min-h-screen w-full py-8 sm:py-12 px-4 sm:px-8 md:px-10 flex justify-center relative" style={{ backgroundColor: BG }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');`}</style>
-
-      <AmbientBackground />
+    <div className="min-h-screen w-full py-8 sm:py-12 px-4 sm:px-8 md:px-10 flex justify-center" style={{ backgroundColor: '#F6FBFA' }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap');`}</style>
+      
+      {/* Hidden card for LinkedIn sharing snapshot */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <LinkedInShareCard 
+          ref={shareCardRef}
+          user={user}
+          dynamicCareers={dynamicCareers}
+          personalityCode={personalityCode}
+          dynamicRIASEC={dynamicRIASEC}
+        />
+      </div>
 
       <motion.div
+        ref={reportRef}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className={`max-w-5xl w-full bg-white rounded-[16px] shadow-[0_30px_80px_rgba(4,48,46,0.15)] border border-black/5 relative overflow-hidden ${!isPurchased ? 'max-h-[92vh]' : ''}`}
+        className="max-w-[1200px] w-full relative"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
-
         <div className={`transition-all duration-500 ${!isPurchased ? 'blur-[6px] select-none pointer-events-none opacity-70' : ''}`}>
-
-          {/* ---- Header band with profile photo and download button ---- */}
-          <div className="px-6 sm:px-10 md:px-12 py-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-4" style={{ backgroundColor: DEEP }}>
-            <div className="flex items-center gap-5">
-              {/* Profile Photo / Avatar */}
-              {profilePhoto ? (
-                <img 
-                  src={profilePhoto} 
-                  alt={fullName}
-                  className="w-16 h-16 rounded-[10px] object-cover shadow-lg border-2 border-white/20"
-                />
-              ) : (
-                <div
-                  className="w-16 h-16 rounded-[10px] flex items-center justify-center text-xl font-extrabold text-white shadow-lg"
-                  style={{ background: `linear-gradient(135deg, ${TEAL}, ${PURPLE})`, fontFamily: "'Sora', sans-serif" }}
-                >
-                  {fullName.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  {studentName}
-                </h1>
-                <p className="text-[13px] text-white/70 font-medium">
-                  {studentGrade ? `${studentGrade} · ` : ''}Career readiness report
-                </p>
-              </div>
-            </div>
-
-            {/* Actions Container */}
-            <div className="flex items-center gap-3">
-              {/* Download Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleDownloadReport}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-white/10 hover:bg-white/20 text-white transition-all border border-white/20 hover:border-white/40 shadow-lg"
-              >
-                <Download className="w-4 h-4" />
-                <span className="text-sm font-semibold">{isPurchased ? t.downloadReport : t.unlockReport}</span>
-              </motion.button>
-
-              {/* LinkedIn Share Button */}
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleLinkedInShare}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#0A66C2] hover:bg-[#004182] text-white transition-all border border-white/20 hover:border-white/40 shadow-lg"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="text-sm font-semibold">Share</span>
-              </motion.button>
-            </div>
-          </div>
-
-          {/* ---- Stat strip ---- */}
-          <div className="px-6 sm:px-10 md:px-12 py-6 flex flex-wrap items-center justify-end gap-4 border-b border-black/5">
-            <div className="flex items-center gap-3 bg-gray-50 px-5 py-3 rounded-[10px] shadow-sm hover:shadow-md transition-all cursor-default">
-              <div className="w-8 h-8 rounded-[8px] flex items-center justify-center bg-teal-500/10">
-                <Target className="w-4 h-4 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-medium">Aptitude match</p>
-                <p className="text-lg font-extrabold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>96%</p>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <div className="flex items-center gap-3 bg-gray-50 px-5 py-3 rounded-[10px] shadow-sm hover:shadow-md transition-all cursor-default">
-                <div className="w-8 h-8 rounded-[8px] flex items-center justify-center bg-purple-500/10">
-                  <Brain className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-500 font-semibold mb-0.5">Top personality</p>
-                  <div className="flex items-center gap-1.5 justify-center">
-                    <p className="text-[19px] font-bold tracking-tight" style={{ color: PURPLE, fontFamily: "'Sora', sans-serif" }}>
-                      {personalityCode}
-                    </p>
-                    <button 
-                      onMouseEnter={() => setShowEcrTooltip(true)}
-                      onMouseLeave={() => setShowEcrTooltip(false)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Tooltip */}
-              <AnimatePresence>
-                {showEcrTooltip && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 2 }}
-                    className="absolute top-[110%] right-0 w-[220px] bg-gray-900 text-white text-[11px] p-2.5 rounded-lg shadow-xl z-20"
-                  >
-                    <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45" />
-                    <strong>{personalityCode} Profile</strong><br/>
-                    Based on your top 3 traits. It means your work style is deeply aligned with these characteristics.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="flex items-center gap-3 bg-gray-50 px-5 py-3 rounded-[10px] shadow-sm hover:shadow-md transition-all cursor-default">
-              <div className="w-8 h-8 rounded-[8px] flex items-center justify-center bg-amber-500/10">
-                <Compass className="w-4 h-4 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 font-medium">Career paths mapped</p>
-                <p className="text-lg font-extrabold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>{dynamicCareers?.length || 6}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* ---- Hero section: bar graph + career cards ---- */}
-          <div className="px-6 sm:px-10 md:px-12 py-8 grid grid-cols-1 lg:grid-cols-12 gap-10">
-
-            {/* Bar Graph - Left */}
-            <div className="md:col-span-5 border border-gray-100 rounded-xl p-5 bg-white relative">
-              <BarGraph data={dynamicRIASEC} />
-            </div>
-
-            {/* Career Cards - Right */}
-            <div className="lg:col-span-7">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-sm font-bold" style={{ color: DEEP, fontFamily: "'Sora', sans-serif" }}>
-                  Top Career Matches
-                </h2>
-                <span className="text-[11px] text-gray-400">Tap a card for details</span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                {dynamicCareers.map((c) => {
-                  const Icon = c.icon;
-                  return (
-                    <button
-                      key={c.rank}
-                      onClick={() => setSelectedCareer(c)}
-                      className="p-4 rounded-[10px] hover:shadow-lg transition-all text-left cursor-pointer group border border-black/5 hover:border-black/10 bg-white shadow-sm hover:shadow-md"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className="w-10 h-10 rounded-[8px] flex items-center justify-center text-white shrink-0 mt-0.5 shadow-md"
-                          style={{ backgroundColor: c.color }}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold truncate" style={{ color: INK }}>{c.title}</p>
-                          
-                          <div className="flex items-center gap-2 mt-2">
-                            <div className="h-1.5 flex-1 rounded-full bg-gray-100 overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${c.match}%`, backgroundColor: c.color }} />
-                            </div>
-                            <span className="text-[9px] font-bold text-gray-400 shrink-0">{c.match}%</span>
-                          </div>
-                          
-                          <div className="flex items-center gap-1.5 mt-1.5">
-                            <span className="text-[9px] text-gray-400 font-medium">#{c.rank}</span>
-                            <span className="text-[9px] text-gray-400">·</span>
-                            <span className="text-[9px] text-gray-400 truncate">{c.stream}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* ---- Mind / Body / Soul - Larger & Colorful ---- */}
-          <div className="px-6 sm:px-10 md:px-12 pb-10 pt-8 border-t border-black/5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                { 
-                  icon: Brain, 
-                  label: t.mind, 
-                  text: t.mindText, 
-                  color: TEAL,
-                  gradient: 'from-teal-400 to-teal-600'
-                },
-                { 
-                  icon: GraduationCap, 
-                  label: t.body, 
-                  text: t.bodyText, 
-                  color: GOLD,
-                  gradient: 'from-amber-400 to-amber-600'
-                },
-                { 
-                  icon: Heart, 
-                  label: t.soul, 
-                  text: t.soulText, 
-                  color: PURPLE,
-                  gradient: 'from-purple-400 to-purple-600'
-                },
-              ].map((p, i) => {
-                const Icon = p.icon;
-                return (
-                  <motion.div
-                    key={i}
-                    className="p-6 rounded-[12px] shadow-lg hover:shadow-xl transition-all"
-                    style={{ 
-                      background: `linear-gradient(135deg, ${p.color}15, ${p.color}05)`,
-                      border: `1px solid ${p.color}30`
-                    }}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div 
-                        className="w-14 h-14 rounded-[10px] flex items-center justify-center shrink-0 shadow-lg"
-                        style={{ 
-                          background: `linear-gradient(135deg, ${p.color}, ${p.color}CC)`,
-                        }}
-                      >
-                        <Icon className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold mb-1.5" style={{ color: p.color, fontFamily: "'Sora', sans-serif" }}>
-                          {p.label} Profile
-                        </h3>
-                        <p className="text-sm text-gray-600 leading-relaxed">{p.text}</p>
-                        
-                        <div className="mt-3 flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-                          <span className="text-[10px] font-medium text-gray-400">Key trait indicator</span>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+        {/* Top Header */}
+        <div className="flex justify-between items-center mb-6 px-2">
+          <div></div>
+          <div className="text-[#E8B04B] font-['Sora'] italic text-2xl opacity-90 pr-4">
+            A Brighter <span className="underline decoration-2 underline-offset-4 decoration-[#E8B04B]">You</span>
           </div>
         </div>
 
-        {/* ---- Career detail modal ---- */}
+        {/* Section 1: Hero Card */}
+        <div className="bg-[#FAF9F6] rounded-[32px] p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-8 mb-8 border border-gray-200/50 shadow-sm relative overflow-hidden">
+          
+          {/* Left: Text */}
+          <div className="flex-1 max-w-sm relative z-10 pl-2">
+            <h1 className="text-5xl font-['Sora'] font-bold text-[#04302E] leading-[1.1] mb-2 tracking-tight">
+              Career <br/><span className="text-[#09A3A3]">Readiness</span> <br/><span className="text-[#E8B04B]">Report</span>
+            </h1>
+            <p className="text-gray-600 mt-4 mb-6 font-medium text-[15px]">Your strengths today.<br/>A brighter tomorrow.</p>
+            
+            <div className="flex items-center gap-6 mt-8 border-t border-gray-200/60 pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100"><BarChart3 className="w-5 h-5 text-teal-600"/></div>
+                <div className="text-[10px] text-gray-500 leading-tight">Report Generated<br/><strong className="text-gray-900 text-xs">{getDayStr()}</strong></div>
+              </div>
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm border border-gray-100"><LineChart className="w-5 h-5 text-teal-600"/></div>
+                 <div className="text-[10px] text-gray-500 leading-tight">Career readiness report<br/><strong className="text-gray-900 text-xs">For a Better You</strong></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Center: Avatar */}
+          <div className="relative shrink-0 flex items-center justify-center lg:ml-8">
+             <div className="absolute inset-0 bg-[#E8B04B]/15 rounded-full blur-3xl scale-150" />
+             <div className="absolute -inset-4 border-2 border-dashed border-[#09A3A3]/20 rounded-full animate-[spin_40s_linear_infinite]" />
+             
+             <div className="w-[280px] h-[280px] rounded-full border-8 border-white shadow-xl overflow-hidden relative z-10 bg-[#CFEDED] flex items-center justify-center">
+               {profilePhoto ? (
+                  <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" />
+               ) : (
+                  <span className="text-7xl font-bold text-[#09A3A3] font-['Sora']">{studentName.charAt(0)}</span>
+               )}
+             </div>
+             
+             {/* Decorative Badge */}
+             <div className="absolute -bottom-4 -right-4 bg-white px-5 py-3 rounded-2xl shadow-xl border border-gray-100 rotate-[-8deg] z-20">
+               <span className="text-[13px] font-['Sora'] font-bold text-[#09A3A3] leading-tight block">Keep<br/>Exploring<br/>You Got This!</span>
+             </div>
+          </div>
+
+          {/* Right: Profile Details & Stats */}
+          <div className="flex-1 flex flex-col gap-5 relative z-10 w-full lg:max-w-[340px]">
+             <div className="flex flex-col items-end gap-1 mb-2">
+                <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-[20px] shadow-sm border border-gray-100 w-full">
+                  <div className="w-10 h-10 bg-[#04302E] rounded-full flex items-center justify-center text-white font-bold text-sm overflow-hidden shrink-0">
+                     {profilePhoto ? (
+                       <img src={profilePhoto} crossOrigin="anonymous" className="w-full h-full object-cover" alt="Profile" />
+                     ) : (
+                       fullName.slice(0, 2).toUpperCase()
+                     )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-[#04302E] text-base">{fullName}</h3>
+                  </div>
+                </div>
+                <div className="text-[11px] italic text-gray-500 font-serif mr-2 mt-1">
+                   "Better Students Brighter Futures"
+                </div>
+             </div>
+
+             <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white p-3 py-4 rounded-[16px] shadow-sm border border-gray-100 flex flex-col items-center text-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center mb-2">
+                     <Target className="w-4 h-4 text-[#09A3A3]" />
+                   </div>
+                   <span className="text-[9px] text-gray-400 font-medium leading-tight mb-1">Aptitude match</span>
+                   <span className="font-bold text-lg text-[#04302E] leading-none">{topMatch?.match || 96}%</span>
+                </div>
+                <div className="bg-white p-3 py-4 rounded-[16px] shadow-sm border border-gray-100 flex flex-col items-center text-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center mb-2">
+                     <Brain className="w-4 h-4 text-[#6D5AE0]" />
+                   </div>
+                   <span className="text-[9px] text-gray-400 font-medium leading-tight mb-1">Top personality</span>
+                   <span className="font-bold text-lg text-[#6D5AE0] leading-none">{personalityCode}</span>
+                </div>
+                <div className="bg-white p-3 py-4 rounded-[16px] shadow-sm border border-gray-100 flex flex-col items-center text-center justify-center">
+                   <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center mb-2">
+                     <Compass className="w-4 h-4 text-[#E8B04B]" />
+                   </div>
+                   <span className="text-[9px] text-gray-400 font-medium leading-tight mb-1">Career paths mapped</span>
+                   <span className="font-bold text-lg text-[#04302E] leading-none">6</span>
+                </div>
+             </div>
+
+             <div className="flex items-center gap-3 mt-4">
+                <button onClick={handleDownloadReport} className="flex-1 bg-[#04302E] hover:bg-[#064a47] text-white py-3.5 rounded-[14px] flex items-center justify-center gap-2 text-[13px] font-semibold transition-all shadow-md hover:shadow-lg">
+                  <Download className="w-4 h-4" /> Download PDF
+                </button>
+                <button onClick={handleLinkedInShare} className="flex-1 bg-white hover:bg-gray-50 text-[#04302E] border border-gray-200 py-3.5 rounded-[14px] flex items-center justify-center gap-2 text-[13px] font-semibold transition-all shadow-sm hover:shadow-md">
+                  <Share2 className="w-4 h-4" /> Share Report
+                </button>
+             </div>
+          </div>
+        </div>
+
+        {/* Section 2: Middle Data */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+          
+          {/* Left: RIASEC */}
+          <div className="lg:col-span-5 bg-white rounded-[32px] p-8 border border-gray-200/60 shadow-sm relative overflow-hidden flex flex-col">
+             <div className="flex justify-between items-start mb-8">
+               <div>
+                 <h2 className="text-[22px] font-['Sora'] font-bold text-[#04302E] mb-1">Your Trait Profile</h2>
+                 <p className="text-sm text-gray-500 font-medium">Your personality in action</p>
+               </div>
+             </div>
+             
+             <div className="flex gap-6 flex-1">
+                {/* Bars */}
+                <div className="flex-1 space-y-5 mt-2">
+                   {dynamicRIASEC.map((d) => (
+                      <div key={d.key} className="flex items-center gap-3 relative group">
+                         <div className="w-[85px] shrink-0">
+                           <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-help border-b border-dashed border-gray-300 pb-0.5">{d.label}</span>
+                           <div className="absolute left-0 bottom-full mb-2 w-48 bg-[#04302E] text-white text-xs rounded-lg p-3 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                             <div className="font-bold mb-1 text-[#09A3A3]">{d.label}</div>
+                             <div className="mb-2 text-white/90">{d.desc}</div>
+                             <div className="text-white/60 italic text-[10px]">{d.example}</div>
+                             <div className="absolute -bottom-1 left-4 w-2 h-2 bg-[#04302E] rotate-45"></div>
+                           </div>
+                         </div>
+                         <div className="flex-1 h-7 rounded-r-lg rounded-l-sm bg-gray-100 overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${d.score}%` }}
+                              transition={{ duration: 1, ease: "easeOut" }}
+                              className="h-full rounded-r-lg rounded-l-sm" 
+                              style={{ backgroundColor: d.color }} 
+                            />
+                         </div>
+                         <span className="text-xs font-bold text-[#04302E] w-8 text-right">{d.score}%</span>
+                      </div>
+                   ))}
+                </div>
+                {/* Quote Block */}
+                <div className="w-[140px] bg-[#EEF8F7] rounded-[24px] p-5 flex flex-col justify-center relative overflow-hidden shrink-0 border border-[#CFEDED]/50 shadow-inner">
+                   <img src={LeavesIllustration} crossOrigin="anonymous" alt="Decoration" className="absolute -bottom-8 -right-8 w-40 h-40 object-contain opacity-30" />
+                   <span className="text-5xl text-[#09A3A3] font-serif absolute top-4 left-3 opacity-40">"</span>
+                   <p className="text-[15px] font-['Sora'] font-semibold text-[#04302E] relative z-10 leading-snug mt-6">
+                     A unique blend of traits that makes you, <br/><span className="text-[#09A3A3] text-lg block mt-1">YOU.</span>
+                   </p>
+                </div>
+             </div>
+
+             {/* Legend */}
+             <div className="grid grid-cols-3 gap-y-3 gap-x-2 mt-10 border-t border-gray-100 pt-6">
+               {dynamicRIASEC.map((d) => (
+                  <div key={d.key} className="flex items-center gap-2 text-[11px] font-medium text-gray-500">
+                     <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                     {d.label}
+                  </div>
+               ))}
+             </div>
+          </div>
+
+          {/* Right: Top Careers */}
+          <div className="lg:col-span-7 bg-[#F8FAFC] rounded-[32px] p-8 border border-gray-200/50 shadow-sm flex flex-col">
+             <div className="flex justify-between items-start mb-8">
+               <div>
+                 <h2 className="text-[22px] font-['Sora'] font-bold text-[#04302E] mb-1">Top Career Matches</h2>
+                 <p className="text-sm text-gray-500 font-medium">Based on your RIASEC profile</p>
+               </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+               {dynamicCareers.slice(0, 6).map((c) => {
+                 const Icon = c.icon;
+                 return (
+                   <button 
+                      key={c.rank} 
+                      onClick={() => setSelectedCareer(c)} 
+                      className="bg-white p-5 rounded-[20px] shadow-sm border border-gray-100 hover:shadow-md hover:border-[#09A3A3]/30 transition-all text-left flex items-start gap-4 cursor-pointer group"
+                   >
+                     <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-sm transition-transform group-hover:scale-105" style={{ backgroundColor: c.color }}>
+                        <Icon className="w-6 h-6" strokeWidth={2.5} />
+                     </div>
+                     <div className="flex-1 min-w-0 mt-0.5">
+                        <span className="text-[10px] text-gray-400 font-bold tracking-wider mb-1 block uppercase">#{c.rank} Match</span>
+                        <h3 className="text-[15px] font-bold text-[#04302E] leading-tight mb-2 truncate group-hover:text-[#09A3A3] transition-colors">{c.title}</h3>
+                        <div className="text-[11px] text-gray-400 font-medium flex items-center gap-1">— {c.stream}</div>
+                     </div>
+                     <div className="text-sm font-bold text-[#04302E] mt-1">{c.match}%</div>
+                   </button>
+                 );
+               })}
+             </div>
+          </div>
+        </div>
+
+        {/* Section 3: Holistic Profile */}
+        <div className="mb-8">
+           <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 px-2">
+              <div>
+                 <h2 className="text-[22px] font-['Sora'] font-bold text-[#04302E] mb-1">Your Holistic Profile</h2>
+                 <p className="text-sm text-gray-500 font-medium">More than just careers - a deeper understanding of you.</p>
+              </div>
+              <div className="text-xs text-gray-400 font-medium mt-2 md:mt-0">Mind. Body. Soul. A stronger you.</div>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Mind */}
+              <div className="bg-gradient-to-br from-[#F0FDF8] to-[#E6F4F1] rounded-[32px] p-8 border border-[#CCFBF1] shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                 <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 z-10 relative">
+                   <Brain className="w-7 h-7 text-teal-500" />
+                 </div>
+                 <h3 className="text-xl font-bold text-teal-900 mb-3 z-10 relative">Mind Profile</h3>
+                 <p className="text-[13px] text-teal-800/80 mb-10 min-h-[60px] leading-relaxed font-medium z-10 relative">{t.mindText}</p>
+                 <div className="flex items-center gap-2 z-10 relative">
+                   <span className="w-2.5 h-2.5 rounded-full bg-teal-500"/>
+                   <span className="text-[11px] font-semibold text-teal-700">Key trait indicator</span>
+                 </div>
+                 <div className="absolute -bottom-8 -right-8 opacity-[0.07] group-hover:scale-110 transition-transform duration-500"><Brain className="w-48 h-48 text-teal-700" /></div>
+              </div>
+              
+              {/* Body */}
+              <div className="bg-gradient-to-br from-[#FFFBEB] to-[#FEF9C3] rounded-[32px] p-8 border border-[#FEF3C7] shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                 <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 z-10 relative">
+                   <GraduationCap className="w-7 h-7 text-amber-500" />
+                 </div>
+                 <h3 className="text-xl font-bold text-amber-900 mb-3 z-10 relative">Body Profile</h3>
+                 <p className="text-[13px] text-amber-800/80 mb-10 min-h-[60px] leading-relaxed font-medium z-10 relative">{t.bodyText}</p>
+                 <div className="flex items-center gap-2 z-10 relative">
+                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500"/>
+                   <span className="text-[11px] font-semibold text-amber-700">Key trait indicator</span>
+                 </div>
+                 <div className="absolute -bottom-8 -right-8 opacity-[0.07] group-hover:scale-110 transition-transform duration-500"><GraduationCap className="w-48 h-48 text-amber-700" /></div>
+              </div>
+
+              {/* Soul */}
+              <div className="bg-gradient-to-br from-[#F5F3FF] to-[#EDE9FE] rounded-[32px] p-8 border border-[#E9D5FF] shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
+                 <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 z-10 relative">
+                   <Heart className="w-7 h-7 text-purple-500" />
+                 </div>
+                 <h3 className="text-xl font-bold text-purple-900 mb-3 z-10 relative">Soul Profile</h3>
+                 <p className="text-[13px] text-purple-800/80 mb-10 min-h-[60px] leading-relaxed font-medium z-10 relative">{t.soulText}</p>
+                 <div className="flex items-center gap-2 z-10 relative">
+                   <span className="w-2.5 h-2.5 rounded-full bg-purple-500"/>
+                   <span className="text-[11px] font-semibold text-purple-700">Key trait indicator</span>
+                 </div>
+                 <div className="absolute -bottom-8 -right-8 opacity-[0.07] group-hover:scale-110 transition-transform duration-500"><Heart className="w-48 h-48 text-purple-700" /></div>
+              </div>
+           </div>
+        </div>
+
+        {/* Section 4: Footer Banner */}
+        <div className="bg-gradient-to-r from-[#04302E] to-[#064e4a] rounded-[32px] p-8 lg:p-12 flex flex-col md:flex-row items-center justify-between gap-10 relative overflow-hidden shadow-lg mt-12">
+           <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-[#09A3A3]/20 to-transparent pointer-events-none rounded-r-[32px]" />
+           
+           {/* Left */}
+           <div className="flex-1 relative z-10">
+              <div className="flex items-center gap-2 mb-6">
+                <Sparkles className="w-5 h-5 text-white" />
+                <span className="text-white font-bold text-sm tracking-wide">SkillSense</span>
+              </div>
+              <h2 className="text-4xl lg:text-5xl font-['Sora'] font-bold text-white mb-5 leading-tight">
+                Turning Potential<br/><span className="text-[#E8B04B]">Into Possibilities</span>
+              </h2>
+              <p className="text-white/70 text-sm max-w-[240px] leading-relaxed">
+                Every insight brings you closer to a brighter future.
+              </p>
+           </div>
+
+           {/* Middle grid */}
+           <div className="grid grid-cols-2 gap-4 relative z-10 w-full max-w-[420px]">
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-[20px] hover:bg-white/20 transition-colors cursor-default">
+                 <div className="w-12 h-12 rounded-full bg-[#09A3A3]/20 flex items-center justify-center text-[#09A3A3] shrink-0"><Target className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-white text-sm font-bold mb-1">Discover</div>
+                    <div className="text-white/60 text-[10px] leading-snug">Understand your<br/>unique strengths</div>
+                 </div>
+              </div>
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-[20px] hover:bg-white/20 transition-colors cursor-default">
+                 <div className="w-12 h-12 rounded-full bg-[#E8B04B]/20 flex items-center justify-center text-[#E8B04B] shrink-0"><Compass className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-white text-sm font-bold mb-1">Explore</div>
+                    <div className="text-white/60 text-[10px] leading-snug">Find career paths<br/>that fit you</div>
+                 </div>
+              </div>
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-[20px] hover:bg-white/20 transition-colors cursor-default">
+                 <div className="w-12 h-12 rounded-full bg-[#6D5AE0]/20 flex items-center justify-center text-[#6D5AE0] shrink-0"><TrendingUp className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-white text-sm font-bold mb-1">Grow</div>
+                    <div className="text-white/60 text-[10px] leading-snug">Build skills for<br/>a brighter tomorrow</div>
+                 </div>
+              </div>
+              <div className="flex items-center gap-4 bg-white/10 backdrop-blur-md border border-white/10 p-4 rounded-[20px] hover:bg-white/20 transition-colors cursor-default">
+                 <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0"><Star className="w-6 h-6"/></div>
+                 <div>
+                    <div className="text-white text-sm font-bold mb-1">Belong</div>
+                    <div className="text-white/60 text-[10px] leading-snug">Create a future<br/>that excites you</div>
+                 </div>
+              </div>
+           </div>
+
+           {/* Right Illustration Placeholder */}
+           <div className="flex-1 hidden xl:flex justify-end relative z-10">
+              <div className="w-56 h-56 rounded-full flex flex-col items-center justify-center text-center p-6 border-4 border-white/10 shadow-2xl relative overflow-hidden">
+                 <div className="absolute inset-0 bg-gradient-to-br from-[#09A3A3]/40 to-[#6D5AE0]/40 backdrop-blur-sm" />
+                 <span className="text-[#E8B04B] font-['Sora'] italic text-3xl mb-2 rotate-[-10deg] relative z-10 drop-shadow-lg">A<br/>Brighter<br/>Tomorrow</span>
+                 <Sparkles className="absolute top-8 right-8 text-white w-6 h-6 opacity-50" />
+                 <Sparkles className="absolute bottom-12 left-10 text-white w-4 h-4 opacity-50" />
+              </div>
+           </div>
+        </div>
+
+        {/* Bottom-most footer text */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mt-10 px-6 border-t border-gray-200/60 pt-8 pb-12 gap-4">
+           <div className="flex items-center gap-2 opacity-60">
+              <Sparkles className="w-5 h-5 text-[#04302E]" />
+              <span className="text-[#04302E] font-bold text-sm tracking-wide">SkillSense</span>
+              <span className="text-xs text-gray-500 font-medium ml-2 border-l border-gray-300 pl-2">Know Yourself. Build Your Tomorrow.</span>
+           </div>
+           <div className="text-gray-500 italic text-[15px] font-serif font-medium">
+              "Self knowledge is the beginning of all success."
+           </div>
+           <div className="text-xs text-gray-400 text-right font-medium">
+              Keep Exploring.<br/>Greater Futures Await.
+           </div>
+        </div>
+
+        </div>
+
+        {/* Modal */}
         <AnimatePresence>
           {selectedCareer && (
             <CareerDetailModal

@@ -76,10 +76,21 @@ export default function AICounselorPage({ onBack, currentUser }) {
     setIsTyping(true);
 
     try {
-      const payload = { message: text, language: language };
-      if (currentUser?.email) {
-        payload.email = currentUser.email;
+      if (!currentUser?.email) {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'bot',
+            text: "First login ok",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+        return;
       }
+
+      const payload = { message: text, language: language, email: currentUser.email };
 
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -88,6 +99,20 @@ export default function AICounselorPage({ onBack, currentUser }) {
         },
         body: JSON.stringify(payload)
       });
+      
+      if (response.status === 401) {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'bot',
+            text: "First login ok",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+        return;
+      }
 
       const data = await response.json();
       
