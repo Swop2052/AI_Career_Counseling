@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Compass, User, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Compass, User, BookOpen, Sparkles, Camera } from 'lucide-react';
 import { useLanguage } from '../translations/LanguageContext';
 
 const locT = {
@@ -120,31 +120,55 @@ const locT = {
   }
 };
 
-export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
+export default function AssessmentOnboarding({ onComplete, onBackToHome, initialData, currentUser }) {
   const { language } = useLanguage();
   const tLoc = locT[language] || locT.en;
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    fullName: '',
-    age: '',
-    classYear: '',
-    stream: '',
-    enjoySubjects: '',
-    challengingSubjects: '',
-    interests: '',
-    hobbies: '',
-    strengths: '',
-    careerAspirations: '',
-    learningMode: 'Offline (Classroom/Lab)',
-    budget: 'Moderate Budget',
-    locationPref: 'India Wide',
-    studyLocation: '',
-    collegeType: 'All Colleges (Govt & Private)'
+    profilePhoto: initialData?.profilePhoto || currentUser?.profilePhoto || null,
+    fullName: initialData?.fullName || currentUser?.name || '',
+    age: initialData?.age || '',
+    classYear: initialData?.classYear || '',
+    stream: initialData?.stream || '',
+    enjoySubjects: initialData?.enjoySubjects || '',
+    challengingSubjects: initialData?.challengingSubjects || '',
+    interests: initialData?.interests || '',
+    hobbies: initialData?.hobbies || '',
+    strengths: initialData?.strengths || '',
+    careerAspirations: initialData?.careerAspirations || '',
+    learningMode: initialData?.learningMode || 'Offline (Classroom/Lab)',
+    budget: initialData?.budget || 'Moderate Budget',
+    locationPref: initialData?.locationPref || 'India Wide',
+    studyLocation: initialData?.studyLocation || '',
+    collegeType: initialData?.collegeType || 'All Colleges (Govt & Private)'
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, profilePhoto: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const selectAvatar = (avatarPath) => {
+    setFormData({ ...formData, profilePhoto: avatarPath });
+  };
+
+  const avatarOptions = [
+    '/avatars/Ma_01.png', '/avatars/fa_01.png', 
+    '/avatars/MA_02.png', '/avatars/fa_02.png',
+    '/avatars/Ma_03.png', '/avatars/fa_03.png',
+    '/avatars/Ma_04.png', '/avatars/fa_04.png',
+    '/avatars/Ma_05.png', '/avatars/Ma_06.png'
+  ];
 
   const handleNext = () => {
     if (step < 3) setStep(step + 1);
@@ -220,6 +244,44 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome }) {
             >
               <div className="flex items-center gap-2 text-xs font-black text-[#09A3A3] uppercase tracking-wider mb-2">
                 <User className="w-4 h-4" /> {tLoc.basicDetails}
+              </div>
+
+              {/* Profile Photo / Avatar Selection */}
+              <div className="bg-[#F4FBFA] p-4 rounded-2xl border border-[#09A3A3]/20 mb-4">
+                <label className="text-xs font-extrabold text-[#04211F] block mb-3">Profile Photo / Avatar</label>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  {/* Current Photo Preview */}
+                  <div className="relative group shrink-0">
+                    <div className="w-20 h-20 rounded-full bg-white border-2 border-[#09A3A3] overflow-hidden flex items-center justify-center shadow-inner">
+                      {formData.profilePhoto ? (
+                        <img src={formData.profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-8 h-8 text-gray-300" />
+                      )}
+                    </div>
+                    <label className="absolute bottom-0 right-0 w-7 h-7 bg-[#E8B04B] rounded-full flex items-center justify-center cursor-pointer shadow-md hover:scale-110 transition-transform">
+                      <Camera className="w-3.5 h-3.5 text-white" />
+                      <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                    </label>
+                  </div>
+                  
+                  {/* Avatar Options */}
+                  <div className="flex-1 w-full">
+                    <p className="text-[10px] text-gray-500 font-bold mb-2 uppercase tracking-wide">Or choose an avatar:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {avatarOptions.map((avatar, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => selectAvatar(avatar)}
+                          className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${formData.profilePhoto === avatar ? 'border-[#09A3A3] shadow-md scale-110' : 'border-transparent opacity-80 hover:opacity-100'}`}
+                        >
+                          <img src={avatar} alt={`Avatar ${idx}`} className="w-full h-full object-cover bg-white" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -142,6 +142,18 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
     }
   };
 
+  const avatarOptions = [
+    '/avatars/Ma_01.png', '/avatars/fa_01.png', 
+    '/avatars/MA_02.png', '/avatars/fa_02.png',
+    '/avatars/Ma_03.png', '/avatars/fa_03.png',
+    '/avatars/Ma_04.png', '/avatars/fa_04.png',
+    '/avatars/Ma_05.png', '/avatars/Ma_06.png'
+  ];
+
+  const selectAvatar = (avatar) => {
+     setAvatarImage(avatar);
+  };
+
   const handleSaveProfile = (e) => {
     e.preventDefault();
     setSavedSuccess(true);
@@ -371,6 +383,21 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
               </div>
             ) : (
               <form onSubmit={handleSaveProfile} className="mt-5 space-y-5">
+                <div className="bg-[#CFEDED]/30 p-4 rounded-xl border border-[#CDE6E2] mb-5">
+                  <label className="block text-xs font-semibold mb-3" style={{ color: '#5B7975' }}>Select an Avatar</label>
+                  <div className="flex flex-wrap gap-2">
+                    {avatarOptions.map((avatar, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => selectAvatar(avatar)}
+                        className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${avatarImage === avatar ? 'border-[#0B8F86] shadow-md scale-110' : 'border-transparent opacity-80 hover:opacity-100'}`}
+                      >
+                        <img src={avatar} alt={`Avatar ${idx}`} className="w-full h-full object-cover bg-white" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {editFields.map((field) => (
                     <div key={field.key}>
