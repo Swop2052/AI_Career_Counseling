@@ -87,6 +87,71 @@ const DEEP = '#04302E';
 const TEAL = '#09A3A3';
 const GOLD = '#E8B04B';
 const PURPLE = '#6D5AE0';
+const INK = '#04302E';
+
+const FALLBACK_CAREERS = [
+  {
+    rank: 1,
+    title: "Software Engineer / Tech Architect",
+    stream: "Science / Engineering",
+    match: 95,
+    salary: "₹1,50,000 – ₹3,50,000 / mo",
+    fee: "₹2,00,000 – ₹8,00,000",
+    description: "Designs, codes, and architect modern scalable software systems.",
+    traits: "Problem solving, logical reasoning",
+    growthPath: "Junior → Senior → Tech Lead → Principal Architect",
+    icon: Rocket,
+    color: PURPLE,
+  },
+  {
+    rank: 2,
+    title: "Data Scientist & AI Specialist",
+    stream: "Science / Mathematics",
+    match: 92,
+    salary: "₹1,80,000 – ₹4,00,000 / mo",
+    fee: "₹3,00,000 – ₹10,00,000",
+    description: "Builds predictive statistical models and cutting-edge artificial intelligence.",
+    traits: "Analytical mindset, curiosity",
+    growthPath: "Analyst → Senior Data Scientist → Head of AI",
+    icon: TrendingUp,
+    color: TEAL,
+  },
+  {
+    rank: 3,
+    title: "Cybersecurity Analyst",
+    stream: "Information Technology",
+    match: 89,
+    salary: "₹1,20,000 – ₹2,80,000 / mo",
+    fee: "₹1,50,000 – ₹5,00,000",
+    description: "Guards network boundaries, cloud infrastructure, and organizational data.",
+    traits: "Vigilance, investigative depth",
+    growthPath: "Security Engineer → Security Architect → CISO",
+    icon: Award,
+    color: GOLD,
+  },
+  {
+    rank: 4,
+    title: "Product Manager",
+    stream: "Any Stream / Management",
+    match: 86,
+    salary: "₹1,40,000 – ₹3,20,000 / mo",
+    fee: "₹2,00,000 – ₹9,00,000",
+    description: "Guides product strategy, roadmaps, and cross-functional execution.",
+    traits: "Leadership, communication",
+    growthPath: "Associate PM → Senior PM → VP Product",
+    icon: Compass,
+    color: '#2E86AB',
+  }
+];
+
+const getFallbackRIASEC = (t) => [
+  { key: 'R', label: 'Realistic', score: 65, color: '#5C8374', desc: t?.realisticDesc || 'Practical, hands-on, and action-oriented.', example: t?.realisticEx || 'e.g., Engineer, Architect' },
+  { key: 'I', label: 'Investigative', score: 78, color: '#2E86AB', desc: t?.investigativeDesc || 'Analytical, intellectual, and scientific thinkers.', example: t?.investigativeEx || 'e.g., Scientist, Researcher' },
+  { key: 'A', label: 'Artistic', score: 70, color: GOLD, desc: t?.artisticDesc || 'Creative, expressive, and original creators.', example: t?.artisticEx || 'e.g., Designer, Writer' },
+  { key: 'S', label: 'Social', score: 85, color: TEAL, desc: t?.socialDesc || 'Empathetic, helpful, and community-driven.', example: t?.socialEx || 'e.g., Teacher, Counselor' },
+  { key: 'E', label: 'Enterprising', score: 94, color: PURPLE, desc: t?.enterprisingDesc || 'Ambitious, persuasive, and visionary leaders.', example: t?.enterprisingEx || 'e.g., Entrepreneur, Manager' },
+  { key: 'C', label: 'Conventional', score: 82, color: DEEP, desc: t?.conventionalDesc || 'Organized, detail-oriented, and systematic experts.', example: t?.conventionalEx || 'e.g., Accountant, Analyst' },
+];
 
 export default function ReportCardPage({ isPurchased = false, onCreateAccount, onGoToPricing, onUnlockReport, user = null, currentUser = null, reportData = null }) {
   const { language } = useLanguage();
@@ -95,8 +160,8 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
   const t = repT[language] || repT.en;
 
   const [selectedCareer, setSelectedCareer] = useState(null);
-  const [defaultCareers, setDefaultCareers] = useState(null);
-  const [defaultRIASEC, setDefaultRIASEC] = useState(null);
+  const [defaultCareers, setDefaultCareers] = useState(FALLBACK_CAREERS);
+  const [defaultRIASEC, setDefaultRIASEC] = useState(() => getFallbackRIASEC(t));
   const [preGeneratedBlob, setPreGeneratedBlob] = useState(null);
 
   useEffect(() => {
@@ -207,22 +272,30 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     }
   }, [reportData, t]);
 
-  // Dynamic RIASEC Scores (supports both .scores and .riasec_scores)
-  const rawScores = reportData?.scores || reportData?.riasec_scores;
-  const dynamicRIASEC = rawScores ? [
+  // Dynamic RIASEC Scores (supports .scores, .riasec_scores, and .teaser_data)
+  const rawScores = reportData?.scores || reportData?.riasec_scores || reportData?.teaser_data?.riasec_scores;
+  const dynamicRIASEC = (rawScores && typeof rawScores === 'object' && Object.keys(rawScores).length > 0) ? [
     { key: 'R', label: 'Realistic', score: Math.round(((rawScores['R'] || 0) / 35) * 100), color: '#5C8374', desc: t.realisticDesc, example: t.realisticEx },
     { key: 'I', label: 'Investigative', score: Math.round(((rawScores['I'] || 0) / 35) * 100), color: '#2E86AB', desc: t.investigativeDesc, example: t.investigativeEx },
     { key: 'A', label: 'Artistic', score: Math.round(((rawScores['A'] || 0) / 35) * 100), color: GOLD, desc: t.artisticDesc, example: t.artisticEx },
     { key: 'S', label: 'Social', score: Math.round(((rawScores['S'] || 0) / 35) * 100), color: TEAL, desc: t.socialDesc, example: t.socialEx },
     { key: 'E', label: 'Enterprising', score: Math.round(((rawScores['E'] || 0) / 35) * 100), color: PURPLE, desc: t.enterprisingDesc, example: t.enterprisingEx },
     { key: 'C', label: 'Conventional', score: Math.round(((rawScores['C'] || 0) / 35) * 100), color: DEEP, desc: t.conventionalDesc, example: t.conventionalEx },
-  ] : defaultRIASEC;
+  ] : (defaultRIASEC || getFallbackRIASEC(t));
 
-  const personalityCode = dynamicRIASEC 
+  const personalityCode = (dynamicRIASEC && Array.isArray(dynamicRIASEC) && dynamicRIASEC.length > 0)
     ? [...dynamicRIASEC].sort((a, b) => b.score - a.score).slice(0, 3).map(d => d.key).join('')
-    : 'CIE';
+    : (reportData?.riasec_code || reportData?.teaser_data?.riasec_code || 'CIE');
 
-  const dynamicCareers = reportData?.top_careers ? reportData.top_careers.map((c, idx) => {
+  const incomingCareers = Array.isArray(reportData?.top_careers) && reportData.top_careers.length > 0
+    ? reportData.top_careers
+    : (Array.isArray(reportData?.career_matches) && reportData.career_matches.length > 0
+        ? reportData.career_matches
+        : (Array.isArray(reportData?.teaser_data?.top_careers) && reportData.teaser_data.top_careers.length > 0
+            ? reportData.teaser_data.top_careers
+            : null));
+
+  const dynamicCareers = incomingCareers ? incomingCareers.map((c, idx) => {
     const careerData = (c.data && typeof c.data === 'object' && Object.keys(c.data).length > 0) ? c.data : c;
     const minSalary = careerData?.expected_income?.minimum_monthly_salary || careerData?.minimum_monthly_salary || '';
     const maxSalary = careerData?.expected_income?.maximum_monthly_salary || careerData?.maximum_monthly_salary || '';
@@ -236,8 +309,8 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     const traits = Array.isArray(careerData?.personality_traits) ? careerData.personality_traits.join(', ') : (careerData?.personality_traits || 'Problem solving, logical reasoning');
     const growthPath = Array.isArray(careerData?.growth_path) ? careerData.growth_path.join(' → ') : (careerData?.growth_path || 'Junior → Senior → Lead');
 
-    const rawScore = c.match_score ?? c.score ?? c.fit_score ?? 85;
-    const matchScore = Math.round(Number(rawScore) || 85);
+    const rawScore = c.match_score ?? c.score ?? c.fit_score ?? (95 - idx * 3);
+    const matchScore = Math.round(Number(rawScore) || (95 - idx * 3));
 
     return {
       rank: idx + 1,
@@ -254,7 +327,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
       rawData: careerData,
       reason: c.reason || careerData?.reason || ''
     };
-  }) : defaultCareers;
+  }) : (defaultCareers || FALLBACK_CAREERS);
 
   useEffect(() => {
     if (shareCardRef.current && dynamicCareers && dynamicCareers.length > 0) {
@@ -777,7 +850,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
                   </button>
                   <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
-                    Instant access \u00b7 100% free signup
+                    Instant access · 100% free signup
                   </p>
                 </>
               )}
@@ -825,7 +898,7 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
                   </div>
                   <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
-                    Secure \u00b7 Credits never expire
+                    Secure · Credits never expire
                   </p>
                 </>
               )}

@@ -64,6 +64,59 @@ export const clearAssessmentFlow = () => {
   } catch {}
 };
 
+class ReportErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    console.error("Report render error caught by boundary:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center bg-[#FAF9F6] m-6 rounded-3xl border border-gray-200 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-teal-50 text-[#09A3A3] flex items-center justify-center mb-4 shadow-sm border border-teal-100">
+            <Sparkles className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-[#04302E] mb-2 font-['Sora']">
+            Your Assessment is Ready
+          </h2>
+          <p className="text-sm text-gray-500 max-w-md mb-6 leading-relaxed">
+            Your assessment responses have been saved securely. Click below to view your personalized report.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.reload();
+              }}
+              className="px-6 py-3 rounded-xl bg-[#04302E] hover:bg-[#064e4a] text-white text-sm font-bold shadow-md transition-all cursor-pointer"
+            >
+              Refresh Report
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.hash = '';
+                window.location.reload();
+              }}
+              className="px-6 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all cursor-pointer"
+            >
+              Return Home
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [isPurchased, setIsPurchased] = useState(false);
@@ -628,7 +681,8 @@ export default function App() {
         )}
 
         {currentPage === 'report' && (
-          <ReportCardPage
+          <ReportErrorBoundary>
+            <ReportCardPage
             user={activeReportUser}
             currentUser={currentUser}
             reportData={reportData}
@@ -656,7 +710,8 @@ export default function App() {
                 });
               }
             }}
-          />
+            />
+          </ReportErrorBoundary>
         )}
 
         {currentPage === 'signup' && (
