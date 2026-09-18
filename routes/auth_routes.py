@@ -4,6 +4,8 @@ from flask import Blueprint, request, jsonify, session
 from services.auth_service import auth_service
 from services.assessment_service import assessment_service
 from services.wallet_service import wallet_service
+from core.avatar import resolve_avatar_url, normalize_avatar_key
+from core.security import require_auth
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/auth')
 
@@ -11,6 +13,18 @@ def sanitize_user(user: dict) -> dict:
     """Strip sensitive fields before sending user data to client."""
     if not user:
         return {}
+    avatar_key = normalize_avatar_key(user.get('avatar') or user.get('profilePhoto'))
+    avatar_url = resolve_avatar_url(avatar_key)
+    
+    # Handle age safely
+    raw_age = user.get('age')
+    clean_age = None
+    if raw_age is not None and str(raw_age).strip() != '':
+        try:
+            clean_age = int(raw_age)
+        except (ValueError, TypeError):
+            clean_age = None
+
     return {
         'id': user.get('id'),
         'email': user.get('email'),
@@ -18,8 +32,16 @@ def sanitize_user(user: dict) -> dict:
         'is_active': user.get('is_active', 1),
         'can_manage_developers': bool(user.get('can_manage_developers', False) or user.get('role') == 'SUPER_ADMIN'),
         'name': user.get('full_name') or user.get('name') or user.get('email', '').split('@')[0],
+        'full_name': user.get('full_name') or user.get('name') or '',
         'phone': user.get('phone', ''),
-        'education_level': user.get('education_level', '')
+        'education_level': user.get('education_level', ''),
+        'class_year': user.get('class_year') or user.get('education_level', ''),
+        'age': clean_age,
+        'enjoy_subjects': user.get('enjoy_subjects', ''),
+        'challenging_subjects': user.get('challenging_subjects', ''),
+        'avatar': avatar_key,
+        'avatar_url': avatar_url,
+        'profilePhoto': avatar_url
     }
 
 @auth_bp.route('/signup', methods=['POST'])
@@ -37,12 +59,54 @@ def signup():
         return jsonify({'error': 'Email and password are required.'}), 400
         
     try:
+        # Check if attempt has student_profile with avatar and profile fields
+        avatar = data.get('avatar') or data.get('profilePhoto')
+        age = data.get('age')
+        class_year = data.get('class_year') or education_level
+        enjoy_subjects = data.get('enjoy_subjects')
+        challenging_subjects = data.get('challenging_subjects')
+        
+        if attempt_id:
+            try:
+                attempt = assessment_service.get_attempt_by_id(attempt_id)
+                if attempt and attempt.get('student_profile'):
+                    sp = attempt['student_profile']
+                    if isinstance(sp, str):
+                        try:
+                            import json
+                            sp = json.loads(sp)
+                        except Exception:
+                            sp = {}
+                    if not isinstance(sp, dict):
+                        sp = {}
+                    if not avatar and (sp.get('avatar') or sp.get('profilePhoto')):
+                        avatar = sp.get('avatar') or sp.get('profilePhoto')
+                    if not age and sp.get('age'):
+                        age = sp.get('age')
+                    if not class_year and (sp.get('class') or sp.get('classYear') or sp.get('education_level')):
+                        class_year = sp.get('class') or sp.get('classYear') or sp.get('education_level')
+                    if not enjoy_subjects and (sp.get('subjects') or sp.get('enjoySubjects')):
+                        enjoy_subjects = sp.get('subjects') or sp.get('enjoySubjects')
+                    if not challenging_subjects and (sp.get('weak_subjects') or sp.get('challengingSubjects')):
+                        challenging_subjects = sp.get('weak_subjects') or sp.get('challengingSubjects')
+                    if not full_name and (sp.get('name') or sp.get('fullName')):
+                        cand_name = sp.get('name') or sp.get('fullName')
+                        if cand_name and cand_name.lower() not in ('guest', 'guest student'):
+                            full_name = cand_name
+            except Exception as e:
+                print(f"[WARNING] Could not parse student profile from attempt {attempt_id}: {e}")
+
         user = auth_service.create_user(
             email=email,
             password=password,
-            full_name=full_name,
+            full_name=full_name or 'Student',
             phone=phone,
-            education_level=education_level
+            education_level=class_year or education_level,
+            avatar=avatar,
+            age=age,
+            class_year=class_year,
+            enjoy_subjects=enjoy_subjects,
+            challenging_subjects=challenging_subjects
         )
         
         session.permanent = True
@@ -152,6 +216,31 @@ def get_current_user():
     except Exception as e:
         print(f"[ERROR] /me failed: {e}")
         return jsonify({'authenticated': False, 'user': None}), 500
+
+@auth_bp.route('/profile', methods=['PUT', 'POST'])
+@require_auth
+def update_profile():
+    """Update student profile details and avatar in PostgreSQL with authoritative validation."""
+    user_id = session.get('user_id')
+    data = request.json or {}
+    try:
+        validated = auth_service.validate_profile_data(data, require_all_mandatory=False)
+        update_payload = {**data, **validated}
+        user = auth_service.update_user_profile(user_id, update_payload)
+        sanitized = sanitize_user(user)
+        sanitized['balance'] = wallet_service.get_balance(user_id)
+        return jsonify({
+            'status': 'success',
+            'message': 'Profile updated successfully.',
+            'user': sanitized
+        }), 200
+    except ValueError as ve:
+        if isinstance(ve.args[0], dict):
+            return jsonify({'error': 'Validation failed.', 'details': ve.args[0]}), 400
+        return jsonify({'error': str(ve)}), 400
+    except Exception as e:
+        print(f"[ERROR] update_profile failed: {e}")
+        return jsonify({'error': 'An error occurred while updating profile.'}), 500
 
 @auth_bp.route('/forgot-password', methods=['POST'])
 def forgot_password():

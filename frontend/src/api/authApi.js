@@ -65,5 +65,12 @@ export const authApi = {
       method: 'POST',
       body: { token, password, full_name: fullName }
     });
+  },
+
+  updateProfile: (profileData) => {
+    return request('/api/auth/profile', {
+      method: 'PUT',
+      body: profileData
+    });
   }
 };

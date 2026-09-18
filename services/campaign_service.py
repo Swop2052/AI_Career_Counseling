@@ -325,7 +325,18 @@ class CampaignService:
                 ORDER BY c.created_at DESC
             """)
             rows = cursor.fetchall()
-            return [dict(r) for r in rows]
+            campaigns = []
+            for r in rows:
+                c_dict = dict(r)
+                used = c_dict.get('real_redemption_count') or 0
+                max_u = c_dict.get('max_uses') or 0
+                pct = round(min((used / max_u) * 100, 100), 1) if max_u > 0 else 0
+                c_dict['redemptions_used'] = used
+                c_dict['redemption_limit'] = max_u
+                c_dict['redemption_percentage'] = pct
+                c_dict['times_redeemed'] = used
+                campaigns.append(c_dict)
+            return campaigns
         finally:
             conn.close()
 

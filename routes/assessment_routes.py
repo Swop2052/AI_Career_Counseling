@@ -27,6 +27,26 @@ def account_summary():
         print(f"[ERROR] account_summary failed: {e}")
         return jsonify({'error': str(e)}), 500
 
+@assessment_bp.route('/api/assessment/<attempt_id>/claim', methods=['POST'])
+@require_auth
+def claim_assessment(attempt_id):
+    """Explicitly associate a completed guest assessment attempt with the authenticated user."""
+    user_id = session.get('user_id')
+    try:
+        claimed_count = assessment_service.claim_guest_assessment(
+            guest_session_id=session.get('session_id'),
+            user_id=user_id,
+            attempt_id=attempt_id
+        )
+        return jsonify({
+            'status': 'success',
+            'claimed': bool(claimed_count and claimed_count > 0),
+            'attempt_id': attempt_id
+        }), 200
+    except Exception as e:
+        print(f"[ERROR] claim_assessment failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @assessment_bp.route('/api/assessment/<attempt_id>/status', methods=['GET'])
 def get_assessment_status(attempt_id):
     """Authoritative status check for an assessment attempt."""
@@ -37,6 +57,11 @@ def get_assessment_status(attempt_id):
             return jsonify({'error': 'Assessment attempt not found.', 'exists': False}), 404
             
         owner_id = attempt.get('user_id')
+        # If user is authenticated and the attempt is unclaimed, securely claim it for this user
+        if user_id and (not owner_id or str(owner_id).strip() == ''):
+            assessment_service.claim_guest_assessment(attempt_id=attempt_id, user_id=user_id)
+            owner_id = user_id
+
         is_owner = bool(user_id and owner_id and str(user_id).strip() == str(owner_id).strip())
         is_guest_unclaimed = bool(not owner_id)
         is_unlocked = bool(attempt.get('is_unlocked'))
@@ -82,12 +107,14 @@ def get_assessment_teaser(attempt_id):
         return jsonify({'error': str(e)}), 400
 
 @assessment_bp.route('/api/assessment/<attempt_id>/full', methods=['GET'])
+@require_auth
 def get_assessment_full(attempt_id):
-    """Retrieve full unlocked assessment report. Enforces server-side unlock verification."""
+    """Retrieve full unlocked assessment report. Enforces server-side unlock verification and IDOR ownership check."""
     user_id = session.get('user_id')
+    is_admin = session.get('role') == 'SUPER_ADMIN'
     try:
         lang = request.args.get('lang', 'en')
-        data = assessment_service.get_assessment_full(user_id, attempt_id)
+        data = assessment_service.get_assessment_full(user_id, attempt_id, is_admin=is_admin)
         if not data:
             return jsonify({'error': 'Assessment not found or not unlocked.'}), 404
             
@@ -106,7 +133,7 @@ def get_assessment_full(attempt_id):
         return jsonify({'error': msg, 'is_locked': True}), 400
     except Exception as e:
         print(f"[ERROR] get_assessment_full failed: {e}")
-        return jsonify({'error': str(e)}), 400
+        return jsonify({'error': 'Failed to retrieve assessment report.'}), 500
 
 @assessment_bp.route('/api/assessment/<attempt_id>/unlock', methods=['POST'])
 @require_auth

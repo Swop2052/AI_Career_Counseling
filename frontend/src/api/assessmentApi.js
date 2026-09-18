@@ -2,13 +2,15 @@
 import { request } from './client';
 
 export const assessmentApi = {
-  submitAnswers: (answers, studentInfo, language = 'en') => {
+  submitAnswers: (answers, studentInfo, language = 'en', submissionToken = null) => {
+    const token = submissionToken || `sub_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     return request('/api/submit-answers', {
       method: 'POST',
       body: {
         answers,
         student_info: studentInfo,
-        language
+        language,
+        submission_token: token
       }
     });
   },
@@ -16,6 +18,18 @@ export const assessmentApi = {
   getTeaser: (attemptId, language = 'en') => {
     return request(`/api/assessment/${attemptId}/teaser?lang=${language}`, {
       method: 'GET'
+    });
+  },
+
+  getStatus: (attemptId) => {
+    return request(`/api/assessment/${attemptId}/status`, {
+      method: 'GET'
+    });
+  },
+
+  claimAttempt: (attemptId) => {
+    return request(`/api/assessment/${attemptId}/claim`, {
+      method: 'POST'
     });
   },
 

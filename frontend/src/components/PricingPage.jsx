@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { paymentApi } from '../api/paymentApi';
 import { authApi } from '../api/authApi';
+import CanonicalModal from './common/CanonicalModal';
 
 function loadRazorpayScript(timeoutMs = 10000) {
   return new Promise((resolve) => {
@@ -768,68 +769,33 @@ export default function PricingPage({
       </AnimatePresence>
 
       {/* ----------------- AUTH REQUIRED PROMPT MODAL ----------------- */}
-      <AnimatePresence>
-        {showAuthModal && (
-          <div className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-[#04211F]/50 backdrop-blur-md">
-            <div className="absolute inset-0 cursor-pointer" onClick={() => setShowAuthModal(false)} />
-            
-            <motion.div
-              initial={{ scale: 0.92, opacity: 0, y: 16 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.92, opacity: 0, y: 16 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 z-10 text-center"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#09A3A3]/15 text-[#09A3A3] flex items-center justify-center mx-auto mb-4">
-                <Lock className="w-6 h-6" />
-              </div>
-              
-              <h3 className="text-xl font-black text-[#04211F] mb-2">
-                Sign in to Purchase
-              </h3>
-              
-              <p className="text-xs text-gray-600 mb-6">
-                Please log in or create your free SkillSense account so your purchased credits are securely deposited into your wallet.
-              </p>
-
-              <div className="space-y-2.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    if (onOpenLogin) onOpenLogin();
-                    else if (onRequireAuth) onRequireAuth();
-                  }}
-                  className="w-full py-3 rounded-xl bg-[#04302E] hover:bg-[#075f5c] text-white text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
-                >
-                  <LogIn className="w-4 h-4" />
-                  <span>Log In to Existing Account</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAuthModal(false);
-                    if (onOpenSignup) onOpenSignup();
-                    else if (onRequireAuth) onRequireAuth();
-                  }}
-                  className="w-full py-3 rounded-xl bg-white hover:bg-gray-50 border border-gray-200 text-[#04211F] text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Create a New Account</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAuthModal(false)}
-                  className="w-full py-2 text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <CanonicalModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        showCloseButton={true}
+        icon={Lock}
+        eyebrow="AUTHENTICATION REQUIRED"
+        title="Sign in to Purchase"
+        description="Please log in or create your free SkillSense account so your purchased credits are securely deposited into your wallet."
+        primaryAction={{
+          label: "Log In to Existing Account",
+          onClick: () => {
+            setShowAuthModal(false);
+            if (onOpenLogin) onOpenLogin();
+            else if (onRequireAuth) onRequireAuth();
+          },
+          icon: LogIn
+        }}
+        secondaryAction={{
+          label: "Create a New Account",
+          onClick: () => {
+            setShowAuthModal(false);
+            if (onOpenSignup) onOpenSignup();
+            else if (onRequireAuth) onRequireAuth();
+          }
+        }}
+        footerText="Instant access · 100% free signup"
+      />
 
     </div>
   );

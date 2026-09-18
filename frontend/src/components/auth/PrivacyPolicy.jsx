@@ -410,7 +410,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>Hosting / Cloud Infrastructure Provider — secured SQLite database and server operations</span>
+                  <span>Hosting / Cloud Infrastructure Provider — secured PostgreSQL database and server operations</span>
                 </div>
                 <p>All processors are contractually obligated to process data only as instructed by AI Sense LLP and to maintain data protection standards consistent with the DPDP Act 2023.</p>
                 <p>No psychometric data, Career Roadmap results, or personal information is shared with educational institutions, employers, or counsellors.</p>
@@ -426,7 +426,7 @@ export default function PrivacyPolicy({ onBack, onHome }) {
         <p>AI Sense LLP implements reasonable security safeguards as mandated by Rule 6 of the DPDP Rules 2025:</p>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>
-                  <span>All personal data stored in a secured SQLite database on VPS server infrastructure</span>
+                  <span>All personal data stored in a secured PostgreSQL database on VPS server infrastructure</span>
                 </div>
                 <div className="flex items-start gap-2 ml-4">
                   <span className="text-[#09A3A3] mt-0.5">•</span>

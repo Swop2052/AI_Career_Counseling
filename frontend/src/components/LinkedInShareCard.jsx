@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { Brain, Heart, GraduationCap, Trophy, Target, Sparkles, MapPin, Building, Compass } from 'lucide-react';
+import { resolveAvatarUrl } from '../utils/avatarUtils';
 
 const DEEP = '#04302E';
 const TEAL = '#09A3A3';
@@ -59,7 +60,7 @@ const LinkedInShareCard = forwardRef(({ user, dynamicCareers, personalityCode, d
             overflow: 'hidden'
           }}>
             {(user?.profilePhoto || user?.avatar) ? (
-              <img src={user?.profilePhoto || user?.avatar} crossOrigin="anonymous" alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={resolveAvatarUrl(user?.avatar || user?.profilePhoto) || user?.profilePhoto || user?.avatar} crossOrigin="anonymous" alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               fullName.slice(0, 1).toUpperCase()
             )}

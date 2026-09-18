@@ -416,9 +416,28 @@ def serve_frontend_or_api(path):
     })
 
 @app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint."""
-    return jsonify({"status": "healthy", "timestamp": time.time()})
+    """Production-safe health check confirming backend & DB availability without leaking secrets."""
+    db_status = "connected"
+    try:
+        from database.schema import get_db_connection
+        conn = get_db_connection()
+        try:
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT 1")
+        finally:
+            conn.close()
+    except Exception:
+        db_status = "unreachable"
+
+    status_code = 200 if db_status == "connected" else 503
+    return jsonify({
+        "status": "healthy" if db_status == "connected" else "degraded",
+        "service": "skillsense-backend",
+        "database": db_status
+    }), status_code
 
 @app.route('/api/ui-translations', methods=['GET'])
 def get_ui_translations():
@@ -695,8 +714,20 @@ def submit_answers():
         answers = data.get('answers', [])
         student_info = data.get('student_info', {})
         language = data.get('language', 'en')
+
+        # Authoritative validation of student_info required fields
+        from services.auth_service import AuthService
+        from core.avatar import normalize_avatar_key
+        try:
+            validated_info = AuthService.validate_profile_data(student_info, require_all_mandatory=True)
+            student_info = {**student_info, **validated_info}
+            if validated_info.get('avatar'):
+                student_info['avatar'] = validated_info['avatar']
+        except ValueError as ve:
+            err_details = ve.args[0] if isinstance(ve.args[0], dict) else {'error': str(ve)}
+            return jsonify({'error': 'Validation error: Missing or invalid required profile fields.', 'details': err_details}), 400
         
-        print(f"[INFO] Processing {len(answers)} answers for {student_info.get('name', 'Student')}")
+        print(f"[INFO] Processing {len(answers)} answers for {student_info.get('full_name') or student_info.get('name', 'Student')}")
         
         scores = {"R": 0, "I": 0, "A": 0, "S": 0, "E": 0, "C": 0}
         category_map = {
@@ -1139,6 +1170,18 @@ app.register_blueprint(payment_bp)
 app.register_blueprint(developer_bp)
 
 # ============================================================
+# PRODUCTION SECURITY HEADERS & GUARDS
+# ============================================================
+@app.after_request
+def add_security_headers(response):
+    """Add defensive security headers to all HTTP responses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    return response
+
+# ============================================================
 # CLI BOOTSTRAP: INITIAL SUPER ADMIN
 # ============================================================
 import click
@@ -1152,9 +1195,25 @@ def create_super_admin_cmd(email, password, name):
     from services.auth_service import AuthService
     try:
         res = AuthService.create_super_admin_via_cli(email=email, password=password, full_name=name)
-        click.echo(f"[SUCCESS] Super Admin created: {res['email']} (ID: {res['id']})")
+        password = None
+        click.echo("")
+        click.echo(f"[SUCCESS] Super Admin account created: {res['email']} (ID: {res['id']})")
+        click.echo("  Role: SUPER_ADMIN")
+        click.echo("  Permissions: Full Platform & Developer Management")
+        click.echo("  Next Steps:")
+        click.echo("    1. Start your SkillSense application")
+        click.echo("    2. Log in with your Super Admin credentials")
+        click.echo("    3. Navigate to Developer / Super Admin Console to invite developers")
+        click.echo("")
     except ValueError as e:
+        password = None
         click.echo(f"[ERROR] {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        password = None
+        click.echo(f"[ERROR] Unexpected failure: {e}", err=True)
+        sys.exit(1)
+
 
 # ============================================================
 # IMAGE UPLOAD (PERMANENT HOSTING)
@@ -1194,7 +1253,7 @@ def upload_image():
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        return jsonify({'status': 'error', 'message': 'Failed to process image upload.'}), 500
 
 @app.route('/api/uploads/<path:filename>')
 def serve_upload(filename):

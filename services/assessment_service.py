@@ -267,8 +267,21 @@ class AssessmentService:
                 """, (user_id or '', guest_session_id or '', window_start, f'%"submission_token": "{submission_token}"%'))
                 existing = cursor.fetchone()
 
+            # Secondary debounce guard: check if user/guest submitted identical RIASEC code within last 5 seconds
+            if not existing and (user_id or guest_session_id) and riasec_code:
+                debounce_window = (datetime.now() - timedelta(seconds=5)).isoformat()
+                cursor.execute("""
+                    SELECT id, is_unlocked, teaser_data, full_result_data, created_at, unlocked_at
+                    FROM assessment_attempts
+                    WHERE (user_id = %s OR guest_session_id = %s)
+                      AND completed_at >= %s
+                      AND riasec_code = %s
+                    ORDER BY completed_at DESC LIMIT 1
+                """, (user_id or '', guest_session_id or '', debounce_window, riasec_code))
+                existing = cursor.fetchone()
+
             if existing:
-                print(f"[INFO] Idempotent submission: reusing existing attempt '{existing['id']}' for token '{submission_token}'")
+                print(f"[INFO] Idempotent submission: reusing existing attempt '{existing['id']}'")
                 t_data = json.loads(existing['teaser_data']) if isinstance(existing['teaser_data'], str) else (existing['teaser_data'] or {})
                 full_rep = json.loads(existing['full_result_data']) if existing['is_unlocked'] and existing['full_result_data'] else None
                 return {
@@ -328,11 +341,19 @@ class AssessmentService:
                 claimed_count = 0
                 if clean_attempt:
                     cursor.execute("""
-                        UPDATE assessment_attempts
-                        SET user_id = %s
-                        WHERE LOWER(TRIM(id)) = LOWER(TRIM(%s)) AND (user_id IS NULL OR user_id = '' OR user_id = %s)
-                    """, (user_id, clean_attempt, user_id))
-                    claimed_count += cursor.rowcount
+                        SELECT id, user_id FROM assessment_attempts
+                        WHERE LOWER(TRIM(id)) = LOWER(TRIM(%s))
+                    """, (clean_attempt,))
+                    row = cursor.fetchone()
+                    if row:
+                        curr_owner = row.get('user_id') if isinstance(row, dict) else row[1]
+                        if not curr_owner or str(curr_owner).strip() == '' or str(curr_owner).strip() == str(user_id).strip():
+                            cursor.execute("""
+                                UPDATE assessment_attempts
+                                SET user_id = %s
+                                WHERE LOWER(TRIM(id)) = LOWER(TRIM(%s))
+                            """, (user_id, clean_attempt))
+                            claimed_count += 1
 
                 if guest_session_id:
                     cursor.execute("""
@@ -340,7 +361,8 @@ class AssessmentService:
                         SET user_id = %s
                         WHERE guest_session_id = %s AND (user_id IS NULL OR user_id = '')
                     """, (user_id, guest_session_id))
-                    claimed_count += cursor.rowcount
+                    if cursor.rowcount and cursor.rowcount > 0:
+                        claimed_count += cursor.rowcount
 
                 return claimed_count
         finally:
@@ -519,163 +541,150 @@ class AssessmentService:
 
     @staticmethod
     def unlock_assessment(user_id: str, attempt_id: str) -> Dict[str, Any]:
-        """Atomically check credit balance, deduct 1 credit, mark assessment as unlocked, and return full report."""
+        """Atomically check credit balance, deduct 1 credit, mark assessment as unlocked, and return full report.
+        Single transaction, strict row locking, idempotency guarantee, and rollback on any failure."""
         clean_id = AssessmentService._clean_id(attempt_id)
         if not clean_id:
             raise ValueError("Assessment attempt ID is required.")
 
         conn = get_db_connection()
         try:
-            cursor = conn.cursor()
-            attempt = AssessmentService._fetch_attempt_record(cursor, conn, clean_id)
+            with conn:
+                cursor = conn.cursor()
+                # 1. Fetch & lock attempt record
+                cursor.execute("""
+                    SELECT id, user_id, is_unlocked, created_at, unlocked_at, full_result_data,
+                           riasec_answers, riasec_code, teaser_data
+                    FROM assessment_attempts
+                    WHERE id = %s
+                    FOR UPDATE
+                """, (clean_id,))
+                attempt = cursor.fetchone()
+                if not attempt:
+                    cursor.execute("""
+                        SELECT id, user_id, is_unlocked, created_at, unlocked_at, full_result_data,
+                               riasec_answers, riasec_code, teaser_data
+                        FROM assessment_attempts
+                        WHERE id = %s OR id = %s
+                        FOR UPDATE
+                    """, (f"ast_{clean_id}", clean_id.replace("ast_", "")))
+                    attempt = cursor.fetchone()
 
-            if not attempt:
-                raise ValueError(f"Assessment attempt '{clean_id}' not found.")
+                if not attempt:
+                    raise ValueError(f"Assessment attempt '{clean_id}' not found.")
 
-            # If unassigned guest attempt, link to active user
-            if not attempt['user_id']:
-                with conn:
-                    conn.execute("UPDATE assessment_attempts SET user_id = %s WHERE id = %s", (user_id, attempt['id']))
-            elif str(attempt['user_id']).strip() != str(user_id).strip():
-                raise ValueError("Unauthorized attempt to unlock another user's assessment.")
+                attempt = dict(attempt)
 
-            # If already unlocked, return full report directly with 0 credit deduction!
-            if attempt['is_unlocked']:
+                # Link guest attempt if unowned
+                if not attempt['user_id']:
+                    cursor.execute("UPDATE assessment_attempts SET user_id = %s WHERE id = %s", (user_id, attempt['id']))
+                    attempt['user_id'] = user_id
+                elif str(attempt['user_id']).strip() != str(user_id).strip():
+                    raise ValueError("Unauthorized attempt to unlock another user's assessment.")
+
+                # Fetch current wallet balance with row lock
+                cursor.execute("SELECT id, balance FROM credit_wallets WHERE user_id = %s FOR UPDATE", (user_id,))
+                w_row = cursor.fetchone()
+                current_bal = w_row['balance'] if w_row else 0
+
+                # If already unlocked, return full report directly with 0 credit deduction (Idempotent!)
+                if attempt['is_unlocked']:
+                    full_data = json.loads(attempt['full_result_data']) if isinstance(attempt['full_result_data'], str) else (attempt['full_result_data'] or {})
+                    if not full_data or not full_data.get('top_careers'):
+                        full_data = AssessmentService._reconstruct_full_report(dict(attempt))
+                        cursor.execute("UPDATE assessment_attempts SET full_result_data = %s WHERE id = %s", (json.dumps(full_data), attempt['id']))
+                    normalized_report = AssessmentService._normalize_report_careers(full_data)
+                    return {
+                        'status': 'already_unlocked',
+                        'message': 'Assessment report is already permanently unlocked.',
+                        'attempt_id': attempt['id'],
+                        'credits_remaining': current_bal,
+                        'full_report': normalized_report
+                    }
+
+                # Pre-validate report data BEFORE deducting credit:
                 full_data = json.loads(attempt['full_result_data']) if isinstance(attempt['full_result_data'], str) else (attempt['full_result_data'] or {})
                 if not full_data or not full_data.get('top_careers'):
-                    full_data = AssessmentService._reconstruct_full_report(dict(attempt))
-                    with conn:
-                        conn.execute("UPDATE assessment_attempts SET full_result_data = %s WHERE id = %s", (json.dumps(full_data), attempt['id']))
-                return {
-                    'status': 'already_unlocked',
-                    'message': 'Assessment report is already permanently unlocked.',
-                    'attempt_id': attempt['id'],
-                    'full_report': full_data
-                }
+                    reconstituted = AssessmentService._reconstruct_full_report(dict(attempt))
+                    if reconstituted and reconstituted.get('top_careers'):
+                        full_data = reconstituted
+                    else:
+                        raise ValueError("Cannot unlock this assessment because assessment responses are incomplete. No credits have been deducted.")
 
-            # Pre-validate report data BEFORE deducting credit:
-            full_data = json.loads(attempt['full_result_data']) if isinstance(attempt['full_result_data'], str) else (attempt['full_result_data'] or {})
-            if not full_data or not full_data.get('top_careers'):
-                reconstituted = AssessmentService._reconstruct_full_report(dict(attempt))
-                if reconstituted and reconstituted.get('top_careers'):
-                    full_data = reconstituted
-                else:
-                    raise ValueError("Cannot unlock this assessment because assessment responses are incomplete. No credits have been deducted.")
-
-            # Check if this attempt is an accidental duplicate (within 5 seconds) of an already unlocked attempt
-            if not attempt['is_unlocked'] and attempt.get('riasec_answers'):
-                ans_str = attempt['riasec_answers']
-                try:
-                    ans_list = json.loads(ans_str) if isinstance(ans_str, str) else ans_str
-                except Exception:
-                    ans_list = []
-                if isinstance(ans_list, list) and len(ans_list) >= 10:
-                    cursor = conn.cursor()
+                # Duplicate attempt detection: check if a twin attempt was already unlocked
+                if attempt.get('riasec_answers'):
+                    ans_str = attempt['riasec_answers']
                     try:
+                        ans_list = json.loads(ans_str) if isinstance(ans_str, str) else ans_str
+                    except Exception:
+                        ans_list = []
+                    if isinstance(ans_list, list) and len(ans_list) >= 10:
                         cursor.execute("""
                             SELECT id, full_result_data, unlocked_at, created_at, riasec_answers FROM assessment_attempts
                             WHERE user_id = %s AND riasec_code = %s AND is_unlocked = 1
                         """, (user_id, attempt['riasec_code']))
                         candidates = cursor.fetchall()
-                    except Exception as e:
-                        print(f"[WARN] Candidate duplicate fetch error: {e}")
-                        candidates = []
-
-                    for cand in candidates:
-                        try:
+                        for cand in candidates:
                             cand_ans = cand['riasec_answers']
                             if isinstance(cand_ans, str):
                                 try:
                                     cand_ans = json.loads(cand_ans)
                                 except Exception:
                                     pass
-                            if cand_ans != ans_list:
-                                continue
-                            # Handle both string (SQLite) and datetime (PostgreSQL via psycopg2)
-                            t1_raw = cand['created_at']
-                            t2_raw = attempt['created_at']
-                            
-                            t1 = t1_raw if isinstance(t1_raw, datetime) else datetime.fromisoformat(str(t1_raw).replace('Z', '+00:00'))
-                            t2 = t2_raw if isinstance(t2_raw, datetime) else datetime.fromisoformat(str(t2_raw).replace('Z', '+00:00'))
-                            
-                            if t1.tzinfo is None and t2.tzinfo is not None:
-                                t1 = t1.replace(tzinfo=t2.tzinfo)
-                            elif t2.tzinfo is None and t1.tzinfo is not None:
-                                t2 = t2.replace(tzinfo=t1.tzinfo)
-
-                            if abs((t1 - t2).total_seconds()) <= 5:
-                                print(f"[INFO] Attempt {attempt['id']} is a 5s duplicate of already unlocked {cand['id']} - marking unlocked with 0 credit deduction")
+                            if cand_ans == ans_list:
                                 twin_full = cand['full_result_data'] if isinstance(cand['full_result_data'], dict) else (json.loads(cand['full_result_data']) if cand['full_result_data'] else None)
                                 twin_full_db = json.dumps(cand['full_result_data']) if isinstance(cand['full_result_data'], dict) else cand['full_result_data']
-                                with conn:
-                                    conn.execute("""
-                                        UPDATE assessment_attempts
-                                        SET is_unlocked = 1, unlocked_at = COALESCE(%s, %s), full_result_data = COALESCE(%s, full_result_data)
-                                        WHERE id = %s
-                                    """, (cand['unlocked_at'], datetime.now(), twin_full_db, attempt['id']))
+                                cursor.execute("""
+                                    UPDATE assessment_attempts
+                                    SET is_unlocked = 1, unlocked_at = COALESCE(%s, %s), full_result_data = COALESCE(%s, full_result_data)
+                                    WHERE id = %s
+                                """, (cand['unlocked_at'], datetime.now(), twin_full_db, attempt['id']))
                                 return {
                                     'status': 'already_unlocked',
                                     'message': 'Assessment report is already permanently unlocked.',
                                     'attempt_id': attempt['id'],
+                                    'credits_remaining': current_bal,
                                     'full_report': twin_full or AssessmentService._reconstruct_full_report(dict(attempt))
                                 }
-                        except Exception as e:
-                            print(f"[ERROR] Failed duplicate detection unlock update: {e}")
-                            pass
 
-            # Pre-check credit balance before atomic unlock
-            user_balance = wallet_service.get_balance(user_id)
-            if user_balance < 1:
-                raise ValueError("Insufficient assessment credits. Please purchase a credit pack to unlock.")
+                # Verify wallet balance >= 1
+                if current_bal < 1:
+                    raise ValueError("Insufficient assessment credits. Please purchase a credit pack to unlock.")
 
-            # Atomically claim the unlock on the attempt to prevent double-spending race conditions (V15)
-            now_str = datetime.now().isoformat()
-            with conn:
-                cursor = conn.cursor()
+                now_str = datetime.now().isoformat()
+                new_balance = current_bal - 1
+
+                # Deduct exactly 1 credit atomically
+                cursor.execute("""
+                    UPDATE credit_wallets
+                    SET balance = %s, updated_at = %s
+                    WHERE user_id = %s
+                """, (new_balance, now_str, user_id))
+
+                # Insert credit ledger debit entry (REPORT_UNLOCK, -1)
+                tx_id = f"tx_{uuid.uuid4().hex[:12]}"
+                cursor.execute("""
+                    INSERT INTO credit_transactions (
+                        id, user_id, type, amount, balance_after,
+                        reference_type, reference_id, description, created_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (tx_id, user_id, 'REPORT_UNLOCK', -1, new_balance, 'assessment_attempt', attempt['id'], f"Unlocked Career Roadmap Report ({attempt['id']})", now_str))
+
+                # Mark attempt as permanently unlocked
                 cursor.execute("""
                     UPDATE assessment_attempts
                     SET is_unlocked = 1, unlocked_at = %s, full_result_data = %s
-                    WHERE id = %s AND is_unlocked = 0
+                    WHERE id = %s
                 """, (now_str, json.dumps(full_data), attempt['id']))
 
-                if cursor.rowcount == 0:
-                    # Another concurrent request already unlocked this attempt
-                    cursor.execute("SELECT is_unlocked, full_result_data FROM assessment_attempts WHERE id = %s", (attempt['id'],))
-                    fresh = cursor.fetchone()
-                    if fresh and fresh['is_unlocked']:
-                        f_data = json.loads(fresh['full_result_data']) if isinstance(fresh['full_result_data'], str) else (fresh['full_result_data'] or full_data)
-                        return {
-                            'status': 'already_unlocked',
-                            'message': 'Assessment report is already permanently unlocked.',
-                            'attempt_id': attempt['id'],
-                            'full_report': f_data
-                        }
-                    raise ValueError("Could not unlock assessment.")
-
-            # Atomically deduct 1 credit from wallet for this successfully claimed unlock
-            try:
-                new_balance = wallet_service.deduct_credits(
-                    user_id=user_id,
-                    amount=1,
-                    transaction_type='ASSESSMENT_UNLOCK',
-                    reference_type='assessment_attempt',
-                    reference_id=attempt['id'],
-                    description=f"Unlocked Career Roadmap Report ({attempt['id']})"
-                )
-            except Exception as e:
-                # If credit deduction fails, rollback unlocked state
-                with conn:
-                    conn.execute("UPDATE assessment_attempts SET is_unlocked = 0, unlocked_at = NULL WHERE id = %s", (attempt['id'],))
-                raise e
-
-            normalized_report = AssessmentService._normalize_report_careers(full_data)
-            return {
-                'status': 'success',
-                'message': 'Career Roadmap unlocked successfully!',
-                'attempt_id': attempt['id'],
-                'credits_remaining': new_balance,
-                'full_report': normalized_report
-            }
+                normalized_report = AssessmentService._normalize_report_careers(full_data)
+                return {
+                    'status': 'success',
+                    'message': 'Career Roadmap unlocked successfully!',
+                    'attempt_id': attempt['id'],
+                    'credits_remaining': new_balance,
+                    'full_report': normalized_report
+                }
         finally:
             conn.close()
 
@@ -689,8 +698,6 @@ class AssessmentService:
         conn = get_db_connection()
         try:
             cursor = conn.cursor()
-
-            # Legacy bridge removed (tests table no longer exists in PostgreSQL)
 
             # Query all attempts for user
             cursor.execute("""
@@ -730,29 +737,43 @@ class AssessmentService:
                             matched_cluster = cl
                             break
 
-                # 2. Match by full answers (>= 10) + same RIASEC code + created within 5 seconds
-                if not matched_cluster and isinstance(ans_list, list) and len(ans_list) >= 10:
+                # 2. Match by answers or scores + same RIASEC code + created within 10 seconds
+                if not matched_cluster:
+                    r_scores = r.get('riasec_scores')
+                    if isinstance(r_scores, str):
+                        try:
+                            r_scores = json.loads(r_scores)
+                        except Exception:
+                            r_scores = None
+
                     for cl in seen_clusters:
-                        if cl.get('riasec_code') == r['riasec_code']:
-                            cl_ans = cl.get('riasec_answers')
-                            if cl_ans == r_ans:
-                                try:
-                                    t1_raw = cl['created_at']
-                                    t2_raw = r['created_at']
-                                    t1 = t1_raw if isinstance(t1_raw, datetime) else datetime.fromisoformat(str(t1_raw).replace('Z', '+00:00'))
-                                    t2 = t2_raw if isinstance(t2_raw, datetime) else datetime.fromisoformat(str(t2_raw).replace('Z', '+00:00'))
-                                    if t1.tzinfo is None and t2.tzinfo is not None:
-                                        t1 = t1.replace(tzinfo=t2.tzinfo)
-                                    elif t2.tzinfo is None and t1.tzinfo is not None:
-                                        t2 = t2.replace(tzinfo=t1.tzinfo)
-                                    if abs((t1 - t2).total_seconds()) <= 5:
+                        if cl.get('riasec_code') == r.get('riasec_code'):
+                            try:
+                                t1_raw = cl['created_at']
+                                t2_raw = r['created_at']
+                                t1 = t1_raw if isinstance(t1_raw, datetime) else datetime.fromisoformat(str(t1_raw).replace('Z', '+00:00'))
+                                t2 = t2_raw if isinstance(t2_raw, datetime) else datetime.fromisoformat(str(t2_raw).replace('Z', '+00:00'))
+                                if t1.tzinfo is None and t2.tzinfo is not None:
+                                    t1 = t1.replace(tzinfo=t2.tzinfo)
+                                elif t2.tzinfo is None and t1.tzinfo is not None:
+                                    t2 = t2.replace(tzinfo=t1.tzinfo)
+
+                                if abs((t1 - t2).total_seconds()) <= 10:
+                                    cl_ans = cl.get('riasec_answers')
+                                    cl_ans_parsed = json.loads(cl_ans) if isinstance(cl_ans, str) else cl_ans
+                                    cl_scores = cl.get('riasec_scores')
+                                    cl_scores_parsed = json.loads(cl_scores) if isinstance(cl_scores, str) else cl_scores
+
+                                    if (cl_ans_parsed and ans_list and cl_ans_parsed == ans_list) or \
+                                       (cl_scores_parsed and r_scores and cl_scores_parsed == r_scores) or \
+                                       (abs((t1 - t2).total_seconds()) <= 2):
                                         matched_cluster = cl
                                         break
-                                except Exception:
-                                    pass
+                            except Exception:
+                                pass
 
                 if matched_cluster:
-                    # Merge unlock status into cluster
+                    # Merge unlock status into cluster so unlocked status is never lost
                     if r['is_unlocked']:
                         matched_cluster['is_unlocked'] = 1
                         matched_cluster['unlocked_at'] = r['unlocked_at'] or matched_cluster['unlocked_at']

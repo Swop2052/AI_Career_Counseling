@@ -1,4 +1,4 @@
-import { Sparkles, CheckCircle2, ArrowRight, Lock } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { authApi } from './api/authApi';
 import { assessmentApi } from './api/assessmentApi';
 import DeveloperDashboard from './components/developer/DeveloperDashboard';
@@ -18,6 +18,7 @@ import PricingPage from './components/PricingPage';
 import Login from './components/auth/login';
 import Signup from './components/auth/signup';
 import AssessmentOnboarding from './components/AssessmentOnboarding';
+import CanonicalModal from './components/common/CanonicalModal';
 
 // Separate Legal Pages
 import TermsConditions from './components/auth/TermsConditions';
@@ -25,6 +26,7 @@ import PrivacyPolicy from './components/auth/PrivacyPolicy';
 import ConsentForm from './components/auth/ConsentForm';
 import AcceptInvitation from './components/auth/AcceptInvitation';
 import { isSuperAdmin, isDeveloper, canAccessDeveloperConsole } from './utils/roleUtils';
+import { resolveAvatarUrl, normalizeAvatarKey, DEFAULT_AVATAR_KEY } from './utils/avatarUtils';
 
 // Session-aware active assessment flow state helpers
 export const getActiveAssessmentFlow = () => {
@@ -123,15 +125,26 @@ export default function App() {
   const [isUnlocking, setIsUnlocking] = useState(false);
   const [tempStudentName, setTempStudentName] = useState('');
   const [savedAttemptId, setSavedAttemptId] = useState(() => getActiveAssessmentFlow()?.attemptId || null);
-  const [zeroCreditModal, setZeroCreditModal] = useState(null); // { attemptId }
-  const [unlockConfirmModal, setUnlockConfirmModal] = useState(null); // { attemptId, balance, title, description }
+  const [globalModal, setGlobalModal] = useState(null); // { type, title, eyebrow, description, balance, primaryAction, secondaryAction, footerText }
   const [successToast, setSuccessToast] = useState(null); // { message, visible, isError }
-  const setPostSignupZeroCreditModal = setZeroCreditModal;
 
   const [onboardingData, setOnboardingData] = useState(() => {
     try {
       const savedData = localStorage.getItem('skillsense_onboarding');
-      return savedData ? JSON.parse(savedData) : null;
+      if (!savedData) return null;
+      const parsed = JSON.parse(savedData);
+      if (parsed && typeof parsed === 'object') {
+        if (parsed.fullName && ['guest', 'guest student', 'test student'].includes(String(parsed.fullName).toLowerCase())) {
+          parsed.fullName = '';
+        }
+        if (parsed.age !== undefined && parsed.age !== null) {
+          const num = parseInt(parsed.age, 10);
+          if (isNaN(num) || num < 10 || num > 60) {
+            parsed.age = '';
+          }
+        }
+      }
+      return parsed;
     } catch {
       return null;
     }
@@ -305,10 +318,45 @@ export default function App() {
       setTempStudentName(formData.fullName);
     }
     setIsPurchased(false);
-    if (currentUser && formData?.profilePhoto) {
-       const updatedUser = { ...currentUser, profilePhoto: formData.profilePhoto };
-       setCurrentUser(updatedUser);
-       localStorage.setItem('skillsense_user', JSON.stringify(updatedUser));
+    if (currentUser) {
+      const canonicalAvatar = normalizeAvatarKey(formData.avatar || formData.profilePhoto) || DEFAULT_AVATAR_KEY;
+      const avatarUrl = resolveAvatarUrl(canonicalAvatar);
+      const updatedUser = {
+        ...currentUser,
+        name: formData.fullName || currentUser.name,
+        full_name: formData.fullName || currentUser.full_name,
+        age: formData.age ? parseInt(formData.age, 10) : currentUser.age,
+        class_year: formData.classYear || currentUser.class_year,
+        enjoy_subjects: formData.enjoySubjects || currentUser.enjoy_subjects,
+        challenging_subjects: formData.challengingSubjects || currentUser.challenging_subjects,
+        avatar: canonicalAvatar,
+        profilePhoto: avatarUrl || formData.profilePhoto
+      };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('skillsense_user', JSON.stringify(updatedUser));
+
+      // Persist to PostgreSQL backend
+      authApi.updateProfile({
+        full_name: formData.fullName,
+        fullName: formData.fullName,
+        name: formData.fullName,
+        age: formData.age ? parseInt(formData.age, 10) : null,
+        class_year: formData.classYear,
+        classYear: formData.classYear,
+        stream: formData.stream,
+        enjoy_subjects: formData.enjoySubjects,
+        enjoySubjects: formData.enjoySubjects,
+        challenging_subjects: formData.challengingSubjects,
+        challengingSubjects: formData.challengingSubjects,
+        avatar: canonicalAvatar
+      }).then(res => {
+        if (res && res.user) {
+          setCurrentUser(res.user);
+          localStorage.setItem('skillsense_user', JSON.stringify(res.user));
+        }
+      }).catch(err => {
+        console.warn('Failed to sync profile to backend:', err);
+      });
     }
     navigateTo('test', '#test');
   };
@@ -321,11 +369,13 @@ export default function App() {
     if (attemptId) {
       const flow = {
         attemptId: attemptId,
-        flowState: 'pending_assessment_locked',
+        flowState: 'guest_completed',
         completedAt: Date.now(),
         dismissed: false
       };
       sessionStorage.setItem('skillsense_active_assessment_flow', JSON.stringify(flow));
+      localStorage.setItem('skillsense_return_to_unlock', attemptId);
+      localStorage.setItem('skillsense_pending_attempt_id', attemptId);
       setSavedAttemptId(attemptId);
     }
     setIsPurchased(false);
@@ -354,43 +404,36 @@ export default function App() {
           }
           const userBalance = liveUser?.balance ?? 0;
           if (userBalance >= 1) {
-            setUnlockConfirmModal({
-              attemptId: attemptId,
-              balance: userBalance,
-              title: "Unlock with 1 Credit",
-              description: "Spend 1 credit from your available balance to reveal your personalized career roadmap and detailed trait breakdown."
-            });
+            updateAssessmentFlow({ attemptId, flowState: 'credits_available_for_attempt', dismissed: false });
           } else {
-            setZeroCreditModal({
-              attemptId: attemptId
-            });
+            updateAssessmentFlow({ attemptId, flowState: 'awaiting_credits', dismissed: false });
           }
         })
         .catch(() => {
           const fallbackBalance = currentUser?.balance ?? 0;
           if (fallbackBalance >= 1) {
-            setUnlockConfirmModal({
-              attemptId: attemptId,
-              balance: fallbackBalance,
-              title: "Unlock with 1 Credit",
-              description: "Spend 1 credit from your available balance to reveal your personalized career roadmap and detailed trait breakdown."
-            });
+            updateAssessmentFlow({ attemptId, flowState: 'credits_available_for_attempt', dismissed: false });
           } else {
-            setZeroCreditModal({ attemptId: attemptId });
+            updateAssessmentFlow({ attemptId, flowState: 'awaiting_credits', dismissed: false });
           }
         });
     }
   };
 
-  const handleSignupSuccess = (userData, claimedAttemptId) => {
+  const handleSignupSuccess = async (userData, claimedAttemptId) => {
     const user = userData || { name: tempStudentName || onboardingData?.fullName || 'User', email: 'user@skillsense.ai', initials: 'U' };
     setCurrentUser(user);
     localStorage.setItem('skillsense_user', JSON.stringify(user));
 
     const activeFlow = getActiveAssessmentFlow();
-    const activeAttempt = claimedAttemptId || (activeFlow ? activeFlow.attemptId : null);
+    const activeAttempt = claimedAttemptId ||
+                          activeFlow?.attemptId ||
+                          localStorage.getItem('skillsense_return_to_unlock') ||
+                          localStorage.getItem('skillsense_pending_attempt_id') ||
+                          reportData?.attempt_id;
 
-    authApi.getMe().then(async (res) => {
+    try {
+      const res = await authApi.getMe().catch(() => null);
       const liveUser = res?.user || user;
       if (res?.user) {
         setCurrentUser(liveUser);
@@ -398,57 +441,89 @@ export default function App() {
       }
 
       // If no valid recent pending assessment flow from this session:
-      if (!activeFlow || !activeAttempt || activeFlow.dismissed) {
+      if (!activeAttempt) {
         navigateTo('profile', '#profile');
         return;
       }
 
-      // Verify assessment ownership and status with backend
+      // 1. Authoritatively claim attempt on backend
       try {
-        const statusRes = await assessmentApi.getStatus(activeAttempt);
-        if (!statusRes?.exists || !statusRes?.is_owner) {
-          navigateTo('profile', '#profile');
-          return;
-        }
-
-        if (statusRes.is_unlocked) {
-          setIsPurchased(true);
-          updateAssessmentFlow({ flowState: 'unlocked' });
-          navigateTo('report', '#report');
-          return;
-        }
-
-        const userBalance = liveUser?.balance ?? 0;
-        if (userBalance >= 1) {
-          setUnlockConfirmModal({
-            attemptId: activeAttempt,
-            balance: userBalance,
-            title: "Unlock with 1 Credit",
-            description: "You have credits available! Spend 1 credit from your balance to reveal your full career roadmap."
-          });
-          navigateTo('report', '#report');
-        } else {
-          setZeroCreditModal({ attemptId: activeAttempt });
-          navigateTo('report', '#report');
-        }
-      } catch (e) {
-        console.warn('Could not verify assessment status on signup:', e);
-        navigateTo('profile', '#profile');
+        await assessmentApi.claimAttempt(activeAttempt);
+      } catch (claimErr) {
+        console.warn('Could not explicitly claim assessment:', claimErr);
       }
-    }).catch(() => {
+
+      // 2. Fetch authoritative assessment status
+      const statusRes = await assessmentApi.getStatus(activeAttempt);
+      if (!statusRes?.exists) {
+        setSuccessToast({
+          message: 'Unable to retrieve your assessment. It is saved in your profile history if linked.',
+          visible: true,
+          isError: true
+        });
+        navigateTo('profile', '#profile');
+        return;
+      }
+
+      if (!statusRes?.is_owner) {
+        setSuccessToast({
+          message: 'Assessment attempt is already associated with another account.',
+          visible: true,
+          isError: true
+        });
+        navigateTo('profile', '#profile');
+        return;
+      }
+
+      // Hydrate teaser report data if not already present
+      if (!reportData || reportData.attempt_id !== activeAttempt) {
+        try {
+          const tRes = await assessmentApi.getTeaser(activeAttempt);
+          const teaser = tRes?.teaser || tRes;
+          const rData = {
+            ...teaser,
+            attempt_id: activeAttempt,
+            is_unlocked: 0
+          };
+          setReportData(rData);
+          localStorage.setItem('skillsense_report', JSON.stringify(rData));
+        } catch {}
+      }
+
+      if (statusRes.is_unlocked) {
+        setIsPurchased(true);
+        updateAssessmentFlow({ attemptId: activeAttempt, flowState: 'unlocked', dismissed: false });
+        navigateTo('report', '#report');
+        return;
+      }
+
+      const userBalance = liveUser?.balance ?? 0;
+      if (userBalance >= 1) {
+        updateAssessmentFlow({ attemptId: activeAttempt, flowState: 'credits_available_for_attempt', dismissed: false });
+      } else {
+        updateAssessmentFlow({ attemptId: activeAttempt, flowState: 'awaiting_credits', dismissed: false });
+      }
+      navigateTo('report', '#report');
+    } catch (e) {
+      console.warn('Could not verify assessment status on signup:', e);
       navigateTo('profile', '#profile');
-    });
+    }
   };
 
-  const handleLoginSuccess = (userData, claimedAttemptId) => {
+  const handleLoginSuccess = async (userData, claimedAttemptId) => {
     const user = userData || { name: 'User', email: 'user@skillsense.ai', initials: 'U' };
     setCurrentUser(user);
     localStorage.setItem('skillsense_user', JSON.stringify(user));
 
     const activeFlow = getActiveAssessmentFlow();
-    const activeAttempt = claimedAttemptId || (activeFlow ? activeFlow.attemptId : null);
+    const activeAttempt = claimedAttemptId ||
+                          activeFlow?.attemptId ||
+                          localStorage.getItem('skillsense_return_to_unlock') ||
+                          localStorage.getItem('skillsense_pending_attempt_id') ||
+                          reportData?.attempt_id;
 
-    authApi.getMe().then(async (res) => {
+    try {
+      const res = await authApi.getMe().catch(() => null);
       const liveUser = res?.user || user;
       if (res?.user) {
         setCurrentUser(liveUser);
@@ -466,86 +541,115 @@ export default function App() {
       };
 
       // If no valid recent pending assessment flow from this session:
-      if (!activeFlow || !activeAttempt || activeFlow.dismissed) {
+      if (!activeAttempt || (activeFlow?.dismissed && !claimedAttemptId && !localStorage.getItem('skillsense_return_to_unlock'))) {
         goToNormalDestination();
         return;
       }
 
-      // Verify assessment ownership and status with backend
+      // 1. Authoritatively claim attempt on backend
       try {
-        const statusRes = await assessmentApi.getStatus(activeAttempt);
-        if (!statusRes?.exists || !statusRes?.is_owner) {
-          goToNormalDestination();
-          return;
-        }
-
-        if (statusRes.is_unlocked) {
-          setIsPurchased(true);
-          updateAssessmentFlow({ flowState: 'unlocked' });
-          navigateTo('report', '#report');
-          return;
-        }
-
-        const userBalance = liveUser?.balance ?? 0;
-        if (userBalance >= 1) {
-          setUnlockConfirmModal({
-            attemptId: activeAttempt,
-            balance: userBalance,
-            title: "Unlock with 1 Credit",
-            description: "You have credits available! Spend 1 credit from your balance to reveal your full career roadmap."
-          });
-          navigateTo('report', '#report');
-        } else {
-          setZeroCreditModal({ attemptId: activeAttempt });
-          navigateTo('report', '#report');
-        }
-      } catch (e) {
-        console.warn('Could not verify assessment status on login:', e);
-        goToNormalDestination();
+        await assessmentApi.claimAttempt(activeAttempt);
+      } catch (claimErr) {
+        console.warn('Could not explicitly claim assessment on login:', claimErr);
       }
-    }).catch(() => {
+
+      // 2. Fetch authoritative assessment status
+      const statusRes = await assessmentApi.getStatus(activeAttempt);
+      if (!statusRes?.exists || !statusRes?.is_owner) {
+        goToNormalDestination();
+        return;
+      }
+
+      // Hydrate teaser report data if needed
+      if (!reportData || reportData.attempt_id !== activeAttempt) {
+        try {
+          const tRes = await assessmentApi.getTeaser(activeAttempt);
+          const teaser = tRes?.teaser || tRes;
+          const rData = {
+            ...teaser,
+            attempt_id: activeAttempt,
+            is_unlocked: 0
+          };
+          setReportData(rData);
+          localStorage.setItem('skillsense_report', JSON.stringify(rData));
+        } catch {}
+      }
+
+      if (statusRes.is_unlocked) {
+        setIsPurchased(true);
+        updateAssessmentFlow({ attemptId: activeAttempt, flowState: 'unlocked', dismissed: false });
+        navigateTo('report', '#report');
+        return;
+      }
+
+      const userBalance = liveUser?.balance ?? 0;
+      if (userBalance >= 1) {
+        updateAssessmentFlow({ attemptId: activeAttempt, flowState: 'credits_available_for_attempt', dismissed: false });
+      } else {
+        updateAssessmentFlow({ attemptId: activeAttempt, flowState: 'awaiting_credits', dismissed: false });
+      }
+      navigateTo('report', '#report');
+    } catch (e) {
+      console.warn('Could not verify assessment status on login:', e);
       navigateTo('profile', '#profile');
-    });
+    }
   };
 
   const handlePurchaseSuccess = async (purchaseRes) => {
-    let freshBalance = currentUser?.balance;
     try {
       const meRes = await authApi.getMe();
       if (meRes && meRes.user) {
         setCurrentUser(meRes.user);
-        freshBalance = meRes.user.balance;
         localStorage.setItem('skillsense_user', JSON.stringify(meRes.user));
       }
     } catch (e) {
       console.warn('[handlePurchaseSuccess] Failed to refresh session:', e);
     }
 
-    const activeFlow = getActiveAssessmentFlow();
-    const returnAttemptId = activeFlow?.attemptId ||
-                           localStorage.getItem('skillsense_return_to_unlock') ||
-                           savedAttemptId ||
-                           reportData?.attempt_id;
+    let target = null;
+    try {
+      const rawTarget = sessionStorage.getItem('skillsense_unlock_target');
+      if (rawTarget) target = JSON.parse(rawTarget);
+    } catch (e) {}
+
+    const returnAttemptId = target?.attemptId ||
+                           localStorage.getItem('skillsense_return_to_unlock');
 
     if (returnAttemptId) {
       try {
         const statusRes = await assessmentApi.getStatus(returnAttemptId);
         if (statusRes?.exists && !statusRes.is_unlocked) {
-          updateAssessmentFlow({ attemptId: returnAttemptId, flowState: 'ready_to_unlock', dismissed: false });
-          // Return to the unlock prompt for that same assessment
-          // DO NOT automatically spend the newly acquired credit!
-          setUnlockConfirmModal({
-            attemptId: returnAttemptId,
-            balance: freshBalance ?? 1,
-            title: "Unlock with 1 Credit",
-            description: "Your credit is available! Spend 1 credit from your balance to reveal your personalized career roadmap now."
+          const dateStr = target?.date || (statusRes.created_at ? new Date(statusRes.created_at).toLocaleDateString() : 'Recent');
+          const titleStr = target?.title || (statusRes.riasec_code ? `RIASEC: ${statusRes.riasec_code}` : 'Career Assessment');
+
+          // Explicit SkillSense canonical modal: DO NOT silently consume credit
+          setGlobalModal({
+            eyebrow: 'CREDIT ADDED',
+            title: 'Credit Added Successfully',
+            description: `Your credit has been added successfully. Unlock this assessment (${titleStr} from ${dateStr}) with 1 credit?`,
+            primaryAction: {
+              label: 'Unlock This Report',
+              onClick: () => {
+                setGlobalModal(null);
+                handleUnlock(returnAttemptId);
+              }
+            },
+            secondaryAction: {
+              label: 'Not Now',
+              onClick: () => {
+                setGlobalModal(null);
+                sessionStorage.removeItem('skillsense_unlock_target');
+                localStorage.removeItem('skillsense_return_to_unlock');
+                navigateTo('profile', '#profile');
+              }
+            }
           });
-          navigateTo('report', '#report');
           return;
         } else if (statusRes?.is_unlocked) {
           setIsPurchased(true);
-          updateAssessmentFlow({ flowState: 'unlocked' });
-          navigateTo('report', '#report');
+          sessionStorage.removeItem('skillsense_unlock_target');
+          localStorage.removeItem('skillsense_return_to_unlock');
+          navigateTo('profile', '#profile');
           return;
         }
       } catch (err) {
@@ -553,6 +657,8 @@ export default function App() {
       }
     }
 
+    sessionStorage.removeItem('skillsense_unlock_target');
+    localStorage.removeItem('skillsense_return_to_unlock');
     const msg = purchaseRes?.message || `${purchaseRes?.credits_granted || 1} credit(s) added successfully to your account.`;
     setSuccessToast({ message: msg, visible: true });
     navigateTo('profile', '#profile');
@@ -575,30 +681,34 @@ export default function App() {
       };
       setReportData(updated);
       localStorage.setItem('skillsense_report', JSON.stringify(updated));
-      updateAssessmentFlow({ attemptId: attemptId, flowState: 'unlocked', dismissed: false });
+      sessionStorage.removeItem('skillsense_unlock_target');
       localStorage.removeItem('skillsense_return_to_unlock');
+      sessionStorage.removeItem('skillsense_active_assessment_flow');
 
-      // Refresh authoritative user session & balance
+      // Refresh authoritative user session & balance from server
+      if (typeof res?.credits_remaining === 'number') {
+        setCurrentUser(prev => prev ? { ...prev, balance: res.credits_remaining } : prev);
+      }
       const meRes = await authApi.getMe();
       if (meRes?.user) {
         setCurrentUser(meRes.user);
         localStorage.setItem('skillsense_user', JSON.stringify(meRes.user));
       }
+
       setUnlockConfirmModal(null);
       setZeroCreditModal(null);
+      setGlobalModal(null);
       setSuccessToast({ message: 'Career roadmap unlocked successfully!', visible: true });
       navigateTo('report', '#report');
     } catch (err) {
       console.error('[handleUnlock] Unlock failed:', err);
       const isInsufficient = err?.status === 402 || err?.data?.insufficient_credits;
       if (isInsufficient) {
-        updateAssessmentFlow({ attemptId: attemptId, flowState: 'awaiting_credit_purchase' });
         localStorage.setItem('skillsense_return_to_unlock', attemptId);
-        setUnlockConfirmModal(null);
-        setZeroCreditModal({ attemptId });
+        navigateTo('pricing', '#pricing');
       } else {
         const errorMsg = err?.message || err?.data?.error || 'Failed to unlock assessment report. Your credit is preserved.';
-        setSuccessToast({ message: errorMsg, visible: true, isError: true });
+        setSuccessToast({ message: errorMsg, isError: true, visible: true });
       }
     } finally {
       setIsUnlocking(false);
@@ -616,12 +726,16 @@ export default function App() {
     setTempStudentName('');
     setOnboardingData(null);
     setReportData(null);
-    setZeroCreditModal(null);
-    setUnlockConfirmModal(null);
+    setGlobalModal(null);
     navigateTo('home', '');
   };
 
-  const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? { name: tempStudentName || onboardingData?.fullName, grade: onboardingData?.classYear, profilePhoto: onboardingData?.profilePhoto } : null);
+  const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? {
+    name: tempStudentName || onboardingData?.fullName,
+    grade: onboardingData?.classYear,
+    avatar: normalizeAvatarKey(onboardingData?.avatar || onboardingData?.profilePhoto) || DEFAULT_AVATAR_KEY,
+    profilePhoto: resolveAvatarUrl(onboardingData?.avatar || onboardingData?.profilePhoto) || onboardingData?.profilePhoto
+  } : null);
   const isFullScreenPage = ['login', 'signup', 'test', 'terms', 'privacy', 'onboarding', 'developer', 'admin', 'accept-invite'].includes(currentPage);
 
   if (!appConfig) {
@@ -688,34 +802,36 @@ export default function App() {
         {currentPage === 'report' && (
           <ReportErrorBoundary>
             <ReportCardPage
-            user={activeReportUser}
-            currentUser={currentUser}
-            reportData={reportData}
-            isPurchased={Boolean(reportData?.is_unlocked === 1 || reportData?.is_unlocked === true)}
-            onCreateAccount={() => navigateTo('signup', '#signup')}
-            onBack={() => navigateTo(currentUser ? 'profile' : 'home', currentUser ? '#profile' : '')}
-            onGoToPricing={() => {
-              const attemptId = reportData?.attempt_id ||
-                                getActiveAssessmentFlow()?.attemptId;
-              if (attemptId) {
-                updateAssessmentFlow({ attemptId, flowState: 'awaiting_credit_purchase' });
-                localStorage.setItem('skillsense_return_to_unlock', attemptId);
-              }
-              navigateTo('pricing', '#pricing');
-            }}
-            onUnlockReport={async () => {
-              const attemptId = reportData?.attempt_id ||
-                                getActiveAssessmentFlow()?.attemptId;
-              if (attemptId) {
-                await handleUnlock(attemptId);
-              } else {
-                setSuccessToast({
-                  message: 'Assessment attempt details not found. Please retake the test or select an attempt from Profile.',
-                  visible: true,
-                  isError: true
-                });
-              }
-            }}
+              user={activeReportUser}
+              currentUser={currentUser}
+              reportData={reportData}
+              isPurchased={Boolean(reportData?.is_unlocked === 1 || reportData?.is_unlocked === true)}
+              suppressLockedModal={Boolean(globalModal)}
+              onCreateAccount={() => navigateTo('signup', '#signup')}
+              onBack={() => navigateTo(currentUser ? 'profile' : 'home', currentUser ? '#profile' : '')}
+              onGoToPricing={() => {
+                const attemptId = reportData?.attempt_id ||
+                                  getActiveAssessmentFlow()?.attemptId;
+                if (attemptId) {
+                  updateAssessmentFlow({ attemptId, flowState: 'awaiting_credits' });
+                  localStorage.setItem('skillsense_return_to_unlock', attemptId);
+                  localStorage.setItem('skillsense_pending_attempt_id', attemptId);
+                }
+                navigateTo('pricing', '#pricing');
+              }}
+              onUnlockReport={async () => {
+                const attemptId = reportData?.attempt_id ||
+                                  getActiveAssessmentFlow()?.attemptId;
+                if (attemptId) {
+                  await handleUnlock(attemptId);
+                } else {
+                  setSuccessToast({
+                    message: 'Assessment attempt details not found. Please retake the test or select an attempt from Profile.',
+                    visible: true,
+                    isError: true
+                  });
+                }
+              }}
             />
           </ReportErrorBoundary>
         )}
@@ -947,130 +1063,13 @@ export default function App() {
         )}
       </main>
 
-      {/* ---- Zero-Credit Modal ---- */}
-      {zeroCreditModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#04211F]/50 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-white rounded-3xl p-7 shadow-2xl border border-gray-100 z-10 text-center animate-[scaleUp_0.2s_ease-out]">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#09A3A3] to-[#04302E] flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-
-            <span className="text-xs font-bold uppercase tracking-wider text-[#09A3A3] bg-teal-50 px-3 py-1 rounded-full">
-              Assessment Saved
-            </span>
-
-            <h2 className="text-xl font-bold text-[#04211F] mt-3 mb-2">
-              Credits Required to Unlock
-            </h2>
-            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-              Credits are required to unlock this career report. Buy 1 credit to reveal your personalized career roadmap and detailed trait breakdown.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const attId = zeroCreditModal.attemptId || getActiveAssessmentFlow()?.attemptId;
-                  if (attId) {
-                    updateAssessmentFlow({ attemptId: attId, flowState: 'awaiting_credit_purchase' });
-                    localStorage.setItem('skillsense_return_to_unlock', attId);
-                  }
-                  setZeroCreditModal(null);
-                  navigateTo('pricing', '#pricing');
-                }}
-                className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#084b48] via-[#04302E] to-[#09A3A3] text-white text-sm font-extrabold shadow-md hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <span>Buy Now</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const attId = zeroCreditModal.attemptId || getActiveAssessmentFlow()?.attemptId;
-                  if (attId) {
-                    updateAssessmentFlow({ attemptId: attId, dismissed: true, flowState: 'dismissed' });
-                  }
-                  setZeroCreditModal(null);
-                  navigateTo('profile', '#profile');
-                }}
-                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 active:scale-[0.99] transition-colors cursor-pointer"
-              >
-                Not Now
-              </button>
-            </div>
-
-            <p className="text-[11px] text-gray-400 mt-4">
-              Your assessment is securely saved. You can unlock it anytime from My Profile.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ---- Unlock Confirmation Modal ---- */}
-      {unlockConfirmModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#04211F]/50 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-white rounded-3xl p-7 shadow-2xl border border-gray-100 z-10 text-center animate-[scaleUp_0.2s_ease-out]">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <CheckCircle2 className="w-8 h-8 text-white" />
-            </div>
-
-            <h2 className="text-xl font-bold text-[#04211F] mb-2">
-              {unlockConfirmModal.title || "Unlock with 1 Credit"}
-            </h2>
-            <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-              {unlockConfirmModal.description || "Spend 1 credit from your available balance to reveal your complete career roadmap now."}
-            </p>
-
-            <div className="inline-flex items-center justify-center gap-1.5 px-3 py-1 mb-5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
-              <span>Available Balance:</span>
-              <span className="font-bold">{currentUser?.balance ?? unlockConfirmModal.balance ?? 0} {(currentUser?.balance ?? unlockConfirmModal.balance ?? 0) === 1 ? 'Credit' : 'Credits'}</span>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                disabled={isUnlocking}
-                onClick={async () => {
-                  const attId = unlockConfirmModal.attemptId || getActiveAssessmentFlow()?.attemptId;
-                  if (!attId) {
-                    setUnlockConfirmModal(null);
-                    return;
-                  }
-                  await handleUnlock(attId);
-                }}
-                className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#084b48] via-[#04302E] to-[#09A3A3] text-white text-sm font-extrabold shadow-md hover:brightness-105 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isUnlocking ? (
-                  <span>Unlocking...</span>
-                ) : (
-                  <>
-                    <span>Unlock with 1 Credit</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                disabled={isUnlocking}
-                onClick={() => {
-                  const attId = unlockConfirmModal.attemptId || getActiveAssessmentFlow()?.attemptId;
-                  if (attId) {
-                    updateAssessmentFlow({ attemptId: attId, dismissed: true, flowState: 'dismissed' });
-                  }
-                  setUnlockConfirmModal(null);
-                  navigateTo('profile', '#profile');
-                }}
-                className="flex-1 py-3.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-50 active:scale-[0.99] transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Not Now
-              </button>
-            </div>
-
-            <p className="text-[11px] text-gray-400 mt-4">
-              1 credit will be used. Your full roadmap will be permanently saved in My Profile.
-            </p>
-          </div>
-        </div>
+      {/* ---- Global Canonical Modal (when active outside ReportCardPage) ---- */}
+      {globalModal && (
+        <CanonicalModal
+          isOpen={Boolean(globalModal)}
+          onClose={() => setGlobalModal(null)}
+          {...globalModal}
+        />
       )}
 
       {/* ---- Success Toast ---- */}

@@ -5,6 +5,7 @@ import {
   LayoutDashboard, ShieldCheck
 } from 'lucide-react';
 import { isSuperAdmin, isDeveloper } from '../../utils/roleUtils';
+import { resolveAvatarUrl } from '../../utils/avatarUtils';
 
 const LANGUAGES = [
   { code: 'EN', label: 'English', accent: '#09A3A3' },
@@ -102,7 +103,7 @@ function LanguageDropdown({ compact }) {
 function AvatarBadge({ size = 'md', user }) {
   const dims = size === 'sm' ? 'w-8 h-8 text-[10px]' : 'w-9 h-9 text-xs';
   const initials = user?.initials || (user?.name ? user.name.slice(0, 2).toUpperCase() : 'SK');
-  const avatar = user?.avatar || user?.profilePhoto;
+  const avatar = resolveAvatarUrl(user?.avatar || user?.profilePhoto) || (user?.profilePhoto && typeof user.profilePhoto === 'string' && user.profilePhoto.startsWith('data:') ? user.profilePhoto : null);
   
   return (
     <div

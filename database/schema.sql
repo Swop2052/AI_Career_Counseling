@@ -27,9 +27,21 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     education_level VARCHAR(100),
     city VARCHAR(100),
     state VARCHAR(100),
+    avatar VARCHAR(255),
+    age INTEGER,
+    class_year VARCHAR(100),
+    enjoy_subjects TEXT,
+    challenging_subjects TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Backward-compatible additive columns for existing deployments
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS avatar VARCHAR(255);
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS age INTEGER;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS class_year VARCHAR(100);
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS enjoy_subjects TEXT;
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS challenging_subjects TEXT;
 
 -- 3. Assessment Attempts Table
 CREATE TABLE IF NOT EXISTS assessment_attempts (
@@ -54,7 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_attempts_guest_id ON assessment_attempts(guest_se
 CREATE TABLE IF NOT EXISTS credit_wallets (
     id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255) UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    balance INTEGER NOT NULL DEFAULT 0,
+    balance INTEGER NOT NULL DEFAULT 0 CHECK (balance >= 0),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

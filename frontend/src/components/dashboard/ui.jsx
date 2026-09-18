@@ -86,7 +86,9 @@ export const inputClasses =
   'transition-colors';
 
 export function ProgressBar({ value, max, className = '' }) {
-  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  const pct = (max !== undefined && max !== null)
+    ? (max > 0 ? Math.min(100, Math.max(0, Math.round((value / max) * 100))) : 0)
+    : Math.min(100, Math.max(0, Math.round(value || 0)));
   return (
     <div className={`h-1.5 w-full bg-mist-light rounded-full overflow-hidden ${className}`}>
       <motion.div

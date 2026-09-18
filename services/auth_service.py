@@ -4,6 +4,8 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.schema import get_db_connection
+from core.avatar import normalize_avatar_key, resolve_avatar_url
+from core.education import normalize_class_year
 
 
 class AuthService:
@@ -18,7 +20,12 @@ class AuthService:
         education_level: Optional[str] = None,
         city: Optional[str] = None,
         state: Optional[str] = None,
-        role: str = 'USER'
+        role: str = 'USER',
+        avatar: Optional[str] = None,
+        age: Optional[int] = None,
+        class_year: Optional[str] = None,
+        enjoy_subjects: Optional[str] = None,
+        challenging_subjects: Optional[str] = None
     ) -> Dict[str, Any]:
         """Register a new user account with hashed password and initial wallet."""
         email_clean = email.strip().lower()
@@ -46,10 +53,15 @@ class AuthService:
 
                 # Insert profile
                 profile_id = f"prf_{uuid.uuid4().hex[:12]}"
+                avatar_key = normalize_avatar_key(avatar)
+                class_val = class_year or education_level
                 cursor.execute("""
-                    INSERT INTO user_profiles (id, user_id, full_name, phone, education_level, city, state, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (profile_id, user_id, full_name.strip(), phone, education_level, city, state, now_str, now_str))
+                    INSERT INTO user_profiles (id, user_id, full_name, phone, education_level, city, state,
+                                              avatar, age, class_year, enjoy_subjects, challenging_subjects,
+                                              created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (profile_id, user_id, full_name.strip(), phone, class_val, city, state,
+                      avatar_key, age, class_val, enjoy_subjects, challenging_subjects, now_str, now_str))
 
                 # Initialize credit wallet with 0 balance
                 wallet_id = f"wlt_{uuid.uuid4().hex[:12]}"
@@ -62,7 +74,15 @@ class AuthService:
                 'id': user_id,
                 'email': email_clean,
                 'role': role,
-                'full_name': full_name.strip()
+                'full_name': full_name.strip(),
+                'avatar': avatar_key,
+                'profilePhoto': resolve_avatar_url(avatar_key),
+                'age': age,
+                'class_year': class_val,
+                'education_level': class_val,
+                'enjoy_subjects': enjoy_subjects,
+                'challenging_subjects': challenging_subjects,
+                'phone': phone
             }
         finally:
             conn.close()
@@ -76,7 +96,9 @@ class AuthService:
             cursor = conn.cursor()
             cursor.execute("""
                 SELECT u.id, u.email, u.password_hash, u.role, u.is_active, u.can_manage_developers,
-                       p.full_name, w.balance
+                       p.full_name, p.phone, p.education_level, p.city, p.state,
+                       p.avatar, p.age, p.class_year, p.enjoy_subjects, p.challenging_subjects,
+                       w.balance
                 FROM users u
                 LEFT JOIN user_profiles p ON u.id = p.user_id
                 LEFT JOIN credit_wallets w ON u.id = w.user_id
@@ -104,7 +126,14 @@ class AuthService:
                     'full_name': row['full_name'] or 'Student',
                     'balance': row['balance'] or 0,
                     'is_active': row['is_active'],
-                    'can_manage_developers': (row['role'] == 'SUPER_ADMIN' or bool(row['can_manage_developers']))
+                    'can_manage_developers': (row['role'] == 'SUPER_ADMIN' or bool(row['can_manage_developers'])),
+                    'avatar': row['avatar'],
+                    'age': row['age'],
+                    'class_year': row['class_year'],
+                    'enjoy_subjects': row['enjoy_subjects'],
+                    'challenging_subjects': row['challenging_subjects'],
+                    'phone': row['phone'],
+                    'education_level': row['education_level']
                 }
             return None
         finally:
@@ -142,6 +171,7 @@ class AuthService:
             cursor.execute("""
                 SELECT u.id, u.email, u.role, u.is_active, u.created_at, u.last_login_at, u.can_manage_developers,
                        p.full_name, p.phone, p.education_level, p.city, p.state,
+                       p.avatar, p.age, p.class_year, p.enjoy_subjects, p.challenging_subjects,
                        w.balance
                 FROM users u
                 LEFT JOIN user_profiles p ON u.id = p.user_id
@@ -213,11 +243,12 @@ class AuthService:
                 print(f"[INFO] Password reset requested for non-existing email: {email_clean}")
                 return True
 
-            # Check rate limiting: max 5 requests per 10 minutes using PostgreSQL native interval
+            # Check rate limiting: max 5 requests per 10 minutes
+            ten_mins_ago = (datetime.now() - timedelta(minutes=10)).isoformat()
             cursor.execute("""
                 SELECT COUNT(*) as cnt FROM password_resets
-                WHERE email = %s AND created_at > (NOW() - INTERVAL '10 minutes')
-            """, (email_clean,))
+                WHERE email = %s AND created_at > %s
+            """, (email_clean, ten_mins_ago))
             count_row = cursor.fetchone()
             recent_count = count_row['cnt'] if isinstance(count_row, dict) else (count_row[0] if count_row else 0)
 
@@ -380,29 +411,160 @@ class AuthService:
         return AuthService.reset_password_for_email(email, token, new_password)
 
     @staticmethod
+    def validate_profile_data(data: Dict[str, Any], require_all_mandatory: bool = True) -> Dict[str, Any]:
+        """
+        Authoritatively validate student profile fields:
+        - Full Name: required, 2-100 chars, no placeholder names like 'Guest Student'
+        - Age: required, valid integer between 10 and 60 (rejects negative numbers like -4)
+        - Class/Year: required, non-empty
+        - Enjoy subjects: required, non-empty
+        - Challenging subjects: required, non-empty
+        - Avatar: must resolve to approved avatar key
+        """
+        errors = {}
+        
+        # 1. Full Name
+        raw_name = data.get('full_name') or data.get('fullName') or data.get('name') or data.get('student_name')
+        name_str = str(raw_name).strip() if raw_name else ''
+        if not name_str:
+            if require_all_mandatory:
+                errors['fullName'] = "Full name is required."
+        elif len(name_str) < 2:
+            errors['fullName'] = "Full name must be at least 2 characters."
+        elif len(name_str) > 100:
+            errors['fullName'] = "Full name must not exceed 100 characters."
+        elif name_str.lower() in ('guest', 'guest student', 'test student'):
+            if require_all_mandatory:
+                errors['fullName'] = "Please enter your actual full name."
+
+        # 2. Age
+        raw_age = data.get('age')
+        age_val = None
+        if raw_age is None or str(raw_age).strip() == '':
+            if require_all_mandatory:
+                errors['age'] = "Age is required."
+        else:
+            try:
+                age_val = int(raw_age)
+                if age_val < 10 or age_val > 60:
+                    errors['age'] = "Age must be between 10 and 60."
+            except (ValueError, TypeError):
+                errors['age'] = "Age must be a valid whole number."
+
+        # 3. Class/Year
+        raw_class = data.get('class_year') or data.get('classYear') or data.get('class') or data.get('education_level') or data.get('educationStage')
+        class_str = str(raw_class).strip() if raw_class else ''
+        if not class_str:
+            if require_all_mandatory:
+                errors['classYear'] = "Class/Year is required."
+        else:
+            normalized_class = normalize_class_year(class_str)
+            if not normalized_class:
+                errors['classYear'] = "Invalid Class/Year selection. Please choose from the supported options."
+            else:
+                class_str = normalized_class
+
+        # 4. Enjoy Subjects
+        raw_enjoy = data.get('enjoy_subjects') or data.get('enjoySubjects') or data.get('subjects')
+        if isinstance(raw_enjoy, list):
+            raw_enjoy = ", ".join(str(s).strip() for s in raw_enjoy if str(s).strip())
+        enjoy_str = str(raw_enjoy).strip() if raw_enjoy else ''
+        if not enjoy_str:
+            if require_all_mandatory:
+                errors['enjoySubjects'] = "Please specify subjects you enjoy learning."
+
+        # 5. Challenging Subjects
+        raw_chall = data.get('challenging_subjects') or data.get('challengingSubjects') or data.get('weak_subjects')
+        if isinstance(raw_chall, list):
+            raw_chall = ", ".join(str(s).strip() for s in raw_chall if str(s).strip())
+        chall_str = str(raw_chall).strip() if raw_chall else ''
+        if not chall_str:
+            if require_all_mandatory:
+                errors['challengingSubjects'] = "Please specify subjects you find challenging."
+
+        # 6. Avatar
+        raw_avatar = data.get('avatar') or data.get('profilePhoto')
+        avatar_key = None
+        if raw_avatar:
+            avatar_key = normalize_avatar_key(raw_avatar)
+            if not avatar_key:
+                errors['avatar'] = "Invalid avatar selected. Please choose from approved avatars."
+
+        if errors:
+            raise ValueError(errors)
+
+        return {
+            'full_name': name_str,
+            'age': age_val,
+            'class_year': class_str,
+            'education_level': class_str,
+            'enjoy_subjects': enjoy_str,
+            'challenging_subjects': chall_str,
+            'avatar': avatar_key
+        }
+
+    @staticmethod
     def update_user_profile(user_id: str, profile_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update student profile details."""
+        """Update student profile details and avatar in database."""
         conn = get_db_connection()
         try:
             now_str = datetime.now().isoformat()
-            full_name = profile_data.get('full_name', '').strip()
-            phone = profile_data.get('phone', '').strip()
-            education_level = profile_data.get('education_level', '').strip()
-            city = profile_data.get('city', '').strip()
-            state = profile_data.get('state', '').strip()
+            full_name = profile_data.get('full_name', '').strip() if profile_data.get('full_name') else None
+            phone = profile_data.get('phone', '').strip() if profile_data.get('phone') else None
+            education_level = profile_data.get('education_level', '').strip() if profile_data.get('education_level') else None
+            city = profile_data.get('city', '').strip() if profile_data.get('city') else None
+            state = profile_data.get('state', '').strip() if profile_data.get('state') else None
+
+            raw_avatar = profile_data.get('avatar') or profile_data.get('profilePhoto')
+            avatar = normalize_avatar_key(raw_avatar) if raw_avatar else None
+
+            age_raw = profile_data.get('age')
+            age = None
+            if age_raw is not None and str(age_raw).strip() != '':
+                try:
+                    age = int(age_raw)
+                except (ValueError, TypeError):
+                    pass
+
+            class_year = profile_data.get('class_year') or profile_data.get('classYear') or education_level
+            enjoy_subjects = profile_data.get('enjoy_subjects') or profile_data.get('enjoySubjects')
+            if isinstance(enjoy_subjects, list):
+                enjoy_subjects = ", ".join(str(s) for s in enjoy_subjects)
+            challenging_subjects = profile_data.get('challenging_subjects') or profile_data.get('challengingSubjects')
+            if isinstance(challenging_subjects, list):
+                challenging_subjects = ", ".join(str(s) for s in challenging_subjects)
 
             with conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE user_profiles
-                    SET full_name = COALESCE(NULLIF(%s, ''), full_name),
-                        phone = %s,
-                        education_level = %s,
-                        city = %s,
-                        state = %s,
-                        updated_at = %s
-                    WHERE user_id = %s
-                """, (full_name, phone, education_level, city, state, now_str, user_id))
+                cursor.execute("SELECT id FROM user_profiles WHERE user_id = %s", (user_id,))
+                existing = cursor.fetchone()
+                if not existing:
+                    profile_id = f"prf_{uuid.uuid4().hex[:12]}"
+                    cursor.execute("""
+                        INSERT INTO user_profiles (id, user_id, full_name, phone, education_level, city, state,
+                                                  avatar, age, class_year, enjoy_subjects, challenging_subjects,
+                                                  created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (profile_id, user_id, full_name, phone, education_level or class_year, city, state,
+                          avatar, age, class_year, enjoy_subjects, challenging_subjects, now_str, now_str))
+                else:
+                    cursor.execute("""
+                        UPDATE user_profiles
+                        SET full_name = COALESCE(NULLIF(%s, ''), full_name),
+                            phone = COALESCE(%s, phone),
+                            education_level = COALESCE(%s, education_level),
+                            city = COALESCE(%s, city),
+                            state = COALESCE(%s, state),
+                            avatar = COALESCE(%s, avatar),
+                            age = COALESCE(%s, age),
+                            class_year = COALESCE(%s, class_year),
+                            enjoy_subjects = COALESCE(%s, enjoy_subjects),
+                            challenging_subjects = COALESCE(%s, challenging_subjects),
+                            updated_at = %s
+                        WHERE user_id = %s
+                    """, (full_name, phone, education_level or class_year, city, state,
+                          avatar, age, class_year, enjoy_subjects, challenging_subjects,
+                          now_str, user_id))
 
             return AuthService.get_user_by_id(user_id)
         finally:
@@ -843,6 +1005,44 @@ class AuthService:
             conn.close()
 
     @staticmethod
+    def set_user_status(target_id: str, is_active: int, actor_id: str, actor_email: str) -> dict:
+        """Set user (student or staff) active or inactive status with audit logging."""
+        if target_id == actor_id and not is_active:
+            raise ValueError("You cannot deactivate your own logged-in account.")
+
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT u.id, u.email, u.role, p.full_name
+                FROM users u
+                LEFT JOIN user_profiles p ON u.id = p.user_id
+                WHERE u.id = %s
+            """, (target_id,))
+            target = cursor.fetchone()
+            if not target:
+                raise ValueError("User account not found.")
+
+            target_dict = dict(target)
+            new_status = 1 if is_active else 0
+            with conn:
+                conn.execute("UPDATE users SET is_active = %s, updated_at = %s WHERE id = %s",
+                             (new_status, datetime.now().isoformat(), target_id))
+
+            action_name = 'REACTIVATED_USER' if new_status else 'DISABLED_USER'
+            AuthService.write_audit_log(
+                actor_id=actor_id,
+                actor_email=actor_email,
+                action=action_name,
+                target_email=target_dict['email'],
+                target_id=target_id,
+                details=f"User: {target_dict.get('full_name') or target_dict['email']}, Role: {target_dict['role']}, Set is_active: {bool(new_status)}"
+            )
+            return {'id': target_id, 'email': target_dict['email'], 'is_active': new_status}
+        finally:
+            conn.close()
+
+    @staticmethod
     def delete_developer(target_id: str, actor_id: str, actor_email: str) -> None:
         """
         Delete a developer or super admin account.
@@ -952,10 +1152,13 @@ class AuthService:
         Refuses if any SUPER_ADMIN already exists.
         Never prints or stores plaintext password.
         """
-        email_clean = email.strip().lower()
-        if not email_clean or not password:
-            raise ValueError("Email and password are required.")
-        if len(password) < 8:
+        email_clean = (email or '').strip().lower()
+        name_clean = (full_name or '').strip()
+        if not name_clean:
+            raise ValueError("Full name is required.")
+        if not email_clean or "@" not in email_clean or "." not in email_clean.split("@")[-1]:
+            raise ValueError("A valid email address is required.")
+        if not password or len(password) < 8:
             raise ValueError("Password must be at least 8 characters.")
 
         conn = get_db_connection()
@@ -963,8 +1166,10 @@ class AuthService:
             cursor = conn.cursor()
 
             # Refuse if SUPER_ADMIN already exists
-            cursor.execute("SELECT COUNT(*) FROM users WHERE role = 'SUPER_ADMIN'")
-            if cursor.fetchone()[0] > 0:
+            cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'SUPER_ADMIN'")
+            row = cursor.fetchone()
+            count_val = row['count'] if (isinstance(row, dict) or hasattr(row, 'keys')) and 'count' in row else row[0]
+            if count_val > 0:
                 raise ValueError(
                     "A SUPER_ADMIN account already exists. "
                     "Log in and use the Developer Dashboard to manage accounts."

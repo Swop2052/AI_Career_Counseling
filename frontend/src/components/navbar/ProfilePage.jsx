@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { assessmentApi } from '../../api/assessmentApi';
 import { paymentApi } from '../../api/paymentApi';
+import { authApi } from '../../api/authApi';
+import { AVATAR_LIST, normalizeAvatarKey, resolveAvatarUrl, DEFAULT_AVATAR_KEY } from '../../utils/avatarUtils';
+import { CLASS_YEAR_GROUPS } from '../../utils/classYearUtils';
 import {
   CreditCard, Lock, CheckCircle2, Check, Award, BookOpen, Compass,
   Sparkles, TrendingUp, User, FileText, Bot, Edit3, X, Mail, Phone,
@@ -50,10 +53,12 @@ function TagGroup({ icon: Icon, title, items, tone }) {
 
 export default function ProfilePage({ user, onboardingData, isPurchased, onBack, onSave, onGoToPricing, onUnlockReport, onViewReport }) {
   const fileInputRef = useRef(null);
-  const [avatarImage, setAvatarImage] = useState(user?.avatar || null);
+  const initialAvatar = normalizeAvatarKey(user?.avatar || user?.profilePhoto || onboardingData?.avatar || onboardingData?.profilePhoto) || DEFAULT_AVATAR_KEY;
+  const [avatarKey, setAvatarKey] = useState(initialAvatar);
+  const [avatarImage, setAvatarImage] = useState(resolveAvatarUrl(initialAvatar) || user?.profilePhoto || null);
   const [credits, setCredits] = useState(user?.balance ?? 0);
   const [attempts, setAttempts] = useState([]);
-  const [showAllAttempts, setShowAllAttempts] = useState(false);
+  const [showAllAttempts, setShowAllAttempts] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [summaryError, setSummaryError] = useState(null);
   const [workshopCode, setWorkshopCode] = useState('');
@@ -68,7 +73,15 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
             setCredits(res.wallet.balance);
           }
           if (Array.isArray(res.attempts)) {
-            setAttempts(res.attempts);
+            const seen = new Set();
+            const unique = [];
+            for (const a of res.attempts) {
+              if (a && a.id && !seen.has(a.id)) {
+                seen.add(a.id);
+                unique.push(a);
+              }
+            }
+            setAttempts(unique);
           }
         }
       })
@@ -82,24 +95,54 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
   useEffect(() => {
     fetchSummary();
   }, []);
+
+  useEffect(() => {
+    if (user?.avatar || user?.profilePhoto) {
+      const k = normalizeAvatarKey(user?.avatar || user?.profilePhoto);
+      if (k) {
+        setAvatarKey(k);
+        setAvatarImage(resolveAvatarUrl(k));
+      }
+    }
+  }, [user]);
+
   const [codeRedeemed, setCodeRedeemed] = useState(false);
   const [redeemError, setRedeemError] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
+  const getInitialName = () => {
+    const raw = user?.full_name || user?.name || onboardingData?.fullName || '';
+    if (!raw || typeof raw !== 'string') return '';
+    const trimmed = raw.trim();
+    if (['guest', 'guest student', 'test student'].includes(trimmed.toLowerCase())) return '';
+    return trimmed;
+  };
+
+  const getInitialAge = () => {
+    const raw = user?.age ?? onboardingData?.age;
+    if (raw === '' || raw === null || raw === undefined) return '';
+    const num = parseInt(raw, 10);
+    if (isNaN(num) || num < 10 || num > 60) return '';
+    return String(num);
+  };
+
   const [formData, setFormData] = useState({
-    fullName: user?.name || onboardingData?.fullName || 'Swapnil',
-    email: user?.email || 'swapnil@skillsense.ai',
-    phone: user?.phone || '+91 98765 43210',
-    age: onboardingData?.age || '23',
-    educationStage: user?.grade || onboardingData?.classYear || '3rd Year College',
-    stream: onboardingData?.stream || 'Science / Tech',
-    enjoySubjects: onboardingData?.enjoySubjects || 'Mathematics, AI',
-    interests: onboardingData?.interests || 'Technology, Research',
-    hobbies: onboardingData?.hobbies || 'Coding, Travelling',
-    strengths: onboardingData?.strengths || 'Problem-solving, Leadership',
-    careerAspirations: onboardingData?.careerAspirations || 'Professional',
-    learningMode: onboardingData?.learningMode || 'Offline (Classroom/Lab)',
+    fullName: getInitialName(),
+    email: user?.email || '',
+    phone: user?.phone || '',
+    age: getInitialAge(),
+    educationStage: user?.class_year || user?.education_level || onboardingData?.classYear || '',
+    stream: user?.stream || onboardingData?.stream || '',
+    enjoySubjects: user?.enjoy_subjects || onboardingData?.enjoySubjects || '',
+    challengingSubjects: user?.challenging_subjects || onboardingData?.challengingSubjects || '',
+    interests: user?.interests || onboardingData?.interests || '',
+    hobbies: user?.hobbies || onboardingData?.hobbies || '',
+    strengths: user?.strengths || onboardingData?.strengths || '',
+    careerAspirations: user?.career_aspirations || onboardingData?.careerAspirations || '',
+    learningMode: user?.learning_mode || onboardingData?.learningMode || 'Offline (Classroom/Lab)',
     city: user?.city || 'Shegaon',
     state: user?.state || 'Maharashtra',
   });
@@ -187,34 +230,71 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
     }
   };
 
-  const avatarOptions = [
-    '/avatars/Ma_01.png', '/avatars/fa_01.png', 
-    '/avatars/MA_02.png', '/avatars/fa_02.png',
-    '/avatars/Ma_03.png', '/avatars/fa_03.png',
-    '/avatars/Ma_04.png', '/avatars/fa_04.png',
-    '/avatars/Ma_05.png', '/avatars/Ma_06.png'
-  ];
-
-  const selectAvatar = (avatar) => {
-     setAvatarImage(avatar);
+  const selectAvatar = (item) => {
+    setAvatarKey(item.key);
+    setAvatarImage(item.path);
   };
 
-  const handleSaveProfile = (e) => {
+  const handleSaveProfile = async (e) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setIsEditing(false);
-    if (onSave) onSave({ ...formData, name: formData.fullName, grade: formData.educationStage, avatar: avatarImage });
-    setTimeout(() => setSavedSuccess(false), 2500);
+    setSaveError('');
+    setIsSaving(true);
+    try {
+      const canonicalAvatar = normalizeAvatarKey(avatarKey || avatarImage) || DEFAULT_AVATAR_KEY;
+      const parsedAge = formData.age ? parseInt(formData.age, 10) : null;
+      if (parsedAge !== null && (isNaN(parsedAge) || parsedAge < 10 || parsedAge > 60)) {
+        setSaveError('Age must be a valid whole number between 10 and 60.');
+        setIsSaving(false);
+        return;
+      }
+
+      const payload = {
+        full_name: formData.fullName,
+        fullName: formData.fullName,
+        name: formData.fullName,
+        phone: formData.phone,
+        age: parsedAge,
+        class_year: formData.educationStage,
+        classYear: formData.educationStage,
+        grade: formData.educationStage,
+        stream: formData.stream,
+        enjoy_subjects: formData.enjoySubjects,
+        enjoySubjects: formData.enjoySubjects,
+        challenging_subjects: formData.challengingSubjects,
+        challengingSubjects: formData.challengingSubjects,
+        interests: formData.interests,
+        hobbies: formData.hobbies,
+        strengths: formData.strengths,
+        career_aspirations: formData.careerAspirations,
+        learning_mode: formData.learningMode,
+        city: formData.city,
+        state: formData.state,
+        avatar: canonicalAvatar,
+        profilePhoto: resolveAvatarUrl(canonicalAvatar) || avatarImage
+      };
+
+      const res = await authApi.updateProfile(payload);
+      const updatedUser = res?.user || { ...user, ...payload };
+      setSavedSuccess(true);
+      setIsEditing(false);
+      if (onSave) onSave(updatedUser);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      setSaveError(err.message || 'Failed to update profile.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const identityFields = [
-    { icon: User, label: 'Full Name', value: formData.fullName },
-    { icon: Mail, label: 'Email', value: formData.email },
-    { icon: Phone, label: 'Phone', value: formData.phone },
-    { icon: Calendar, label: 'Age', value: formData.age + ' Years' },
-    { icon: GraduationCap, label: 'Education', value: formData.educationStage },
-    { icon: MapPin, label: 'Location', value: formData.city + ', ' + formData.state },
-    { icon: BookOpen, label: 'Learning Mode', value: formData.learningMode },
+    { icon: User, label: 'Full Name', value: formData.fullName || '-' },
+    { icon: Mail, label: 'Email', value: formData.email || '-' },
+    { icon: Phone, label: 'Phone', value: formData.phone || '-' },
+    { icon: Calendar, label: 'Age', value: formData.age ? `${formData.age} Years` : '-' },
+    { icon: GraduationCap, label: 'Education', value: formData.educationStage || '-' },
+    { icon: MapPin, label: 'Location', value: (formData.city || formData.state) ? `${formData.city}, ${formData.state}` : '-' },
+    { icon: BookOpen, label: 'Learning Mode', value: formData.learningMode || '-' },
   ];
 
   const editFields = [
@@ -432,16 +512,21 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                 <div className="bg-[#CFEDED]/30 p-4 rounded-xl border border-[#CDE6E2] mb-5">
                   <label className="block text-xs font-semibold mb-3" style={{ color: '#5B7975' }}>Select an Avatar</label>
                   <div className="flex flex-wrap gap-2">
-                    {avatarOptions.map((avatar, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => selectAvatar(avatar)}
-                        className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${avatarImage === avatar ? 'border-[#0B8F86] shadow-md scale-110' : 'border-transparent opacity-80 hover:opacity-100'}`}
-                      >
-                        <img src={avatar} alt={`Avatar ${idx}`} className="w-full h-full object-cover bg-white" />
-                      </button>
-                    ))}
+                    {AVATAR_LIST.map((item) => {
+                      const isSelected = (avatarKey === item.key) || (avatarImage === item.path);
+                      return (
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => selectAvatar(item)}
+                          className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all hover:scale-110 cursor-pointer ${
+                            isSelected ? 'border-[#0B8F86] ring-2 ring-[#0B8F86]/40 shadow-md scale-110' : 'border-transparent opacity-80 hover:opacity-100'
+                          }`}
+                        >
+                          <img src={item.path} alt={item.key} className="w-full h-full object-cover bg-white" />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -450,16 +535,41 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                       <label className="block text-xs font-semibold mb-1.5" style={{ color: '#5B7975' }}>
                         {field.label}
                       </label>
-                      <input
-                        type="text"
-                        value={formData[field.key]}
-                        onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl text-sm outline-none font-medium transition-all border"
-                        style={{ background: '#CFEDED', borderColor: '#CDE6E2' }}
-                      />
+                      {field.key === 'educationStage' ? (
+                        <select
+                          value={formData.educationStage}
+                          onChange={(e) => setFormData({ ...formData, educationStage: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl text-sm outline-none font-medium transition-all border cursor-pointer"
+                          style={{ background: '#CFEDED', borderColor: '#CDE6E2', color: '#12302D' }}
+                        >
+                          <option value="">Select your class/year</option>
+                          {CLASS_YEAR_GROUPS.map((grp) => (
+                            <optgroup key={grp.group} label={grp.group}>
+                              {grp.options.map((opt) => (
+                                <option key={opt} value={opt}>
+                                  {opt}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={field.key === 'age' ? 'number' : 'text'}
+                          min={field.key === 'age' ? '10' : undefined}
+                          max={field.key === 'age' ? '60' : undefined}
+                          value={formData[field.key]}
+                          onChange={(e) => setFormData({ ...formData, [field.key]: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl text-sm outline-none font-medium transition-all border"
+                          style={{ background: '#CFEDED', borderColor: '#CDE6E2' }}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
+                {saveError && (
+                  <p className="text-xs text-rose-500 font-semibold mt-2">{saveError}</p>
+                )}
                 <div className="flex justify-end gap-3 pt-4 border-t" style={{ borderColor: '#E3EFEC' }}>
                   <button
                     type="button"
@@ -471,10 +581,11 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm"
+                    disabled={isSaving}
+                    className="px-6 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                     style={{ background: '#0B8F86' }}
                   >
-                    Save Changes
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
@@ -677,9 +788,10 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                             if (credits >= 1) {
                               assessmentApi.unlockAttempt(att.id)
                                 .then((res) => {
-                                  setCredits(prev => Math.max(0, prev - 1));
-                                  setAttempts(prev => prev.map(a => a.id === att.id ? { ...a, is_unlocked: true } : a));
-                                  if (onViewReport) onViewReport({ ...att, is_unlocked: true, full_report: res?.full_report });
+                                  const updatedBal = typeof res?.credits_remaining === 'number' ? res.credits_remaining : Math.max(0, credits - 1);
+                                  setCredits(updatedBal);
+                                  setAttempts(prev => prev.map(a => a.id === att.id ? { ...a, is_unlocked: 1, is_unlocked_bool: true } : a));
+                                  if (onViewReport) onViewReport({ ...att, is_unlocked: 1, full_report: res?.full_report });
                                 })
                                 .catch(err => {
                                   if (err?.status === 402 || err?.data?.insufficient_credits) {
@@ -690,6 +802,12 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                                 });
                             } else {
                               try {
+                                sessionStorage.setItem('skillsense_unlock_target', JSON.stringify({
+                                  attemptId: att.id,
+                                  date: dateStr,
+                                  riasec_code: att.riasec_code,
+                                  title: att.primary_career_title
+                                }));
                                 sessionStorage.setItem('skillsense_active_assessment_flow', JSON.stringify({
                                   attemptId: att.id,
                                   flowState: 'awaiting_credit_purchase',
@@ -703,7 +821,7 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
                           }}
                           className="px-3.5 py-1.5 rounded-xl bg-[#0B8F86] hover:bg-[#09776f] text-white text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                         >
-                          <span>{credits >= 1 ? 'Unlock (1 Credit)' : 'Buy Credits to Unlock'}</span>
+                          <span>{credits >= 1 ? 'Unlock (1 Credit)' : 'Buy 1 Credit to Unlock'}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                       )}

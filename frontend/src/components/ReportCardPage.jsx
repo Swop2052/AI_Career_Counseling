@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import LinkedInShareCard from './LinkedInShareCard';
@@ -14,8 +13,10 @@ import {
   BarChart3, LineChart, Star
 } from 'lucide-react';
 import CareerDetailModal from './CareerDetailModal';
+import CanonicalModal from './common/CanonicalModal';
 import { useLanguage } from '../translations/LanguageContext';
 import LeavesIllustration from '../assets/leaves_illustration.jpg';
+import { resolveAvatarUrl } from '../utils/avatarUtils';
 
 const repT = {
   en: {
@@ -156,136 +157,21 @@ const getFallbackRIASEC = (t) => [
   { key: 'C', label: 'Conventional', score: 82, color: DEEP, desc: t?.conventionalDesc || 'Organized, detail-oriented, and systematic experts.', example: t?.conventionalEx || 'e.g., Accountant, Analyst' },
 ];
 
-export default function ReportCardPage({ isPurchased = false, onCreateAccount, onGoToPricing, onUnlockReport, onBack = null, user = null, currentUser = null, reportData = null }) {
+export default function ReportCardPage({ 
+  isPurchased = false, 
+  suppressLockedModal = false,
+  onCreateAccount, 
+  onGoToPricing, 
+  onUnlockReport, 
+  onBack = null, 
+  user = null, 
+  currentUser = null, 
+  reportData = null 
+}) {
   const { language } = useLanguage();
   const shareCardRef = useRef(null);
   const reportRef = useRef(null);
-  const modalRef = useRef(null);
-  const primaryButtonRef = useRef(null);
   const t = repT[language] || repT.en;
-
-  // Viewport scroll lock, background interaction lock, and keyboard handling when locked modal is open
-  useEffect(() => {
-    if (!isPurchased) {
-      const scrollY = window.scrollY || window.pageYOffset || 0;
-      const origBodyOverflow = document.body.style.overflow;
-      const origHtmlOverflow = document.documentElement.style.overflow;
-      const origBodyPosition = document.body.style.position;
-      const origBodyTop = document.body.style.top;
-      const origBodyWidth = document.body.style.width;
-
-      // Fixed position body scroll lock
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-
-      // Prevent wheel and touchmove events from scrolling background content
-      const handlePreventScroll = (e) => {
-        if (modalRef.current && modalRef.current.contains(e.target)) {
-          const modalEl = modalRef.current;
-          const isScrollable = modalEl.scrollHeight > modalEl.clientHeight;
-          if (isScrollable) {
-            const isAtTop = modalEl.scrollTop === 0 && e.deltaY < 0;
-            const isAtBottom = modalEl.scrollTop + modalEl.clientHeight >= modalEl.scrollHeight && e.deltaY > 0;
-            if (!isAtTop && !isAtBottom) {
-              return; // Allow smooth scroll inside modal content
-            }
-          }
-        }
-        if (e.cancelable) {
-          e.preventDefault();
-        }
-      };
-
-      window.addEventListener('wheel', handlePreventScroll, { passive: false });
-      window.addEventListener('touchmove', handlePreventScroll, { passive: false });
-
-      // Disable interactions on background elements outside the modal
-      const backgroundElements = Array.from(
-        document.querySelectorAll('header, nav, footer, main, #root > *:not([role="dialog"])')
-      );
-      backgroundElements.forEach((el) => {
-        if (el && !el.contains(modalRef.current)) {
-          el.setAttribute('data-locked-pointer', el.style.pointerEvents || '');
-          el.style.pointerEvents = 'none';
-          el.setAttribute('aria-hidden', 'true');
-          el.setAttribute('inert', '');
-        }
-      });
-
-      const previousActiveElement = document.activeElement;
-
-      const focusTimer = setTimeout(() => {
-        if (primaryButtonRef.current) {
-          primaryButtonRef.current.focus();
-        } else if (modalRef.current) {
-          modalRef.current.focus();
-        }
-      }, 50);
-
-      const handleKeyDown = (e) => {
-        if (e.key === 'Escape') {
-          if (typeof onBack === 'function') {
-            onBack();
-          }
-        }
-        if (e.key === 'Tab' && modalRef.current) {
-          const focusableElements = modalRef.current.querySelectorAll(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-          );
-          if (focusableElements.length > 0) {
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
-
-            if (e.shiftKey) {
-              if (document.activeElement === firstElement) {
-                e.preventDefault();
-                lastElement.focus();
-              }
-            } else {
-              if (document.activeElement === lastElement) {
-                e.preventDefault();
-                firstElement.focus();
-              }
-            }
-          }
-        }
-      };
-
-      document.addEventListener('keydown', handleKeyDown);
-
-      return () => {
-        clearTimeout(focusTimer);
-        document.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('wheel', handlePreventScroll);
-        window.removeEventListener('touchmove', handlePreventScroll);
-
-        backgroundElements.forEach((el) => {
-          if (el) {
-            const orig = el.getAttribute('data-locked-pointer');
-            el.style.pointerEvents = orig || '';
-            el.removeAttribute('data-locked-pointer');
-            el.removeAttribute('aria-hidden');
-            el.removeAttribute('inert');
-          }
-        });
-
-        document.body.style.overflow = origBodyOverflow;
-        document.documentElement.style.overflow = origHtmlOverflow;
-        document.body.style.position = origBodyPosition || '';
-        document.body.style.top = origBodyTop || '';
-        document.body.style.width = origBodyWidth || '';
-        window.scrollTo(0, scrollY);
-        if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
-          try {
-            previousActiveElement.focus();
-          } catch (_) {}
-        }
-      };
-    }
-  }, [isPurchased, onBack]);
 
   const [selectedCareer, setSelectedCareer] = useState(null);
   const [activeTrait, setActiveTrait] = useState(null);
@@ -481,9 +367,10 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
     );
   }
 
-  const fullName = user?.name || 'Student';
+  const fullName = user?.name || user?.full_name || reportData?.student_profile?.name || reportData?.student_profile?.fullName || 'Student';
   const studentName = fullName.split(' ')[0];
-  const profilePhoto = user?.profilePhoto || user?.avatar || null;
+  const rawAvatar = user?.avatar || user?.profilePhoto || reportData?.student_profile?.avatar || reportData?.student_profile?.profilePhoto || null;
+  const profilePhoto = resolveAvatarUrl(rawAvatar) || (rawAvatar && typeof rawAvatar === 'string' && (rawAvatar.startsWith('/') || rawAvatar.startsWith('data:')) ? rawAvatar : null);
   const topMatch = dynamicCareers[0];
 
   const handleDownloadReport = async () => {
@@ -978,116 +865,55 @@ export default function ReportCardPage({ isPurchased = false, onCreateAccount, o
         </AnimatePresence>
       </motion.div>
 
-      {/* ---- Locked overlay (Viewport-Level React Portal) ---- */}
-      {!isPurchased && typeof document !== 'undefined' && createPortal(
-        <div 
-          className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-[#04211F]/50 backdrop-blur-md overflow-y-auto"
-          style={{ fontFamily: "'Inter', sans-serif" }}
-          aria-modal="true"
-          role="dialog"
-          aria-labelledby="unlock-report-title"
-          aria-describedby="unlock-report-desc"
-          onClick={(e) => {
-            // Prevent clicks on overlay from propagating to background elements
-            e.stopPropagation();
-          }}
-        >
-          <motion.div
-            ref={modalRef}
-            tabIndex={-1}
-            initial={{ opacity: 0, scale: 0.94, y: 16 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="w-full max-w-[440px] max-h-[min(90vh,620px)] flex flex-col bg-white rounded-[20px] sm:rounded-[24px] shadow-[0_30px_80px_rgba(4,48,46,0.28)] border border-black/5 text-center p-6 sm:p-8 md:p-9 my-auto overflow-y-auto overscroll-contain focus:outline-none thin-scroll"
-          >
-            <div
-              className="w-14 h-14 rounded-[14px] flex items-center justify-center mx-auto mb-4 sm:mb-5 shadow-lg shrink-0"
-              style={{ background: `linear-gradient(135deg, ${DEEP}, ${TEAL})` }}
-            >
-              <Lock className="w-6 h-6 text-white" strokeWidth={2.2} />
-            </div>
-
-            <span className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: GOLD }}>Assessment complete</span>
-
-            <h2 id="unlock-report-title" className="text-xl sm:text-2xl font-bold mt-1 mb-2 tracking-tight" style={{ color: INK, fontFamily: "'Sora', sans-serif" }}>
-              Unlock {fullName}'s report
-            </h2>
-
-            {/* Guest user: show account creation CTA */}
-            {!currentUser && (
-              <div id="unlock-report-desc">
-                <p className="text-sm text-gray-500 max-w-[320px] mx-auto mb-6 leading-relaxed">
-                  Create a free account to see the full trait analysis, subject recommendations, and career roadmap.
-                </p>
-                <button
-                  ref={primaryButtonRef}
-                  type="button"
-                  onClick={onCreateAccount}
-                  className="w-full py-3.5 sm:py-4 rounded-[14px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl focus:ring-2 focus:ring-[#09A3A3] focus:ring-offset-2 focus:outline-none"
-                  style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
-                >
-                  Create account to unlock
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
-                  Instant access · 100% free signup
-                </p>
-              </div>
-            )}
-
-            {/* Logged-in user: show unlock or purchase CTA */}
-            {currentUser && (
-              <div id="unlock-report-desc">
-                <p className="text-sm text-gray-500 max-w-[320px] mx-auto mb-4 leading-relaxed">
-                  Use 1 assessment credit to unlock the full trait analysis, subject recommendations, and career roadmap.
-                </p>
-                <div className="inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 mb-5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800">
-                  <span>Available Balance:</span>
-                  <span className="font-bold">{currentUser?.balance ?? 0} {(currentUser?.balance ?? 0) === 1 ? 'Credit' : 'Credits'}</span>
-                </div>
-                <div className="flex flex-col gap-3">
-                  {(currentUser?.balance ?? 0) >= 1 ? (
-                    <>
-                      {onUnlockReport && (
-                        <button
-                          ref={primaryButtonRef}
-                          type="button"
-                          onClick={onUnlockReport}
-                          className="w-full py-3.5 sm:py-4 rounded-[14px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl focus:ring-2 focus:ring-[#09A3A3] focus:ring-offset-2 focus:outline-none"
-                          style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
-                        >
-                          Unlock with 1 Credit
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {onGoToPricing && (
-                        <button
-                          ref={primaryButtonRef}
-                          type="button"
-                          onClick={onGoToPricing}
-                          className="w-full py-3.5 sm:py-4 rounded-[14px] text-white font-bold text-sm shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer hover:shadow-xl focus:ring-2 focus:ring-[#09A3A3] focus:ring-offset-2 focus:outline-none"
-                          style={{ background: `linear-gradient(90deg, ${DEEP}, ${TEAL})` }}
-                        >
-                          Buy Credits to Unlock
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-                <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: TEAL }} />
-                  Secure · Credits never expire
-                </p>
-              </div>
-            )}
-          </motion.div>
-        </div>,
-        document.body
+      {/* Canonical SkillSense Modal for Locked State */}
+      {!isPurchased && (
+        <CanonicalModal
+          isOpen={!isPurchased}
+          eyebrow={!currentUser ? "ASSESSMENT COMPLETE" : ((currentUser?.balance ?? 0) >= 1 ? "ASSESSMENT READY" : "ASSESSMENT SAVED")}
+          title={!currentUser ? `Unlock ${fullName}'s Report` : ((currentUser?.balance ?? 0) >= 1 ? `Unlock ${fullName}'s Report` : "Credits Required to Unlock")}
+          balance={currentUser && (currentUser?.balance ?? 0) > 0 ? currentUser.balance : null}
+          description={
+            !currentUser
+              ? "Create a free account to see the full trait analysis, subject recommendations, and career roadmap."
+              : ((currentUser?.balance ?? 0) >= 1
+                ? "Spend 1 credit from your available balance to reveal your personalized career roadmap and detailed trait breakdown."
+                : "Credits are required to unlock this career report. Buy 1 credit to reveal your personalized career roadmap and detailed trait breakdown.")
+          }
+          primaryAction={
+            !currentUser
+              ? {
+                  label: "Create Account to Unlock",
+                  onClick: onCreateAccount,
+                  icon: ArrowRight
+                }
+              : ((currentUser?.balance ?? 0) >= 1
+                ? {
+                    label: "Unlock with 1 Credit",
+                    onClick: onUnlockReport,
+                    icon: ArrowRight
+                  }
+                : {
+                    label: "Buy Credits",
+                    onClick: onGoToPricing,
+                    icon: ArrowRight
+                  })
+          }
+          secondaryAction={
+            onBack
+              ? {
+                  label: !currentUser ? "Return Home" : "Not Now",
+                  onClick: onBack
+                }
+              : null
+          }
+          footerText={
+            !currentUser
+              ? "Instant access · 100% free signup"
+              : ((currentUser?.balance ?? 0) >= 1
+                ? "1 credit will be used. Your full roadmap will be permanently saved in My Profile."
+                : "Your assessment is securely saved. You can unlock it anytime from My Profile.")
+          }
+        />
       )}
     </div>
   );

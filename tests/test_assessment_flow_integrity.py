@@ -33,7 +33,7 @@ class TestAssessmentFlowIntegrity(unittest.TestCase):
         conn = get_db_connection()
         try:
             with conn:
-                conn.execute("UPDATE pricing_plans SET is_active = 1 WHERE id = 'plan_single'")
+                conn.execute("UPDATE pricing_plans SET is_active = 1 WHERE id = 'plan_Standard'")
         finally:
             conn.close()
 
@@ -175,7 +175,7 @@ class TestAssessmentFlowIntegrity(unittest.TestCase):
 
         # User purchases 1 credit pack
         order_res = self.client.post('/api/payments/create-order', json={
-            'plan_id': 'plan_single',
+            'plan_id': 'plan_Standard',
             'attempt_id': att_id
         })
         self.assertEqual(order_res.status_code, 200)
@@ -224,7 +224,7 @@ class TestAssessmentFlowIntegrity(unittest.TestCase):
         )
 
         redeem_res = self.client.post('/api/payments/redeem-zero', json={
-            'plan_id': 'plan_single',
+            'plan_id': 'plan_Standard',
             'coupon_code': code,
             'attempt_id': att_id
         })
@@ -297,7 +297,7 @@ class TestAssessmentFlowIntegrity(unittest.TestCase):
         att_id = attempt['attempt_id']
 
         order_res = self.client.post('/api/payments/create-order', json={
-            'plan_id': 'plan_single',
+            'plan_id': 'plan_Standard',
             'attempt_id': att_id
         })
         order_id = order_res.get_json()['order_id']

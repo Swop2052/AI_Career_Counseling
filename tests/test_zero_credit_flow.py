@@ -41,6 +41,17 @@ INSERT INTO user_profiles (id, user_id, full_name, created_at, updated_at)
                     INSERT INTO credit_wallets (id, user_id, balance, updated_at)
                     VALUES (%s, %s, 0, %s)
                 """, (f"wlt_{self.test_user_id}", self.test_user_id, datetime.now().isoformat()))
+                conn.execute("UPDATE pricing_plans SET is_active = 1 WHERE id = 'plan_Standard'")
+        finally:
+            conn.close()
+
+    def tearDown(self):
+        conn = get_db_connection()
+        try:
+            with conn:
+                conn.execute("UPDATE pricing_plans SET is_active = 1")
+        except Exception:
+            pass
         finally:
             conn.close()
 
@@ -70,6 +81,8 @@ INSERT INTO user_profiles (id, user_id, full_name, created_at, updated_at)
         """Verify that modifying the lowest plan's price in DB immediately changes the backend response."""
         conn = get_db_connection()
         try:
+            with conn:
+                conn.execute("UPDATE pricing_plans SET is_active = 0 WHERE id LIKE 'plan_test_%'")
             cur_lowest = pricing_service.get_lowest_active_plan()
             target_id = cur_lowest['id'] if cur_lowest else 'plan_Standard'
             # Change the lowest plan price to 29.0
@@ -117,7 +130,7 @@ INSERT INTO user_profiles (id, user_id, full_name, created_at, updated_at)
         finally:
             try:
                 with conn:
-                    conn.execute("UPDATE pricing_plans SET is_active = 1 WHERE id = 'plan_Standard' OR id = 'plan_single'")
+                    conn.execute("UPDATE pricing_plans SET is_active = 1")
             except Exception:
                 pass
             conn.close()

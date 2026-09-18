@@ -60,17 +60,20 @@ class Config:
 
     db_path: str = os.path.join(base_dir, "data", "career_guide.db")
     db_name: str = os.getenv("DB_NAME", "skillsense")
-    db_port: str = os.getenv("DB_PORT", "5434")
+    db_port: str = os.getenv("DB_PORT", "5432")
     db_host: str = os.getenv("DB_HOST", "localhost")
     db_user: str = os.getenv("DB_USER", "postgres")
     db_password: str = os.getenv("DB_PASSWORD", "postgres")
 
     @property
     def database_url(self) -> str:
+        env_url = os.getenv("DATABASE_URL")
+        if env_url:
+            return env_url
         import urllib.parse
         encoded_pwd = urllib.parse.quote_plus(self.db_password)
         host = "127.0.0.1" if self.db_host in ("localhost", "127.0.0.1") else self.db_host
-        return f"postgresql://{self.db_user}:{encoded_pwd}@{host}:{self.db_port}/{self.db_name}?connect_timeout=2"
+        return f"postgresql://{self.db_user}:{encoded_pwd}@{host}:{self.db_port}/{self.db_name}?connect_timeout=5"
     db_retention_hours: int = int(os.getenv("DB_RETENTION_HOURS", 24))
     
     # Conversation

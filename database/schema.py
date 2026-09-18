@@ -1,271 +1,546 @@
-# database/schema.py - Robust PostgreSQL connection with auto-provisioning & SQLite fallback
+# database/schema.py - Database initialization and schema management
+import sqlite3
 import os
 import re
 import uuid
-import socket
-import sqlite3
-from datetime import datetime, timedelta
-import psycopg2
-import psycopg2.extras
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-from psycopg2.extras import RealDictCursor
-from core.config import config
+import json
+from datetime import datetime
 from werkzeug.security import generate_password_hash
+from core.config import config
 
-class HybridRow(dict):
-    def __getitem__(self, key):
-        if isinstance(key, int):
-            return list(self.values())[key]
-        return super().__getitem__(key)
 
-class PgCursorWrapper:
-    def __init__(self, cur):
-        self._cur = cur
-    def __getattr__(self, name):
-        return getattr(self._cur, name)
-    def __iter__(self):
-        for row in self._cur:
-            yield HybridRow(row)
-    def fetchone(self):
-        row = self._cur.fetchone()
-        return HybridRow(row) if row else None
-    def fetchall(self):
-        return [HybridRow(row) for row in self._cur.fetchall()]
-    def __enter__(self):
-        return self
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+try:
+    import psycopg2
+    import psycopg2.extras
+    from psycopg2.extras import DictCursor
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
 
-class PgConnectionWrapper:
-    def __init__(self, conn):
-        self._conn = conn
-    def __getattr__(self, name):
-        return getattr(self._conn, name)
-    def cursor(self):
-        return PgCursorWrapper(self._conn.cursor())
-    def __enter__(self):
-        return self._conn.__enter__()
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return self._conn.__exit__(exc_type, exc_val, exc_tb)
-    def execute(self, query, vars=None):
-        cur = self.cursor()
-        if vars:
-            cur.execute(query, vars)
-        else:
-            cur.execute(query)
-        return cur
-    def executemany(self, query, vars_list):
-        cur = self.cursor()
-        cur.executemany(query, vars_list)
-        return cur
 
-class SqliteCursorWrapper:
-    def __init__(self, cur):
-        self._cur = cur
+class PostgresCursorWrapper:
+    def __init__(self, cursor):
+        self._cursor = cursor
 
-    def _convert_query(self, query):
-        q = re.sub(r'\bNOW\(\)', "datetime('now')", query, flags=re.IGNORECASE)
-        q = re.sub(r'::[a-zA-Z_]+', '', q)
-        q = re.sub(r'\bILIKE\b', 'LIKE', q, flags=re.IGNORECASE)
-        q = re.sub(r'%s', '?', q)
-        return q
+    def execute(self, sql, params=None):
+        if 'INSERT OR REPLACE INTO' in sql.upper():
+            sql = re.sub(
+                r'INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([\s\S]+?)\)\s*VALUES\s*\(([\s\S]+?)\)',
+                r'INSERT INTO \1 (\2) VALUES (\3) ON CONFLICT (id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP',
+                sql,
+                flags=re.IGNORECASE
+            )
+        if params is not None and '?' in sql:
+            sql = re.sub(r'\?', '%s', sql)
+        if params is None:
+            return self._cursor.execute(sql)
+        return self._cursor.execute(sql, params)
 
-    def execute(self, query, vars=None):
-        q = self._convert_query(query)
-        if vars:
-            return self._cur.execute(q, vars)
-        return self._cur.execute(q)
-
-    def executemany(self, query, vars_list):
-        q = self._convert_query(query)
-        return self._cur.executemany(q, vars_list)
-
-    def fetchone(self):
-        row = self._cur.fetchone()
-        return HybridRow(dict(row)) if row else None
-
-    def fetchall(self):
-        return [HybridRow(dict(r)) for r in self._cur.fetchall()]
+    def executemany(self, sql, seq_of_params):
+        if 'INSERT OR REPLACE INTO' in sql.upper():
+            sql = re.sub(
+                r'INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([\s\S]+?)\)\s*VALUES\s*\(([\s\S]+?)\)',
+                r'INSERT INTO \1 (\2) VALUES (\3) ON CONFLICT (id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP',
+                sql,
+                flags=re.IGNORECASE
+            )
+        if seq_of_params and '?' in sql:
+            sql = re.sub(r'\?', '%s', sql)
+        return self._cursor.executemany(sql, seq_of_params)
 
     def __iter__(self):
-        for row in self._cur:
-            yield HybridRow(dict(row))
+        return iter(self._cursor)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
+        return self._cursor.close()
 
     def __getattr__(self, name):
-        return getattr(self._cur, name)
+        return getattr(self._cursor, name)
 
-class SqliteConnWrapper:
+
+class PostgresConnectionWrapper:
     def __init__(self, conn):
         self._conn = conn
-    def cursor(self):
-        return SqliteCursorWrapper(self._conn.cursor())
-    def execute(self, query, vars=None):
+
+    def cursor(self, *args, **kwargs):
+        if 'cursor_factory' not in kwargs:
+            kwargs['cursor_factory'] = DictCursor
+        return PostgresCursorWrapper(self._conn.cursor(*args, **kwargs))
+
+    def execute(self, sql, params=None):
         cur = self.cursor()
-        return cur.execute(query, vars)
-    def executemany(self, query, vars_list):
+        cur.execute(sql, params)
+        return cur
+
+    def executemany(self, sql, seq_of_params):
         cur = self.cursor()
-        return cur.executemany(query, vars_list)
+        cur.executemany(sql, seq_of_params)
+        return cur
+
     def commit(self):
         return self._conn.commit()
+
     def rollback(self):
         return self._conn.rollback()
+
     def close(self):
         return self._conn.close()
+
     def __enter__(self):
-        return self._conn.__enter__()
+        self._conn.__enter__()
+        return self
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         return self._conn.__exit__(exc_type, exc_val, exc_tb)
+
     def __getattr__(self, name):
         return getattr(self._conn, name)
 
-_USE_SQLITE = None
 
-def _is_pg_listening():
-    try:
-        host = getattr(config, 'db_host', '127.0.0.1')
-        if host in ('localhost', '127.0.0.1'):
-            host = '127.0.0.1'
-        port = int(getattr(config, 'db_port', 5432))
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.5)
-        s.connect((host, port))
-        s.close()
-        return True
-    except Exception:
-        return False
+class SQLiteCursorWrapper:
+    def __init__(self, cursor):
+        self._cursor = cursor
 
-def _ensure_pg_database_exists():
-    """Ensure PostgreSQL database exists; if not, auto-create it and apply schema.sql."""
-    host = "127.0.0.1" if config.db_host in ("localhost", "127.0.0.1") else config.db_host
-    port = int(getattr(config, 'db_port', 5432))
-    db_name = getattr(config, 'db_name', 'SkillSense')
+    def execute(self, sql, params=None):
+        if params is not None and '%s' in sql:
+            sql = re.sub(r'(?<!%)%s', '?', sql)
+        if params is None:
+            return self._cursor.execute(sql)
+        return self._cursor.execute(sql, params)
 
-    try:
-        test_conn = psycopg2.connect(config.database_url, connect_timeout=2)
-        test_conn.close()
-        return True
-    except psycopg2.OperationalError as e:
-        err_msg = str(e).lower()
-        if "does not exist" in err_msg:
-            print(f"[AUTO-SETUP] PostgreSQL database '{db_name}' not found. Creating automatically...")
-            try:
-                m_conn = psycopg2.connect(
-                    dbname="postgres",
-                    user=config.db_user,
-                    password=config.db_password,
-                    host=host,
-                    port=port,
-                    connect_timeout=3
-                )
-                m_conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
-                with m_conn.cursor() as m_cur:
-                    m_cur.execute(f'CREATE DATABASE "{db_name}";')
-                m_conn.close()
-                print(f"[SUCCESS] Database '{db_name}' created automatically.")
+    def executemany(self, sql, seq_of_params):
+        if '%s' in sql:
+            sql = re.sub(r'(?<!%)%s', '?', sql)
+        return self._cursor.executemany(sql, seq_of_params)
 
-                # Apply schema.sql
-                schema_path = os.path.join(config.base_dir, "database", "schema.sql")
-                if os.path.exists(schema_path):
-                    app_conn = psycopg2.connect(config.database_url, connect_timeout=3)
-                    app_conn.autocommit = True
-                    with open(schema_path, "r", encoding="utf-8") as sf:
-                        sql = sf.read()
-                    with app_conn.cursor() as acur:
-                        acur.execute(sql)
-                    app_conn.close()
-                    print("[SUCCESS] Applied database/schema.sql to new database.")
-                return True
-            except Exception as ce:
-                print(f"[WARNING] Could not auto-create database '{db_name}': {ce}")
-                return False
-        else:
-            print(f"[WARNING] PostgreSQL OperationalError: {e}")
-            return False
-    except Exception as e:
-        print(f"[WARNING] PostgreSQL connection error: {e}")
-        return False
+    def __iter__(self):
+        return iter(self._cursor)
+
+    def __getattr__(self, name):
+        return getattr(self._cursor, name)
+
+
+class SQLiteConnectionWrapper:
+    def __init__(self, conn):
+        self._conn = conn
+
+    def cursor(self):
+        return SQLiteCursorWrapper(self._conn.cursor())
+
+    def execute(self, sql, params=None):
+        if params is not None and '%s' in sql:
+            sql = re.sub(r'(?<!%)%s', '?', sql)
+        if params is None:
+            return self._conn.execute(sql)
+        return self._conn.execute(sql, params)
+
+    def executemany(self, sql, seq_of_params):
+        if '%s' in sql:
+            sql = re.sub(r'(?<!%)%s', '?', sql)
+        return self._conn.executemany(sql, seq_of_params)
+
+    def commit(self):
+        return self._conn.commit()
+
+    def rollback(self):
+        return self._conn.rollback()
+
+    def close(self):
+        return self._conn.close()
+
+    def __enter__(self):
+        self._conn.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self._conn.__exit__(exc_type, exc_val, exc_tb)
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
 
 def get_db_connection():
-    """Get database connection (PostgreSQL if online, automatic SQLite fallback)."""
-    global _USE_SQLITE
-    if _USE_SQLITE is None:
-        if not _is_pg_listening():
-            print("[INFO] PostgreSQL port not reachable, using local SQLite fallback.")
-            _USE_SQLITE = True
-        else:
-            _ensure_pg_database_exists()
-            try:
-                conn = psycopg2.connect(config.database_url, connect_timeout=3)
-                psycopg2.extras.register_default_jsonb(conn)
-                psycopg2.extras.register_default_json(conn)
-                conn.cursor_factory = RealDictCursor
-                _USE_SQLITE = False
-                return PgConnectionWrapper(conn)
-            except Exception as e:
-                print(f"[INFO] PostgreSQL connect failed ({e}), using SQLite fallback.")
-                _USE_SQLITE = True
-
-    if not _USE_SQLITE:
+    """
+    Get primary database connection.
+    Connects to PostgreSQL as the authoritative production source of truth.
+    Falls back gracefully to SQLite only if PostgreSQL is unreachable in an offline/test environment.
+    """
+    if HAS_PSYCOPG2:
         try:
-            conn = psycopg2.connect(config.database_url, connect_timeout=3)
-            psycopg2.extras.register_default_jsonb(conn)
-            psycopg2.extras.register_default_json(conn)
-            conn.cursor_factory = RealDictCursor
-            return PgConnectionWrapper(conn)
+            if os.getenv("DATABASE_URL"):
+                raw_conn = psycopg2.connect(os.getenv("DATABASE_URL"), connect_timeout=3)
+            else:
+                raw_conn = psycopg2.connect(
+                    dbname=config.db_name,
+                    user=config.db_user,
+                    password=config.db_password,
+                    host=config.db_host,
+                    port=int(config.db_port),
+                    connect_timeout=3
+                )
+            psycopg2.extras.register_default_jsonb(raw_conn)
+            psycopg2.extras.register_default_json(raw_conn)
+            return PostgresConnectionWrapper(raw_conn)
         except Exception:
-            _USE_SQLITE = True
+            pass
 
-    # High performance local SQLite connection
-    db_path = getattr(config, 'db_path', os.path.join(config.base_dir, 'data', 'career_guide.db'))
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    s_conn = sqlite3.connect(db_path, timeout=10.0, check_same_thread=False)
-    s_conn.row_factory = sqlite3.Row
+    # Offline testing fallback
+    db_dir = os.path.dirname(config.db_path)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+    conn = sqlite3.connect(config.db_path, timeout=30.0, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     try:
-        s_conn.execute("PRAGMA journal_mode=WAL;")
-        s_conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.execute("PRAGMA synchronous=NORMAL;")
+        conn.execute("PRAGMA foreign_keys=ON;")
     except Exception:
         pass
-    return SqliteConnWrapper(s_conn)
+    return SQLiteConnectionWrapper(conn)
+
+
 
 def init_db():
-    """Initialize active database schema and ensure essential Super Admin user exists."""
+    """Create all required tables, indexes, and seed initial data safely."""
     conn = get_db_connection()
     try:
-        with conn:
-            cur = conn.cursor()
-            
-            # Ensure Super Admin user exists and has correct credentials
-            cur.execute("SELECT id FROM users WHERE email = %s", ('admin@skillsense.ai',))
-            admin_row = cur.fetchone()
-            admin_uid = admin_row['id'] if admin_row else f"usr_{uuid.uuid4().hex[:12]}"
-            now_str = datetime.now().isoformat()
-            
-            if not admin_row:
-                cur.execute("""
-                    INSERT INTO users (id, email, password_hash, role, is_active, can_manage_developers, created_at, updated_at)
-                    VALUES (%s, 'admin@skillsense.ai', %s, 'SUPER_ADMIN', 1, 1, %s, %s)
-                """, (admin_uid, generate_password_hash("Admin@123456"), now_str, now_str))
-                cur.execute("""
-                    INSERT INTO user_profiles (id, user_id, full_name, created_at, updated_at)
-                    VALUES (%s, %s, 'Developer Admin', %s, %s)
-                """, (f"prf_{uuid.uuid4().hex[:12]}", admin_uid, now_str, now_str))
-                cur.execute("""
-                    INSERT INTO credit_wallets (id, user_id, balance, updated_at)
-                    VALUES (%s, %s, 100, %s)
-                """, (f"wlt_{uuid.uuid4().hex[:12]}", admin_uid, now_str))
-                print("[SUCCESS] Initialized admin@skillsense.ai as SUPER_ADMIN")
-            else:
-                cur.execute("""
-                    UPDATE users SET role = 'SUPER_ADMIN', is_active = 1, can_manage_developers = 1 WHERE id = %s
-                """, (admin_uid,))
+        if isinstance(conn, PostgresConnectionWrapper):
+            schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "schema.sql")
+            if os.path.exists(schema_path):
+                with open(schema_path, "r", encoding="utf-8") as f:
+                    schema_sql = f.read()
+                with conn:
+                    with conn.cursor() as cur:
+                        cur.execute(schema_sql)
 
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) as count FROM pricing_plans")
+                row = cur.fetchone()
+                cnt = row['count'] if (isinstance(row, dict) or hasattr(row, 'keys')) and 'count' in row else row[0]
+                if cnt == 0:
+                    print("[INFO] Seeding initial pricing plans into PostgreSQL...")
+                    now_str = datetime.now().isoformat()
+                    plans = [
+                        ("plan_single", "Single Assessment", "SINGLE_ASSESSMENT", 19.0, "INR", 1, None, 1, 1, 0, now_str, now_str),
+                        ("plan_pack30", "30 Credit Pack", "CREDIT_PACK", 599.0, "INR", 30, None, 1, 2, 1, now_str, now_str)
+                    ]
+                    cur.executemany("""
+                        INSERT INTO pricing_plans (id, name, type, price, currency, credits, duration_days, is_active, sort_order, is_recommended, created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, plans)
+
+                cur.execute("SELECT id FROM campaign_codes WHERE code = 'SCHOOL20'")
+                if not cur.fetchone():
+                    now_str = datetime.now().isoformat()
+                    from datetime import timedelta
+                    future_str = (datetime.now() + timedelta(days=90)).isoformat()
+                    cmp_id = f"cmp_{uuid.uuid4().hex[:12]}"
+                    cur.execute("""
+                        INSERT INTO campaign_codes (
+                            id, code, campaign_name, discount_type, discount_value, benefit_type, benefit_value,
+                            valid_from, valid_until, max_uses, used_count, one_use_per_user, is_active, created_at, updated_at
+                        ) VALUES (%s, 'SCHOOL20', 'School Workshop', 'PERCENTAGE', 20.0, 'PERCENTAGE', 20.0, %s, %s, 300, 0, 1, 1, %s, %s)
+                    """, (cmp_id, now_str, future_str, now_str, now_str))
+                    print("[SUCCESS] Seeded default campaign discount code 'SCHOOL20' (20% off)")
+
+                cur.execute("UPDATE users SET can_manage_developers = 1 WHERE role = 'SUPER_ADMIN'")
+
+            print("[SUCCESS] PostgreSQL database schema initialized.")
+            return
+
+        with conn:
+            cursor = conn.cursor()
+
+            # 1. Users table (authentication identity)
+            # Roles: USER, DEVELOPER, SUPER_ADMIN
+            # can_manage_developers: explicit permission flag for DEVELOPER role
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id TEXT PRIMARY KEY,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    role TEXT NOT NULL DEFAULT 'USER',
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    can_manage_developers INTEGER NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_login_at TIMESTAMP
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
+
+            # 2. User Profiles table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS user_profiles (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT UNIQUE NOT NULL,
+                    full_name TEXT,
+                    phone TEXT,
+                    education_level TEXT,
+                    city TEXT,
+                    state TEXT,
+                    avatar TEXT,
+                    age INTEGER,
+                    class_year TEXT,
+                    enjoy_subjects TEXT,
+                    challenging_subjects TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+
+            # 3. Assessment Attempts table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS assessment_attempts (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT,
+                    guest_session_id TEXT,
+                    student_profile TEXT,
+                    riasec_answers TEXT,
+                    riasec_scores TEXT,
+                    riasec_code TEXT,
+                    teaser_data TEXT,
+                    full_result_data TEXT,
+                    is_unlocked INTEGER NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    unlocked_at TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_attempts_user_id ON assessment_attempts(user_id);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_attempts_guest_id ON assessment_attempts(guest_session_id);")
+
+            # 4. Credit Wallets table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS credit_wallets (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT UNIQUE NOT NULL,
+                    balance INTEGER NOT NULL DEFAULT 0 CHECK(balance >= 0),
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+
+            # 5. Credit Transactions table (immutable audit ledger)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS credit_transactions (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    amount INTEGER NOT NULL,
+                    balance_after INTEGER NOT NULL,
+                    reference_type TEXT,
+                    reference_id TEXT,
+                    description TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON credit_transactions(user_id);")
+
+            # 6. Pricing Plans table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS pricing_plans (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    type TEXT NOT NULL,
+                    price REAL NOT NULL,
+                    currency TEXT NOT NULL DEFAULT 'INR',
+                    credits INTEGER NOT NULL,
+                    duration_days INTEGER,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    sort_order INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 7. Payments table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS payments (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    plan_id TEXT NOT NULL,
+                    amount REAL NOT NULL,
+                    original_amount REAL,
+                    discount_amount REAL DEFAULT 0,
+                    campaign_code_id TEXT,
+                    currency TEXT NOT NULL DEFAULT 'INR',
+                    gateway TEXT NOT NULL DEFAULT 'razorpay',
+                    razorpay_order_id TEXT UNIQUE,
+                    razorpay_payment_id TEXT UNIQUE,
+                    razorpay_signature TEXT,
+                    status TEXT NOT NULL DEFAULT 'CREATED',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+                    FOREIGN KEY(plan_id) REFERENCES pricing_plans(id)
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(razorpay_order_id);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_payment_id ON payments(razorpay_payment_id);")
+
+            # 8. Campaign Codes table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS campaign_codes (
+                    id TEXT PRIMARY KEY,
+                    code TEXT UNIQUE NOT NULL,
+                    campaign_name TEXT NOT NULL,
+                    discount_type TEXT NOT NULL DEFAULT 'PERCENTAGE',
+                    discount_value REAL NOT NULL DEFAULT 20.0,
+                    benefit_type TEXT NOT NULL DEFAULT 'PERCENTAGE',
+                    benefit_value REAL NOT NULL DEFAULT 20.0,
+                    valid_from TIMESTAMP NOT NULL,
+                    valid_until TIMESTAMP NOT NULL,
+                    max_uses INTEGER NOT NULL DEFAULT 300,
+                    used_count INTEGER NOT NULL DEFAULT 0,
+                    one_use_per_user INTEGER NOT NULL DEFAULT 1,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    created_by TEXT,
+                    FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_campaign_code ON campaign_codes(code);")
+
+            # 9. Campaign Redemptions table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS campaign_redemptions (
+                    id TEXT PRIMARY KEY,
+                    campaign_code_id TEXT NOT NULL,
+                    user_id TEXT NOT NULL,
+                    benefit_granted TEXT NOT NULL,
+                    discount_applied REAL DEFAULT 0,
+                    payment_id TEXT,
+                    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY(campaign_code_id) REFERENCES campaign_codes(id) ON DELETE CASCADE,
+                    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_redemptions_user_code ON campaign_redemptions(user_id, campaign_code_id);")
+
+            # 10. Password Resets table (OTP Security)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS password_resets (
+                    id TEXT PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    otp_hash TEXT NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    attempts INTEGER NOT NULL DEFAULT 0,
+                    is_used INTEGER NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_resets_email ON password_resets(email);")
+
+            # 11. Developer Invitations table (secure one-time account setup links)
+            # token_hash: bcrypt hash of the raw token (raw token sent in email, never stored)
+            # status: PENDING | ACCEPTED | EXPIRED | CANCELLED
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS developer_invitations (
+                    id TEXT PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    role TEXT NOT NULL DEFAULT 'DEVELOPER',
+                    token_hash TEXT NOT NULL,
+                    expires_at TIMESTAMP NOT NULL,
+                    created_by TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    used_at TIMESTAMP,
+                    status TEXT NOT NULL DEFAULT 'PENDING',
+                    FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE SET NULL
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_invitations_email ON developer_invitations(email);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_invitations_status ON developer_invitations(status);")
+
+            # 12. Audit Log table (immutable record of developer management actions)
+            # Tracks: Created Developer, Disabled Developer, Reactivated Developer,
+            #         Granted CAN_MANAGE_DEVELOPERS, Revoked CAN_MANAGE_DEVELOPERS,
+            #         Resent Invitation, Created SUPER_ADMIN via CLI
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS audit_log (
+                    id TEXT PRIMARY KEY,
+                    actor_id TEXT,
+                    actor_email TEXT,
+                    action TEXT NOT NULL,
+                    target_email TEXT,
+                    target_id TEXT,
+                    details TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log(actor_id);")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_log(created_at);")
+
+            # ---------------------------------------------------------------
+            # Safe column migration helpers for existing production tables
+            # ---------------------------------------------------------------
+            def add_col_if_missing(table, col_name, col_def):
+                cursor.execute(f"PRAGMA table_info({table})")
+                cols = [row[1] for row in cursor.fetchall()]
+                if col_name not in cols:
+                    cursor.execute(f"ALTER TABLE {table} ADD COLUMN {col_name} {col_def}")
+
+            add_col_if_missing("users", "can_manage_developers", "INTEGER NOT NULL DEFAULT 0")
+            add_col_if_missing("campaign_codes", "discount_type", "TEXT NOT NULL DEFAULT 'PERCENTAGE'")
+            add_col_if_missing("campaign_codes", "discount_value", "REAL NOT NULL DEFAULT 20.0")
+            add_col_if_missing("campaign_redemptions", "discount_applied", "REAL DEFAULT 0")
+            add_col_if_missing("campaign_redemptions", "payment_id", "TEXT")
+            add_col_if_missing("pricing_plans", "is_recommended", "INTEGER NOT NULL DEFAULT 0")
+            add_col_if_missing("payments", "original_amount", "REAL")
+            add_col_if_missing("payments", "discount_amount", "REAL DEFAULT 0")
+            add_col_if_missing("payments", "campaign_code_id", "TEXT")
+            add_col_if_missing("user_profiles", "avatar", "TEXT")
+            add_col_if_missing("user_profiles", "age", "INTEGER")
+            add_col_if_missing("user_profiles", "class_year", "TEXT")
+            add_col_if_missing("user_profiles", "enjoy_subjects", "TEXT")
+            add_col_if_missing("user_profiles", "challenging_subjects", "TEXT")
+
+            # Seed default pricing plans if none exist
+            cursor.execute("SELECT COUNT(*) FROM pricing_plans")
+            if cursor.fetchone()[0] == 0:
+                print("[INFO] Seeding initial pricing plans into SQLite...")
+                now_str = datetime.now().isoformat()
+                plans = [
+                    ("plan_single", "Single Assessment", "SINGLE_ASSESSMENT", 19.0, "INR", 1, None, 1, 1, now_str, now_str),
+                    ("plan_pack30", "30 Credit Pack", "CREDIT_PACK", 599.0, "INR", 30, None, 1, 2, now_str, now_str)
+                ]
+                cursor.executemany("""
+                    INSERT INTO pricing_plans (id, name, type, price, currency, credits, duration_days, is_active, sort_order, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, plans)
+            else:
+                # Removed forced price reset to allow developer test pricing
+                cursor.execute("UPDATE pricing_plans SET price = 599.0 WHERE id = 'plan_pack30' AND price != 599.0;")
+
+            # Seed default sample campaign code SCHOOL20 if none exists
+            cursor.execute("SELECT id FROM campaign_codes WHERE code = 'SCHOOL20'")
+            if not cursor.fetchone():
+                now_str = datetime.now().isoformat()
+                from datetime import timedelta
+                future_str = (datetime.now() + timedelta(days=90)).isoformat()
+                cmp_id = f"cmp_{uuid.uuid4().hex[:12]}"
+                cursor.execute("""
+                    INSERT INTO campaign_codes (
+                        id, code, campaign_name, discount_type, discount_value, benefit_type, benefit_value,
+                        valid_from, valid_until, max_uses, used_count, one_use_per_user, is_active, created_at, updated_at
+                    ) VALUES (?, 'SCHOOL20', 'School Workshop', 'PERCENTAGE', 20.0, 'PERCENTAGE', 20.0, ?, ?, 300, 0, 1, 1, ?, ?)
+                """, (cmp_id, now_str, future_str, now_str, now_str))
+                print("[SUCCESS] Seeded default campaign discount code 'SCHOOL20' (20% off)")
+
+            # Ensure all SUPER_ADMIN accounts have can_manage_developers = 1
+            cursor.execute("UPDATE users SET can_manage_developers = 1 WHERE role = 'SUPER_ADMIN'")
+
+        print("[SUCCESS] Monetization database schema initialized.")
     except Exception as e:
-        print(f"[INFO] DB init check: {e}")
+        print(f"[ERROR] Database schema initialization failed: {e}")
+        raise e
     finally:
         conn.close()

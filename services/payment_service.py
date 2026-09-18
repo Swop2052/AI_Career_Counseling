@@ -83,9 +83,9 @@ class RazorpayProvider(BasePaymentProvider):
         if not order_id or not payment_id or not signature:
             return False
 
-        # In development mode only, allow mock testing signatures
+        # In development mode only, allow explicit mock testing signatures
         if config.flask_env == "development":
-            if signature.startswith("simulated_test_sig") or signature == "test_signature_valid" or self.key_id.startswith("rzp_test_512345"):
+            if signature.startswith("simulated_test_sig") or signature == "test_signature_valid":
                 return True
 
         try:

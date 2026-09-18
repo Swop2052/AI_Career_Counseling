@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Compass, User, BookOpen, Sparkles, Camera } from 'lucide-react';
 import { useLanguage } from '../translations/LanguageContext';
+import { AVATAR_LIST, normalizeAvatarKey, resolveAvatarUrl, DEFAULT_AVATAR_KEY, DEFAULT_AVATAR_URL } from '../utils/avatarUtils';
+import { CLASS_YEAR_GROUPS } from '../utils/classYearUtils';
 
 const locT = {
   en: {
@@ -15,8 +17,8 @@ const locT = {
     classYear: "Class/Year *",
     selectClass: "Select your class",
     stream: "Education Stream/Field",
-    enjoySubj: "Subjects you enjoy learning",
-    challSubj: "Subjects You Find Challenging",
+    enjoySubj: "Subjects you enjoy learning *",
+    challSubj: "Subjects You Find Challenging *",
     inspiresOutside: "What inspires you outside academics?",
     interests: "Your Interests",
     hobbies: "Your Hobbies",
@@ -53,8 +55,8 @@ const locT = {
     classYear: "इयत्ता/वर्ष *",
     selectClass: "तुमची इयत्ता निवडा",
     stream: "शिक्षण शाखा/क्षेत्र",
-    enjoySubj: "आवडणारे विषय",
-    challSubj: "कठीण वाटणारे विषय",
+    enjoySubj: "आवडणारे विषय *",
+    challSubj: "कठीण वाटणारे विषय *",
     inspiresOutside: "अभ्यासाव्यतिरिक्त तुम्हाला कशाची आवड आहे?",
     interests: "तुमची आवड",
     hobbies: "तुमचे छंद",
@@ -91,8 +93,8 @@ const locT = {
     classYear: "कक्षा/वर्ष *",
     selectClass: "अपनी कक्षा चुनें",
     stream: "शिक्षा स्ट्रीम/क्षेत्र",
-    enjoySubj: "पसंदीदा विषय",
-    challSubj: "कठिन लगने वाले विषय",
+    enjoySubj: "पसंदीदा विषय *",
+    challSubj: "कठिन लगने वाले विषय *",
     inspiresOutside: "पढ़ाई के अलावा आपको क्या प्रेरित करता है?",
     interests: "आपकी रुचियां",
     hobbies: "आपके शौक",
@@ -124,18 +126,40 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
   const { language } = useLanguage();
   const tLoc = locT[language] || locT.en;
   const [step, setStep] = useState(1);
+  const [errors, setErrors] = useState({});
+
+  // Sanitize initial data against invalid placeholders and out-of-range values
+  const sanitizeInitialName = () => {
+    const raw = currentUser?.full_name || currentUser?.name || initialData?.fullName || '';
+    if (!raw || typeof raw !== 'string') return '';
+    const trimmed = raw.trim();
+    if (['guest', 'guest student', 'test student'].includes(trimmed.toLowerCase())) return '';
+    return trimmed;
+  };
+
+  const sanitizeInitialAge = () => {
+    const raw = currentUser?.age ?? initialData?.age ?? '';
+    if (raw === '' || raw === null || raw === undefined) return '';
+    const num = parseInt(raw, 10);
+    if (isNaN(num) || num < 10 || num > 60) return '';
+    return String(num);
+  };
+
+  const initialAvatarKey = normalizeAvatarKey(currentUser?.avatar || initialData?.avatar || currentUser?.profilePhoto || initialData?.profilePhoto) || DEFAULT_AVATAR_KEY;
+
   const [formData, setFormData] = useState({
-    profilePhoto: initialData?.profilePhoto || currentUser?.profilePhoto || null,
-    fullName: initialData?.fullName || currentUser?.name || '',
-    age: initialData?.age || '',
-    classYear: initialData?.classYear || '',
-    stream: initialData?.stream || '',
-    enjoySubjects: initialData?.enjoySubjects || '',
-    challengingSubjects: initialData?.challengingSubjects || '',
-    interests: initialData?.interests || '',
-    hobbies: initialData?.hobbies || '',
-    strengths: initialData?.strengths || '',
-    careerAspirations: initialData?.careerAspirations || '',
+    avatar: initialAvatarKey,
+    profilePhoto: resolveAvatarUrl(initialAvatarKey) || initialData?.profilePhoto || currentUser?.profilePhoto || DEFAULT_AVATAR_URL,
+    fullName: sanitizeInitialName(),
+    age: sanitizeInitialAge(),
+    classYear: currentUser?.class_year || currentUser?.education_level || initialData?.classYear || '',
+    stream: currentUser?.stream || initialData?.stream || '',
+    enjoySubjects: currentUser?.enjoy_subjects || initialData?.enjoySubjects || '',
+    challengingSubjects: currentUser?.challenging_subjects || initialData?.challengingSubjects || '',
+    interests: currentUser?.interests || initialData?.interests || '',
+    hobbies: currentUser?.hobbies || initialData?.hobbies || '',
+    strengths: currentUser?.strengths || initialData?.strengths || '',
+    careerAspirations: currentUser?.career_aspirations || initialData?.careerAspirations || '',
     learningMode: initialData?.learningMode || 'Offline (Classroom/Lab)',
     budget: initialData?.budget || 'Moderate Budget',
     locationPref: initialData?.locationPref || 'India Wide',
@@ -144,7 +168,15 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
   };
 
   const handlePhotoUpload = (e) => {
@@ -152,28 +184,97 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData({ ...formData, profilePhoto: reader.result });
+        setFormData(prev => ({ ...prev, profilePhoto: reader.result }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const selectAvatar = (avatarPath) => {
-    setFormData({ ...formData, profilePhoto: avatarPath });
+  const selectAvatar = (avatarKey, avatarPath) => {
+    setFormData(prev => ({
+      ...prev,
+      avatar: avatarKey,
+      profilePhoto: avatarPath
+    }));
   };
 
-  const avatarOptions = [
-    '/avatars/Ma_01.png', '/avatars/fa_01.png', 
-    '/avatars/MA_02.png', '/avatars/fa_02.png',
-    '/avatars/Ma_03.png', '/avatars/fa_03.png',
-    '/avatars/Ma_04.png', '/avatars/fa_04.png',
-    '/avatars/Ma_05.png', '/avatars/Ma_06.png'
-  ];
+  const validateStep1 = () => {
+    const newErrors = {};
+
+    // 1. Full Name
+    const name = (formData.fullName || '').trim();
+    if (!name) {
+      newErrors.fullName = 'Full Name is required.';
+    } else if (name.length < 2) {
+      newErrors.fullName = 'Full Name must be at least 2 characters.';
+    } else if (name.length > 100) {
+      newErrors.fullName = 'Full Name cannot exceed 100 characters.';
+    } else if (['guest', 'guest student', 'test student'].includes(name.toLowerCase())) {
+      newErrors.fullName = 'Please enter your actual name instead of a placeholder.';
+    }
+
+    // 2. Age
+    const rawAge = formData.age !== undefined && formData.age !== null ? String(formData.age).trim() : '';
+    if (!rawAge) {
+      newErrors.age = 'Age is required.';
+    } else {
+      const parsedAge = Number(rawAge);
+      if (!Number.isInteger(parsedAge) || isNaN(parsedAge) || String(parsedAge) !== rawAge) {
+        newErrors.age = 'Please enter a valid whole number for age.';
+      } else if (parsedAge < 10 || parsedAge > 60) {
+        newErrors.age = 'Age must be between 10 and 60 years.';
+      }
+    }
+
+    // 3. Class/Year
+    const classVal = (formData.classYear || '').trim();
+    if (!classVal) {
+      newErrors.classYear = 'Please select your Class or Academic Year.';
+    }
+
+    // 4. Subjects enjoyed
+    const enjoy = (formData.enjoySubjects || '').trim();
+    if (!enjoy) {
+      newErrors.enjoySubjects = 'Please enter subjects you enjoy learning.';
+    } else if (enjoy.length < 2) {
+      newErrors.enjoySubjects = 'Subject name must be at least 2 characters.';
+    }
+
+    // 5. Subjects challenging
+    const chall = (formData.challengingSubjects || '').trim();
+    if (!chall) {
+      newErrors.challengingSubjects = 'Please enter subjects you find challenging.';
+    } else if (chall.length < 2) {
+      newErrors.challengingSubjects = 'Subject name must be at least 2 characters.';
+    }
+
+    return newErrors;
+  };
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
-    else {
-      onComplete(formData);
+    if (step === 1) {
+      const step1Errors = validateStep1();
+      if (Object.keys(step1Errors).length > 0) {
+        setErrors(step1Errors);
+        const firstField = Object.keys(step1Errors)[0];
+        const el = document.querySelector(`[name="${firstField}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.focus();
+        }
+        return;
+      }
+    }
+
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
+      const canonicalAvatar = normalizeAvatarKey(formData.avatar || formData.profilePhoto) || DEFAULT_AVATAR_KEY;
+      onComplete({
+        ...formData,
+        avatar: canonicalAvatar,
+        profilePhoto: resolveAvatarUrl(canonicalAvatar) || formData.profilePhoto
+      });
     }
   };
 
@@ -269,16 +370,23 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                   <div className="flex-1 w-full">
                     <p className="text-[10px] text-gray-500 font-bold mb-2 uppercase tracking-wide">Or choose an avatar:</p>
                     <div className="flex flex-wrap gap-2">
-                      {avatarOptions.map((avatar, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => selectAvatar(avatar)}
-                          className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all hover:scale-110 ${formData.profilePhoto === avatar ? 'border-[#09A3A3] shadow-md scale-110' : 'border-transparent opacity-80 hover:opacity-100'}`}
-                        >
-                          <img src={avatar} alt={`Avatar ${idx}`} className="w-full h-full object-cover bg-white" />
-                        </button>
-                      ))}
+                      {AVATAR_LIST.map((item) => {
+                        const isSelected = formData.avatar === item.key || formData.profilePhoto === item.path;
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => selectAvatar(item.key, item.path)}
+                            className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all hover:scale-110 cursor-pointer ${
+                              isSelected
+                                ? 'border-[#09A3A3] ring-2 ring-[#09A3A3]/40 shadow-md scale-110'
+                                : 'border-transparent opacity-80 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={item.path} alt={item.key} className="w-full h-full object-cover bg-white" />
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -293,19 +401,40 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                     value={formData.fullName} 
                     onChange={handleChange}
                     placeholder={tLoc.placeholders.fullName}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
+                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
+                      errors.fullName
+                        ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
+                        : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
+                    }`}
                   />
+                  {errors.fullName && (
+                    <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                      <span>⚠️</span> {errors.fullName}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-[#04211F]">{tLoc.age}</label>
                   <input 
                     type="number" 
                     name="age"
+                    min="10"
+                    max="60"
+                    step="1"
                     value={formData.age} 
                     onChange={handleChange}
                     placeholder={tLoc.placeholders.age}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
+                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
+                      errors.age
+                        ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
+                        : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
+                    }`}
                   />
+                  {errors.age && (
+                    <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                      <span>⚠️</span> {errors.age}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -316,15 +445,28 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                     name="classYear"
                     value={formData.classYear} 
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all cursor-pointer"
+                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all cursor-pointer ${
+                      errors.classYear
+                        ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
+                        : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
+                    }`}
                   >
                     <option value="">{tLoc.selectClass}</option>
-                    <option value="Class 10">Class 10</option>
-                    <option value="Class 12">Class 12</option>
-                    <option value="1st Year College">1st Year College</option>
-                    <option value="2nd Year College">2nd Year College</option>
-                    <option value="3rd Year College">3rd Year College</option>
+                    {CLASS_YEAR_GROUPS.map((grp) => (
+                      <optgroup key={grp.group} label={grp.group}>
+                        {grp.options.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
                   </select>
+                  {errors.classYear && (
+                    <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                      <span>⚠️</span> {errors.classYear}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-[#04211F]">{tLoc.stream}</label>
@@ -347,8 +489,17 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                   value={formData.enjoySubjects} 
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.enjoySubj}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
+                  className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
+                    errors.enjoySubjects
+                      ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
+                      : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
+                  }`}
                 />
+                {errors.enjoySubjects && (
+                  <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                    <span>⚠️</span> {errors.enjoySubjects}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -359,8 +510,17 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                   value={formData.challengingSubjects} 
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.challSubj}
-                  className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
+                  className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
+                    errors.challengingSubjects
+                      ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
+                      : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
+                  }`}
                 />
+                {errors.challengingSubjects && (
+                  <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                    <span>⚠️</span> {errors.challengingSubjects}
+                  </p>
+                )}
               </div>
             </motion.div>
           )}

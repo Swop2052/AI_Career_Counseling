@@ -83,21 +83,27 @@ class WalletService:
         try:
             with conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT id, balance FROM credit_wallets WHERE user_id = %s", (user_id,))
-                row = cursor.fetchone()
-
-                current_balance = row['balance'] if row else 0
-                if current_balance < amount:
-                    raise ValueError(f"Insufficient credit balance (Current: {current_balance}, Required: {amount}).")
-
-                new_balance = current_balance - amount
                 now_str = datetime.now().isoformat()
 
+                # Atomic conditional deduction: row update succeeds ONLY if balance >= amount
                 cursor.execute("""
-                    UPDATE credit_wallets SET balance = %s, updated_at = %s WHERE user_id = %s
-                """, (new_balance, now_str, user_id))
+                    UPDATE credit_wallets
+                    SET balance = balance - %s, updated_at = %s
+                    WHERE user_id = %s AND balance >= %s
+                """, (amount, now_str, user_id, amount))
 
-                # Record negative transaction amount
+                if cursor.rowcount == 0:
+                    cursor.execute("SELECT balance FROM credit_wallets WHERE user_id = %s", (user_id,))
+                    row = cursor.fetchone()
+                    current_balance = row['balance'] if row else 0
+                    raise ValueError(f"Insufficient credit balance (Current: {current_balance}, Required: {amount}).")
+
+                # Fetch updated balance after atomic decrement
+                cursor.execute("SELECT balance FROM credit_wallets WHERE user_id = %s", (user_id,))
+                new_row = cursor.fetchone()
+                new_balance = new_row['balance'] if new_row else 0
+
+                # Record negative transaction amount in immutable audit ledger
                 tx_id = f"tx_{uuid.uuid4().hex[:12]}"
                 cursor.execute("""
                     INSERT INTO credit_transactions (id, user_id, type, amount, balance_after, reference_type, reference_id, description, created_at)

@@ -194,9 +194,9 @@ export default function CampaignCodes() {
           <AnimatePresence>
             {filteredCampaigns.map((c, i) => {
               const active = c.is_active === 1 || c.is_active === true;
-              const uses = c.times_redeemed || 0;
-              const max = c.max_uses || null;
-              const pctUsed = max ? Math.min(100, Math.round((uses / max) * 100)) : 0;
+              const uses = c.redemptions_used ?? c.times_redeemed ?? c.real_redemption_count ?? c.used_count ?? 0;
+              const max = c.redemption_limit ?? c.max_uses ?? null;
+              const pctUsed = c.redemption_percentage ?? (max > 0 ? Math.min(100, Math.round((uses / max) * 100)) : 0);
 
               return (
                 <motion.div
@@ -252,7 +252,7 @@ export default function CampaignCodes() {
                           {uses} {max ? `/ ${max}` : '(Unlimited)'}
                         </span>
                       </div>
-                      {max && <ProgressBar value={pctUsed} color={pctUsed > 80 ? 'rose' : 'teal'} />}
+                      {max ? <ProgressBar value={pctUsed} max={100} /> : null}
                     </div>
 
                     {(c.valid_from || c.valid_until) && (

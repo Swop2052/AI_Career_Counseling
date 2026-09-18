@@ -48,6 +48,12 @@ export default function LoginPage({ onSuccess, onLogin, onSwitchToSignup, onHome
     } catch {
       pendingAttemptId = null;
     }
+    if (!pendingAttemptId) {
+      pendingAttemptId = localStorage.getItem('skillsense_return_to_unlock') ||
+                         localStorage.getItem('skillsense_pending_attempt_id') ||
+                         localStorage.getItem('skillsense_saved_attempt_id') ||
+                         null;
+    }
 
     authApi.login(formData.email, formData.password, pendingAttemptId)
       .then((res) => {
@@ -57,7 +63,7 @@ export default function LoginPage({ onSuccess, onLogin, onSwitchToSignup, onHome
           email: formData.email,
           initials: formData.email.slice(0, 2).toUpperCase()
         };
-        const claimedId = res.claimed_attempt_id || null;
+        const claimedId = res.claimed_attempt_id || pendingAttemptId || null;
         if (claimedId) {
           try {
             const rawFlow = sessionStorage.getItem('skillsense_active_assessment_flow');
@@ -65,10 +71,12 @@ export default function LoginPage({ onSuccess, onLogin, onSwitchToSignup, onHome
             sessionStorage.setItem('skillsense_active_assessment_flow', JSON.stringify({
               ...flow,
               attemptId: claimedId,
-              flowState: 'pending_assessment_locked',
+              flowState: 'claimed_locked',
               completedAt: flow.completedAt || Date.now(),
               dismissed: false
             }));
+            localStorage.setItem('skillsense_return_to_unlock', claimedId);
+            localStorage.setItem('skillsense_pending_attempt_id', claimedId);
           } catch (e) {
             console.warn('Failed to update active assessment flow:', e);
           }

@@ -14,13 +14,8 @@ services:
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
-      - DB_HOST=db
-      - DB_PORT=5432
     depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./data:/app/data
+      - db
     logging:
       driver: "json-file"
       options:
@@ -29,23 +24,16 @@ services:
 
   db:
     image: postgres:15-alpine
-    container_name: skillsense_db
+    container_name: skillsense_postgres
     restart: always
-    env_file:
-      - .env
     environment:
-      - POSTGRES_USER=${DB_USER:-postgres}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
-      - POSTGRES_DB=${DB_NAME:-skillsense}
+      POSTGRES_DB: ${DB_NAME:-skillsense}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
-      - "5434:5432"
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${DB_USER:-postgres} -d $${DB_NAME:-skillsense}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  postgres_data:
