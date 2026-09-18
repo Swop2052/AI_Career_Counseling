@@ -695,8 +695,6 @@ export default function App() {
         localStorage.setItem('skillsense_user', JSON.stringify(meRes.user));
       }
 
-      setUnlockConfirmModal(null);
-      setZeroCreditModal(null);
       setGlobalModal(null);
       setSuccessToast({ message: 'Career roadmap unlocked successfully!', visible: true });
       navigateTo('report', '#report');

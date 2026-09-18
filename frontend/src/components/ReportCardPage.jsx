@@ -866,9 +866,9 @@ export default function ReportCardPage({
       </motion.div>
 
       {/* Canonical SkillSense Modal for Locked State */}
-      {!isPurchased && (
+      {!isPurchased && !suppressLockedModal && (
         <CanonicalModal
-          isOpen={!isPurchased}
+          isOpen={!isPurchased && !suppressLockedModal}
           eyebrow={!currentUser ? "ASSESSMENT COMPLETE" : ((currentUser?.balance ?? 0) >= 1 ? "ASSESSMENT READY" : "ASSESSMENT SAVED")}
           title={!currentUser ? `Unlock ${fullName}'s Report` : ((currentUser?.balance ?? 0) >= 1 ? `Unlock ${fullName}'s Report` : "Credits Required to Unlock")}
           balance={currentUser && (currentUser?.balance ?? 0) > 0 ? currentUser.balance : null}
