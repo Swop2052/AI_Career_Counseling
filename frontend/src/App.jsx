@@ -803,7 +803,7 @@ export default function App() {
               user={activeReportUser}
               currentUser={currentUser}
               reportData={reportData}
-              isPurchased={Boolean(reportData?.is_unlocked === 1 || reportData?.is_unlocked === true)}
+              isPurchased={Boolean(isPurchased || reportData?.is_unlocked === 1 || reportData?.is_unlocked === true)}
               suppressLockedModal={Boolean(globalModal)}
               onCreateAccount={() => navigateTo('signup', '#signup')}
               onBack={() => navigateTo(currentUser ? 'profile' : 'home', currentUser ? '#profile' : '')}
