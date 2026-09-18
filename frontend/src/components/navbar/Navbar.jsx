@@ -340,9 +340,9 @@ export default function Navbar({
   };
 
   return (
-    <header className={`fixed left-0 right-0 z-[90] transition-all duration-500 ease-out px-2.5 xs:px-3 sm:px-6 md:px-10 ${scrolled ? 'top-1.5 sm:top-3' : 'top-2 sm:top-5'} `}>
+    <header className={`fixed left-0 right-0 z-[90] transition-all duration-500 ease-out px-2.5 xs:px-3 sm:px-6 md:px-10 ${scrolled ? 'top-1.5 sm:top-3' : 'top-2 sm:top-5'} pointer-events-none`}>
       <div
-        className={`max-w-7xl mx-auto rounded-xl sm:rounded-3xl transition-all duration-500 flex items-center justify-between gap-2 ${
+        className={`max-w-7xl mx-auto rounded-xl sm:rounded-3xl transition-all duration-500 flex items-center justify-between gap-2 pointer-events-auto ${
           scrolled
             ? 'py-1.5 px-2.5 sm:py-2.5 sm:px-5 backdrop-blur-2xl border-t border-l border-b bg-[#ffffff]/90 shadow-[0_20px_40px_rgba(4,48,46,0.12),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,1)] border-white border-b-slate-200/80'
             : 'py-2 px-3 sm:py-3.5 sm:px-6 backdrop-blur-xl border-t border-l border-b bg-[#ffffff]/75 shadow-[0_12px_32px_rgba(4,48,46,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)] border-white/90 border-b-slate-200/60'
@@ -495,7 +495,7 @@ export default function Navbar({
       {/* Mobile Menu Drawer */}
       <div
         className={`lg:hidden mt-1.5 sm:mt-2 mx-auto max-w-7xl rounded-xl sm:rounded-3xl backdrop-blur-2xl border-t border-l border-b overflow-hidden transition-all duration-300 ease-in-out bg-white/95 border-white border-b-slate-200 shadow-[0_20px_40px_rgba(4,48,46,0.18)] ${
-          menuOpen ? 'max-h-[600px] opacity-100 p-3.5 sm:p-5' : 'max-h-0 opacity-0 p-0 border-transparent'
+          menuOpen ? 'max-h-[600px] opacity-100 p-3.5 sm:p-5 pointer-events-auto' : 'max-h-0 opacity-0 p-0 border-transparent pointer-events-none invisible'
         }`}
       >
         <div className="flex flex-col gap-2.5 sm:gap-3.5">

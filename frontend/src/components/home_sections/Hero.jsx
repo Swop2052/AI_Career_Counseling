@@ -286,7 +286,7 @@ export default function Hero({ onStartTest }) {
         {/* Buttons */}
         <motion.div
           variants={slideFromLeftVariants}
-          className="flex flex-col min-[355px]:flex-row min-[355px]:items-center gap-3.5 mb-7"
+          className="relative z-20 flex flex-col min-[355px]:flex-row min-[355px]:items-center gap-3.5 mb-7"
         >
           {/* Linked Test Button */}
           <button 
@@ -298,7 +298,7 @@ export default function Hero({ onStartTest }) {
               {t('startTest')}
               <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 group-hover:translate-x-1" />
             </span>
-            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12" />
+            <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12 pointer-events-none" />
           </button>
 
           {/* Get Career Advice Button Linked to #ai-counselor */}

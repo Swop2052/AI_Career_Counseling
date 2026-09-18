@@ -99,12 +99,14 @@ export default function AICounselor({ currentUser, onLoginRequest }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 md:bottom-7 md:right-7 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-5 right-5 md:bottom-7 md:right-7 z-50 flex flex-col items-end gap-3 pointer-events-none">
       {/* Chat panel */}
       <div
         className={`transition-all duration-300 ease-out origin-bottom-right ${
-          chatOpen ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-90 translate-y-3 pointer-events-none'
-        } w-[88vw] max-w-[340px] bg-white/90 backdrop-blur-xl rounded-[1.75rem] shadow-2xl shadow-[#04211F]/20 border border-white/60 overflow-hidden flex flex-col max-h-[500px]`}
+          chatOpen 
+            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto max-h-[500px]' 
+            : 'opacity-0 scale-90 translate-y-3 pointer-events-none invisible max-h-0'
+        } w-[88vw] max-w-[340px] bg-white/90 backdrop-blur-xl rounded-[1.75rem] shadow-2xl shadow-[#04211F]/20 border border-white/60 overflow-hidden flex flex-col`}
       >
         <div className="relative bg-gradient-to-br from-[#09A3A3] to-[#04302E] px-5 py-4 flex items-center gap-3 text-white overflow-hidden shrink-0">
           <div className="pointer-events-none absolute -top-8 -right-8 w-24 h-24 rounded-full bg-[#E8B04B]/20 blur-2xl" />
@@ -187,8 +189,9 @@ export default function AICounselor({ currentUser, onLoginRequest }) {
       {/* Floating trigger with spinning gradient ring */}
       <button
         onClick={() => setChatOpen((v) => !v)}
-        className="relative flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95"
+        className="relative flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95 pointer-events-auto cursor-pointer"
         style={{ width: '3.9rem', height: '3.9rem' }}
+        aria-label="Toggle AI Career Counselor chat"
       >
         {!chatOpen && (
           <span
