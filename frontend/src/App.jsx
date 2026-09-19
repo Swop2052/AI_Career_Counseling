@@ -63,7 +63,7 @@ export const clearAssessmentFlow = () => {
     localStorage.removeItem('skillsense_return_to_unlock');
     localStorage.removeItem('skillsense_pending_attempt_id');
     localStorage.removeItem('skillsense_saved_attempt_id');
-  } catch {}
+  } catch { }
 };
 
 class ReportErrorBoundary extends React.Component {
@@ -187,7 +187,7 @@ export default function App() {
           localStorage.removeItem('skillsense_user');
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Sync route and reset scroll on navigation with role guards
@@ -246,7 +246,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', syncPageWithHash);
   }, [currentUser]);
 
-  // Route security guard: adjust current page when user state hydrates or updates
+  // Route security guard: adjust cur rent page when user state hydrates or updates
   useEffect(() => {
     if (currentPage === 'admin') {
       if (currentUser && !isSuperAdmin(currentUser)) {
@@ -303,6 +303,20 @@ export default function App() {
         window.history.pushState(null, '', window.location.pathname + window.location.search);
       }
     }
+  };
+  const handleHelpSupport = () => {
+    navigateTo('home');
+
+    setTimeout(() => {
+      const contactSection = document.getElementById('contact');
+
+      if (contactSection) {
+        contactSection.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      }
+    }, 150);
   };
 
   const handleStartCareerTest = () => {
@@ -427,10 +441,10 @@ export default function App() {
 
     const activeFlow = getActiveAssessmentFlow();
     const activeAttempt = claimedAttemptId ||
-                          activeFlow?.attemptId ||
-                          localStorage.getItem('skillsense_return_to_unlock') ||
-                          localStorage.getItem('skillsense_pending_attempt_id') ||
-                          reportData?.attempt_id;
+      activeFlow?.attemptId ||
+      localStorage.getItem('skillsense_return_to_unlock') ||
+      localStorage.getItem('skillsense_pending_attempt_id') ||
+      reportData?.attempt_id;
 
     try {
       const res = await authApi.getMe().catch(() => null);
@@ -487,7 +501,7 @@ export default function App() {
           };
           setReportData(rData);
           localStorage.setItem('skillsense_report', JSON.stringify(rData));
-        } catch {}
+        } catch { }
       }
 
       if (statusRes.is_unlocked) {
@@ -517,10 +531,10 @@ export default function App() {
 
     const activeFlow = getActiveAssessmentFlow();
     const activeAttempt = claimedAttemptId ||
-                          activeFlow?.attemptId ||
-                          localStorage.getItem('skillsense_return_to_unlock') ||
-                          localStorage.getItem('skillsense_pending_attempt_id') ||
-                          reportData?.attempt_id;
+      activeFlow?.attemptId ||
+      localStorage.getItem('skillsense_return_to_unlock') ||
+      localStorage.getItem('skillsense_pending_attempt_id') ||
+      reportData?.attempt_id;
 
     try {
       const res = await authApi.getMe().catch(() => null);
@@ -572,7 +586,7 @@ export default function App() {
           };
           setReportData(rData);
           localStorage.setItem('skillsense_report', JSON.stringify(rData));
-        } catch {}
+        } catch { }
       }
 
       if (statusRes.is_unlocked) {
@@ -610,10 +624,10 @@ export default function App() {
     try {
       const rawTarget = sessionStorage.getItem('skillsense_unlock_target');
       if (rawTarget) target = JSON.parse(rawTarget);
-    } catch (e) {}
+    } catch (e) { }
 
     const returnAttemptId = target?.attemptId ||
-                           localStorage.getItem('skillsense_return_to_unlock');
+      localStorage.getItem('skillsense_return_to_unlock');
 
     if (returnAttemptId) {
       try {
@@ -714,7 +728,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    authApi.logout().catch(() => {});
+    authApi.logout().catch(() => { });
     clearAssessmentFlow();
     localStorage.removeItem('skillsense_user');
     localStorage.removeItem('skillsense_onboarding');
@@ -770,6 +784,7 @@ export default function App() {
           onHomeClick={() => navigateTo('home', '')}
           onStartCareerTest={handleStartCareerTest}
           onLogout={handleLogout}
+          onHelpSupport={handleHelpSupport}
         />
       )}
 
@@ -809,7 +824,7 @@ export default function App() {
               onBack={() => navigateTo(currentUser ? 'profile' : 'home', currentUser ? '#profile' : '')}
               onGoToPricing={() => {
                 const attemptId = reportData?.attempt_id ||
-                                  getActiveAssessmentFlow()?.attemptId;
+                  getActiveAssessmentFlow()?.attemptId;
                 if (attemptId) {
                   updateAssessmentFlow({ attemptId, flowState: 'awaiting_credits' });
                   localStorage.setItem('skillsense_return_to_unlock', attemptId);
@@ -819,7 +834,7 @@ export default function App() {
               }}
               onUnlockReport={async () => {
                 const attemptId = reportData?.attempt_id ||
-                                  getActiveAssessmentFlow()?.attemptId;
+                  getActiveAssessmentFlow()?.attemptId;
                 if (attemptId) {
                   await handleUnlock(attemptId);
                 } else {
@@ -1073,11 +1088,10 @@ export default function App() {
       {/* ---- Success Toast ---- */}
       {successToast?.visible && (
         <div
-          className={`fixed top-24 left-1/2 -translate-x-1/2 z-[210] px-6 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold flex items-center gap-3 animate-[fadeInDown_0.3s_ease-out] ${
-            successToast.isError
-              ? 'bg-red-50 border-red-200 text-red-700'
-              : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-          }`}
+          className={`fixed top-24 left-1/2 -translate-x-1/2 z-[210] px-6 py-3.5 rounded-2xl shadow-2xl border text-sm font-bold flex items-center gap-3 animate-[fadeInDown_0.3s_ease-out] ${successToast.isError
+            ? 'bg-red-50 border-red-200 text-red-700'
+            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            }`}
           style={{ fontFamily: "'Inter', sans-serif", minWidth: 280, maxWidth: 480 }}
           ref={(el) => {
             if (el && !el._toastTimerSet) {

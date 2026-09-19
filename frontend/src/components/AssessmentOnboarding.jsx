@@ -284,22 +284,22 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
   };
 
   return (
-    <div 
-      className="min-h-screen w-full h-50 bg-[#CFEDED] py-8 px-4 flex items-center justify-center relative selection:bg-[#09A3A3] selection:text-white"
+    <div
+      className="min-h-screen w-full bg-[#CFEDED] py-8 px-4 flex items-center justify-center relative selection:bg-[#09A3A3] selection:text-white"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      
+
       {/* Background Glow Effects */}
       <div className="absolute top-10 left-10 w-72 h-72 bg-[#09A3A3]/15 rounded-full blur-[90px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#E8B04B]/15 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Main Form Card */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full bg-[#FAFDFC] rounded-[32px] shadow-[0_16px_48px_rgba(4,48,46,0.08)] border border-white p-6 sm:p-10 relative overflow-hidden"
+        className="max-w-2xl w-full h-auto min-h-fit bg-[#FAFDFC] rounded-[32px] shadow-[0_16px_48px_rgba(4,48,46,0.08)] border border-white p-6 sm:p-10 relative "
       >
-        
+
         {/* Progress Bar Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -317,7 +317,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
           </div>
 
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               className="h-full bg-gradient-to-r from-[#04302E] to-[#09A3A3]"
               animate={{ width: `${(step / 3) * 100}%` }}
               transition={{ duration: 0.3 }}
@@ -335,7 +335,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
         {/* STEP 1 */}
         <AnimatePresence mode="wait">
           {step === 1 && (
-            <motion.div 
+            <motion.div
               key="step1"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -365,7 +365,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                       <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                     </label>
                   </div>
-                  
+
                   {/* Avatar Options */}
                   <div className="flex-1 w-full">
                     <p className="text-[10px] text-gray-500 font-bold mb-2 uppercase tracking-wide">Or choose an avatar:</p>
@@ -377,11 +377,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                             key={item.key}
                             type="button"
                             onClick={() => selectAvatar(item.key, item.path)}
-                            className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all hover:scale-110 cursor-pointer ${
-                              isSelected
+                            className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all hover:scale-110 cursor-pointer ${isSelected
                                 ? 'border-[#09A3A3] ring-2 ring-[#09A3A3]/40 shadow-md scale-110'
                                 : 'border-transparent opacity-80 hover:opacity-100'
-                            }`}
+                              }`}
                           >
                             <img src={item.path} alt={item.key} className="w-full h-full object-cover bg-white" />
                           </button>
@@ -395,17 +394,16 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-[#04211F]">{tLoc.fullName}</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="fullName"
-                    value={formData.fullName} 
+                    value={formData.fullName}
                     onChange={handleChange}
                     placeholder={tLoc.placeholders.fullName}
-                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
-                      errors.fullName
+                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${errors.fullName
                         ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
                         : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
-                    }`}
+                      }`}
                   />
                   {errors.fullName && (
                     <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
@@ -415,20 +413,19 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-[#04211F]">{tLoc.age}</label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     name="age"
                     min="10"
                     max="60"
                     step="1"
-                    value={formData.age} 
+                    value={formData.age}
                     onChange={handleChange}
                     placeholder={tLoc.placeholders.age}
-                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
-                      errors.age
+                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${errors.age
                         ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
                         : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
-                    }`}
+                      }`}
                   />
                   {errors.age && (
                     <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
@@ -441,15 +438,14 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-[#04211F]">{tLoc.classYear}</label>
-                  <select 
+                  <select
                     name="classYear"
-                    value={formData.classYear} 
+                    value={formData.classYear}
                     onChange={handleChange}
-                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all cursor-pointer ${
-                      errors.classYear
+                    className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all cursor-pointer ${errors.classYear
                         ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
                         : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
-                    }`}
+                      }`}
                   >
                     <option value="">{tLoc.selectClass}</option>
                     {CLASS_YEAR_GROUPS.map((grp) => (
@@ -470,10 +466,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-extrabold text-[#04211F]">{tLoc.stream}</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     name="stream"
-                    value={formData.stream} 
+                    value={formData.stream}
                     onChange={handleChange}
                     placeholder={tLoc.placeholders.stream}
                     className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
@@ -483,17 +479,16 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5 pt-2">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.enjoySubj}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="enjoySubjects"
-                  value={formData.enjoySubjects} 
+                  value={formData.enjoySubjects}
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.enjoySubj}
-                  className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
-                    errors.enjoySubjects
+                  className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${errors.enjoySubjects
                       ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
                       : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
-                  }`}
+                    }`}
                 />
                 {errors.enjoySubjects && (
                   <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
@@ -504,17 +499,16 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.challSubj}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="challengingSubjects"
-                  value={formData.challengingSubjects} 
+                  value={formData.challengingSubjects}
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.challSubj}
-                  className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${
-                    errors.challengingSubjects
+                  className={`w-full px-4 py-3 rounded-2xl text-xs font-medium transition-all ${errors.challengingSubjects
                       ? 'bg-rose-50/50 border border-rose-400 focus:outline-none focus:border-rose-600 focus:ring-1 focus:ring-rose-400 text-[#04211F]'
                       : 'bg-[#F4FBFA] border border-[#09A3A3]/20 focus:outline-none focus:border-[#09A3A3] text-xs font-medium'
-                  }`}
+                    }`}
                 />
                 {errors.challengingSubjects && (
                   <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
@@ -527,7 +521,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
           {/* STEP 2 */}
           {step === 2 && (
-            <motion.div 
+            <motion.div
               key="step2"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -541,10 +535,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.interests}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="interests"
-                  value={formData.interests} 
+                  value={formData.interests}
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.interests}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
@@ -553,10 +547,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.hobbies}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="hobbies"
-                  value={formData.hobbies} 
+                  value={formData.hobbies}
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.hobbies}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
@@ -565,10 +559,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.strengths}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="strengths"
-                  value={formData.strengths} 
+                  value={formData.strengths}
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.strengths}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
@@ -577,10 +571,10 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.careerAsp}</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="careerAspirations"
-                  value={formData.careerAspirations} 
+                  value={formData.careerAspirations}
                   onChange={handleChange}
                   placeholder={tLoc.placeholders.careerAsp}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all"
@@ -591,7 +585,7 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
           {/* STEP 3 */}
           {step === 3 && (
-            <motion.div 
+            <motion.div
               key="step3"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -605,9 +599,9 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.learnMode}</label>
-                <select 
+                <select
                   name="learningMode"
-                  value={formData.learningMode} 
+                  value={formData.learningMode}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all cursor-pointer"
                 >
@@ -619,9 +613,9 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.budget}</label>
-                <select 
+                <select
                   name="budget"
-                  value={formData.budget} 
+                  value={formData.budget}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all cursor-pointer"
                 >
@@ -633,9 +627,9 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.locPref}</label>
-                <select 
+                <select
                   name="locationPref"
-                  value={formData.locationPref} 
+                  value={formData.locationPref}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all cursor-pointer"
                 >
@@ -647,9 +641,9 @@ export default function AssessmentOnboarding({ onComplete, onBackToHome, initial
 
               <div className="space-y-1.5">
                 <label className="text-xs font-extrabold text-[#04211F]">{tLoc.collegeType}</label>
-                <select 
+                <select
                   name="collegeType"
-                  value={formData.collegeType} 
+                  value={formData.collegeType}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-2xl bg-[#F4FBFA] border border-[#09A3A3]/20 text-xs font-medium focus:outline-none focus:border-[#09A3A3] transition-all cursor-pointer"
                 >

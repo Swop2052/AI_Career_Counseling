@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../translations/LanguageContext';
 import {
-  Compass, Menu, X, Globe, ChevronDown, Check, User, Settings, LogOut, HelpCircle, LogIn, UserPlus,
+  Compass, Menu, X, Globe, ChevronDown, Check, User, LogOut, HelpCircle, LogIn, UserPlus,
   LayoutDashboard, ShieldCheck
 } from 'lucide-react';
 import { isSuperAdmin, isDeveloper } from '../../utils/roleUtils';
@@ -15,20 +15,20 @@ const LANGUAGES = [
 
 function Dynamic3DCompassLogo({ onHomeClick }) {
   return (
-    <div 
-      onClick={onHomeClick} 
+    <div
+      onClick={onHomeClick}
       className="group flex items-center gap-0.5 cursor-pointer select-none transition-transform hover:scale-[1.02] active:scale-95 pl-1"
     >
-      <img 
-        src="/logo.png" 
-        alt="SkillSense Icon" 
-        className="h-[46px] w-auto object-contain mix-blend-multiply drop-shadow-sm" 
+      <img
+        src="/logo.png"
+        alt="SkillSense Icon"
+        className="h-[46px] w-auto object-contain mix-blend-multiply drop-shadow-sm"
         draggable="false"
       />
-      <img 
-        src="/logo1.png" 
-        alt="SkillSense Typography" 
-        className="h-[28px] sm:h-[32px] w-auto object-contain mix-blend-multiply drop-shadow-sm mt-1" 
+      <img
+        src="/logo1.png"
+        alt="SkillSense Typography"
+        className="h-[28px] sm:h-[32px] w-auto object-contain mix-blend-multiply drop-shadow-sm mt-1"
         draggable="false"
       />
     </div>
@@ -76,11 +76,10 @@ function LanguageDropdown({ compact }) {
                   setLanguage(lang.code.toLowerCase());
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3.5 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-[#09A3A3]/15 to-transparent text-[#04302E] font-bold border-l-2 border-[#09A3A3]'
-                    : 'text-[#0B3D3D]/70 hover:bg-[#04302E]/5 hover:text-[#04302E]'
-                }`}
+                className={`w-full flex items-center justify-between px-3.5 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${isSelected
+                  ? 'bg-gradient-to-r from-[#09A3A3]/15 to-transparent text-[#04302E] font-bold border-l-2 border-[#09A3A3]'
+                  : 'text-[#0B3D3D]/70 hover:bg-[#04302E]/5 hover:text-[#04302E]'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -104,7 +103,7 @@ function AvatarBadge({ size = 'md', user }) {
   const dims = size === 'sm' ? 'w-8 h-8 text-[10px]' : 'w-9 h-9 text-xs';
   const initials = user?.initials || (user?.name ? user.name.slice(0, 2).toUpperCase() : 'SK');
   const avatar = resolveAvatarUrl(user?.avatar || user?.profilePhoto) || (user?.profilePhoto && typeof user.profilePhoto === 'string' && user.profilePhoto.startsWith('data:') ? user.profilePhoto : null);
-  
+
   return (
     <div
       className={`relative ${dims} shrink-0 rounded-full bg-gradient-to-b from-[#0f5a56] via-[#04302e] to-[#021c1b] flex items-center justify-center border-t border-l border-white/30 border-b border-r border-black/40 shadow-[0_4px_10px_rgba(4,48,46,0.3),inset_0_1px_1px_rgba(255,255,255,0.35)] overflow-hidden`}
@@ -121,7 +120,7 @@ function AvatarBadge({ size = 'md', user }) {
   );
 }
 
-function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin, onLogout, user }) {
+function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin, onLogout, onHelpSupport, user }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -150,6 +149,12 @@ function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin,
       onLogout();
     }
   };
+  const handleHelpSupportClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOpen(false);
+    if (onHelpSupport) onHelpSupport()
+  }
 
   return (
     <div className="relative z-[100]" ref={dropdownRef}>
@@ -169,11 +174,11 @@ function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin,
       </button>
 
       {isOpen && (
-        <div 
-          onClick={(e) => e.stopPropagation()} 
+        <div
+          onClick={(e) => e.stopPropagation()}
           className="absolute right-0 mt-3 w-56 rounded-2xl border py-2 z-[110] bg-white border-white/80 shadow-[0_12px_35px_rgba(4,48,46,0.25),0_4px_10px_rgba(0,0,0,0.1)]"
         >
-          <div 
+          <div
             onClick={handleProfileClick}
             className="flex items-center gap-3 px-4 py-2.5 border-b border-[#04302E]/10 cursor-pointer hover:bg-[#04302E]/5 transition-colors"
           >
@@ -239,16 +244,10 @@ function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin,
               </button>
             ) : null}
 
-            <button
-              type="button"
-              className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs font-semibold transition-all text-[#0B3D3D]/75 hover:bg-[#04302E]/5 hover:text-[#04302E] cursor-pointer"
-            >
-              <Settings className="w-3.5 h-3.5 text-[#09A3A3]" />
-              <span>Settings</span>
-            </button>
 
             <button
               type="button"
+              onClick={handleHelpSupportClick}
               className="w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs font-semibold transition-all text-[#0B3D3D]/75 hover:bg-[#04302E]/5 hover:text-[#04302E] cursor-pointer"
             >
               <HelpCircle className="w-3.5 h-3.5 text-[#09A3A3]" />
@@ -272,15 +271,16 @@ function ProfileDropdown({ compact, onOpenProfile, onOpenDeveloper, onOpenAdmin,
   );
 }
 
-export default function Navbar({ 
-  onOpenProfile, 
-  onOpenCounselor, 
-  onHomeClick, 
-  onOpenLogin, 
-  onOpenSignup, 
+export default function Navbar({
+  onOpenProfile,
+  onOpenCounselor,
+  onHomeClick,
+  onOpenLogin,
+  onOpenSignup,
   onOpenDeveloper,
   onOpenAdmin,
   onStartCareerTest,
+  onHelpSupport,
   isLoggedIn = false,
   user = null,
   onLogout
@@ -323,7 +323,7 @@ export default function Navbar({
   // 2. इतर Sections (About, How it works, Contact) वर अचूक जाण्यासाठी
   const handleScrollToSection = (e, sectionId) => {
     if (e) e.preventDefault();
-    
+
     // जर आपण वेगळ्या पेजवर असू (उदा. Profile, Report, इत्यादी) तर आधी होमपेज सेट करू
     if (onHomeClick) onHomeClick();
 
@@ -342,11 +342,10 @@ export default function Navbar({
   return (
     <header className={`fixed left-0 right-0 z-[90] transition-all duration-500 ease-out px-2.5 xs:px-3 sm:px-6 md:px-10 ${scrolled ? 'top-1.5 sm:top-3' : 'top-2 sm:top-5'} pointer-events-none`}>
       <div
-        className={`max-w-7xl mx-auto rounded-xl sm:rounded-3xl transition-all duration-500 flex items-center justify-between gap-2 pointer-events-auto ${
-          scrolled
-            ? 'py-1.5 px-2.5 sm:py-2.5 sm:px-5 backdrop-blur-2xl border-t border-l border-b bg-[#ffffff]/90 shadow-[0_20px_40px_rgba(4,48,46,0.12),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,1)] border-white border-b-slate-200/80'
-            : 'py-2 px-3 sm:py-3.5 sm:px-6 backdrop-blur-xl border-t border-l border-b bg-[#ffffff]/75 shadow-[0_12px_32px_rgba(4,48,46,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)] border-white/90 border-b-slate-200/60'
-        }`}
+        className={`max-w-7xl mx-auto rounded-xl sm:rounded-3xl transition-all duration-500 flex items-center justify-between gap-2 pointer-events-auto ${scrolled
+          ? 'py-1.5 px-2.5 sm:py-2.5 sm:px-5 backdrop-blur-2xl border-t border-l border-b bg-[#ffffff]/90 shadow-[0_20px_40px_rgba(4,48,46,0.12),0_1px_3px_rgba(0,0,0,0.05),inset_0_1px_1px_rgba(255,255,255,1)] border-white border-b-slate-200/80'
+          : 'py-2 px-3 sm:py-3.5 sm:px-6 backdrop-blur-xl border-t border-l border-b bg-[#ffffff]/75 shadow-[0_12px_32px_rgba(4,48,46,0.08),inset_0_1px_2px_rgba(255,255,255,0.9)] border-white/90 border-b-slate-200/60'
+          }`}
       >
         <Dynamic3DCompassLogo onHomeClick={handleGoHome} />
 
@@ -439,12 +438,13 @@ export default function Navbar({
 
           {/* Conditional Auth Rendering */}
           {isLoggedIn ? (
-            <ProfileDropdown 
-              onOpenProfile={onOpenProfile} 
-              onOpenDeveloper={onOpenDeveloper} 
-              onOpenAdmin={onOpenAdmin} 
-              onLogout={onLogout} 
-              user={user} 
+            <ProfileDropdown
+              onOpenProfile={onOpenProfile}
+              onOpenDeveloper={onOpenDeveloper}
+              onOpenAdmin={onOpenAdmin}
+              onLogout={onLogout}
+              onHelpSupport={onHelpSupport}
+              user={user}
             />
           ) : (
             <div className="flex items-center gap-1.5">
@@ -472,13 +472,14 @@ export default function Navbar({
         {/* Mobile Controls */}
         <div className="flex items-center gap-1 xs:gap-1.5 lg:hidden shrink-0">
           {isLoggedIn && (
-            <ProfileDropdown 
-              compact 
-              onOpenProfile={onOpenProfile} 
-              onOpenDeveloper={onOpenDeveloper} 
-              onOpenAdmin={onOpenAdmin} 
-              onLogout={onLogout} 
-              user={user} 
+            <ProfileDropdown
+              compact
+              onOpenProfile={onOpenProfile}
+              onOpenDeveloper={onOpenDeveloper}
+              onOpenAdmin={onOpenAdmin}
+              onLogout={onLogout}
+              onHelpSupport={onHelpSupport}
+              user={user}
             />
           )}
           <button
@@ -494,13 +495,12 @@ export default function Navbar({
 
       {/* Mobile Menu Drawer */}
       <div
-        className={`lg:hidden mt-1.5 sm:mt-2 mx-auto max-w-7xl rounded-xl sm:rounded-3xl backdrop-blur-2xl border-t border-l border-b overflow-hidden transition-all duration-300 ease-in-out bg-white/95 border-white border-b-slate-200 shadow-[0_20px_40px_rgba(4,48,46,0.18)] ${
-          menuOpen ? 'max-h-[600px] opacity-100 p-3.5 sm:p-5 pointer-events-auto' : 'max-h-0 opacity-0 p-0 border-transparent pointer-events-none invisible'
-        }`}
+        className={`lg:hidden mt-1.5 sm:mt-2 mx-auto max-w-7xl rounded-xl sm:rounded-3xl backdrop-blur-2xl border-t border-l border-b overflow-hidden transition-all duration-300 ease-in-out bg-white/95 border-white border-b-slate-200 shadow-[0_20px_40px_rgba(4,48,46,0.18)] ${menuOpen ? 'max-h-[600px] opacity-100 p-3.5 sm:p-5 pointer-events-auto' : 'max-h-0 opacity-0 p-0 border-transparent pointer-events-none invisible'
+          }`}
       >
         <div className="flex flex-col gap-2.5 sm:gap-3.5">
           {isLoggedIn ? (
-            <div 
+            <div
               onClick={() => { setMenuOpen(false); onOpenProfile && onOpenProfile(); }}
               className="flex items-center gap-3 pb-3 border-b border-[#04302E]/10 cursor-pointer"
             >
@@ -560,9 +560,9 @@ export default function Navbar({
 
             <a
               href="#about"
-              onClick={(e) => { 
-                setMenuOpen(false); 
-                handleScrollToSection(e, 'about'); 
+              onClick={(e) => {
+                setMenuOpen(false);
+                handleScrollToSection(e, 'about');
               }}
               className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#0B3D3D]/85 hover:bg-[#09A3A3]/10 hover:text-[#09A3A3]"
             >
@@ -571,9 +571,9 @@ export default function Navbar({
 
             <a
               href="#how-it-works"
-              onClick={(e) => { 
-                setMenuOpen(false); 
-                handleScrollToSection(e, 'how-it-works'); 
+              onClick={(e) => {
+                setMenuOpen(false);
+                handleScrollToSection(e, 'how-it-works');
               }}
               className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#0B3D3D]/85 hover:bg-[#09A3A3]/10 hover:text-[#09A3A3]"
             >
@@ -593,9 +593,9 @@ export default function Navbar({
 
             <a
               href="#contact"
-              onClick={(e) => { 
-                setMenuOpen(false); 
-                handleScrollToSection(e, 'contact'); 
+              onClick={(e) => {
+                setMenuOpen(false);
+                handleScrollToSection(e, 'contact');
               }}
               className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#0B3D3D]/85 hover:bg-[#09A3A3]/10 hover:text-[#09A3A3]"
             >
