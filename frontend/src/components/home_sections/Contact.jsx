@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, AlertCircle, Loader2 } from 'lucide-react';
 import Reveal from '../Reveal';
 import { useLanguage } from '../../translations/LanguageContext';
 
@@ -40,22 +40,60 @@ const getContactInfo = (t) => [
 
 export default function Contact() {
   const { t } = useLanguage();
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const [form, setForm] = useState({ name: '', email: '', message: '', website: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    if (errorMessage) setErrorMessage('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: connect to backend / email service
-    setSubmitted(true);
+    if (isSubmitting) return;
+
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      setErrorMessage('Please fill in all required fields.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          message: form.message.trim(),
+          website: form.website || '',
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || data?.status !== 'success') {
+        throw new Error(data?.message || 'Failed to send message. Please try again later.');
+      }
+
+      setSubmitted(true);
+      setForm({ name: '', email: '', message: '', website: '' });
+    } catch (err) {
+      setErrorMessage(err.message || 'An error occurred while sending your message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <section id="contact" className="scroll-mt-2 relative bg-white">
+    <section id="contact" className="scroll-mt-20 md:scroll-mt-24 relative bg-white">
       {/* Top wave divider */}
       <div className="w-full leading-[0] text-[#CFEDED]">
         <svg
@@ -156,6 +194,16 @@ export default function Contact() {
                       <p className="text-sm text-[#0B3D3D]/65">
                         {t('successDesc')}
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSubmitted(false);
+                          setErrorMessage('');
+                        }}
+                        className="mt-5 px-5 py-2.5 rounded-xl text-xs font-bold text-[#078686] bg-[#CFEDED]/50 hover:bg-[#CFEDED] transition-colors cursor-pointer"
+                      >
+                        Send Another Message
+                      </button>
                     </motion.div>
                   ) : (
                     <motion.form
@@ -166,6 +214,22 @@ export default function Contact() {
                       onSubmit={handleSubmit}
                       className="flex flex-col gap-4"
                     >
+                      <input
+                        type="text"
+                        name="website"
+                        value={form.website || ''}
+                        onChange={handleChange}
+                        tabIndex="-1"
+                        autoComplete="off"
+                        className="hidden"
+                        aria-hidden="true"
+                      />
+                      {errorMessage && (
+                        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+                          <span>{errorMessage}</span>
+                        </div>
+                      )}
                       {[
                         { id: 'name', label: t('nameLabel'), type: 'text', placeholder: 'Your name' },
                         { id: 'email', label: t('emailLabel'), type: 'email', placeholder: 'you@example.com' },
@@ -228,27 +292,39 @@ export default function Contact() {
 
                       <motion.button
                         type="submit"
+                        disabled={isSubmitting}
                         custom={3}
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true }}
                         variants={fieldVariants}
-                        whileHover={{
+                        whileHover={isSubmitting ? {} : {
                           y: -2,
                           scale: 1.02,
                           transition: { type: 'spring', stiffness: 300, damping: 15 },
                         }}
-                        whileTap={{ scale: 0.97 }}
-                        className="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#09A3A3] to-[#04302E] text-white font-semibold text-sm px-6 py-3 shadow-md shadow-[#09A3A3]/30 hover:shadow-lg hover:shadow-[#09A3A3]/40 transition-shadow duration-300"
+                        whileTap={isSubmitting ? {} : { scale: 0.97 }}
+                        className={`mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#09A3A3] to-[#04302E] text-white font-semibold text-sm px-6 py-3 shadow-md shadow-[#09A3A3]/30 hover:shadow-lg hover:shadow-[#09A3A3]/40 transition-all duration-300 ${
+                          isSubmitting ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'
+                        }`}
                       >
-                        {t('sendMessage')}
-                        <motion.span
-                          animate={{ x: [0, 3, 0] }}
-                          transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-                          className="flex"
-                        >
-                          <Send className="w-4 h-4" />
-                        </motion.span>
+                        {isSubmitting ? (
+                          <>
+                            <span>Sending...</span>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          </>
+                        ) : (
+                          <>
+                            {t('sendMessage')}
+                            <motion.span
+                              animate={{ x: [0, 3, 0] }}
+                              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                              className="flex"
+                            >
+                              <Send className="w-4 h-4" />
+                            </motion.span>
+                          </>
+                        )}
                       </motion.button>
                     </motion.form>
                   )}

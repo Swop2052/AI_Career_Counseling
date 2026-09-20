@@ -1163,11 +1163,13 @@ from routes.auth_routes import auth_bp
 from routes.assessment_routes import assessment_bp
 from routes.payment_routes import payment_bp
 from routes.developer_routes import developer_bp
+from routes.contact_routes import contact_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(assessment_bp)
 app.register_blueprint(payment_bp)
 app.register_blueprint(developer_bp)
+app.register_blueprint(contact_bp)
 
 # ============================================================
 # PRODUCTION SECURITY HEADERS & GUARDS

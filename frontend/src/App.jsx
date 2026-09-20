@@ -305,18 +305,24 @@ export default function App() {
     }
   };
   const handleHelpSupport = () => {
-    navigateTo('home');
-
-    setTimeout(() => {
+    const scrollToContact = () => {
       const contactSection = document.getElementById('contact');
-
       if (contactSection) {
         contactSection.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
+      } else {
+        window.location.hash = '#contact';
       }
-    }, 150);
+    };
+
+    if (currentPage !== 'home') {
+      setCurrentPage('home');
+      setTimeout(scrollToContact, 200);
+    } else {
+      scrollToContact();
+    }
   };
 
   const handleStartCareerTest = () => {

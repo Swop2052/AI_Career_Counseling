@@ -57,15 +57,16 @@ function LanguageDropdown({ compact }) {
       <button
         type="button"
         onClick={() => setIsOpen((v) => !v)}
-        className={`flex items-center gap-2 ${compact ? 'px-2.5 py-1.5' : 'px-3.5 py-2'} rounded-xl border-t border-l border-b border-r shadow-[0_3px_6px_rgba(4,48,46,0.08),inset_0_1px_0_rgba(255,255,255,1)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] active:translate-y-0.5 text-xs font-bold transition-all duration-150 bg-gradient-to-b from-white to-[#edf3f3] border-white border-b-[#c2d3d2] text-[#04211F] cursor-pointer`}
+        className={`flex items-center gap-1.5 xs:gap-2 ${compact ? 'px-2 py-1.5 xs:px-2.5' : 'px-3.5 py-2'} rounded-xl border-t border-l border-b border-r shadow-[0_3px_6px_rgba(4,48,46,0.08),inset_0_1px_0_rgba(255,255,255,1)] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] active:translate-y-0.5 text-xs font-bold transition-all duration-150 bg-gradient-to-b from-white to-[#edf3f3] border-white border-b-[#c2d3d2] text-[#04211F] cursor-pointer`}
       >
         <Globe className="w-3.5 h-3.5 text-[#09A3A3]" />
-        <span>{currentLangObj.label}</span>
+        <span className={compact ? "hidden sm:inline" : ""}>{currentLangObj.label}</span>
+        {compact && <span className="sm:hidden text-xs">{currentLangObj.code}</span>}
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} text-[#0B3D3D]/60`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-40 rounded-2xl border py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150 bg-white border-white/80 shadow-[0_12px_30px_rgba(4,48,46,0.18),0_4px_8px_rgba(0,0,0,0.06)]">
+        <div className="absolute right-0 mt-3 w-40 rounded-2xl border py-1.5 z-[110] animate-in fade-in zoom-in-95 duration-150 bg-white border-white/80 shadow-[0_12px_30px_rgba(4,48,46,0.18),0_4px_8px_rgba(0,0,0,0.06)]">
           {LANGUAGES.map((lang) => {
             const isSelected = currentLangObj.code === lang.code;
             return (
@@ -285,6 +286,7 @@ export default function Navbar({
   user = null,
   onLogout
 }) {
+  const { language, setLanguage } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -471,6 +473,7 @@ export default function Navbar({
 
         {/* Mobile Controls */}
         <div className="flex items-center gap-1 xs:gap-1.5 lg:hidden shrink-0">
+          <LanguageDropdown compact />
           {isLoggedIn && (
             <ProfileDropdown
               compact
@@ -499,6 +502,35 @@ export default function Navbar({
           }`}
       >
         <div className="flex flex-col gap-2.5 sm:gap-3.5">
+          {/* Mobile Language Switcher Row */}
+          <div className="flex items-center justify-between px-2 py-2 border-b border-[#04302E]/10">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#0B3D3D]/70">
+              <Globe className="w-3.5 h-3.5 text-[#09A3A3]" />
+              <span>Language:</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {LANGUAGES.map((lang) => {
+                const isSelected = language === lang.code.toLowerCase();
+                return (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => {
+                      setLanguage(lang.code.toLowerCase());
+                    }}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#09A3A3] text-white shadow-sm'
+                        : 'bg-[#04302E]/5 text-[#04302E] hover:bg-[#04302E]/10'
+                    }`}
+                  >
+                    {lang.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {isLoggedIn ? (
             <div
               onClick={() => { setMenuOpen(false); onOpenProfile && onOpenProfile(); }}
@@ -601,6 +633,22 @@ export default function Navbar({
             >
               Contact
             </a>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                setMenuOpen(false);
+                if (onHelpSupport) {
+                  onHelpSupport();
+                } else {
+                  handleScrollToSection(e, 'contact');
+                }
+              }}
+              className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-[#0B3D3D]/85 hover:bg-[#09A3A3]/10 hover:text-[#09A3A3]"
+            >
+              <span>Help & Support</span>
+              <HelpCircle className="w-4 h-4 text-[#09A3A3]" />
+            </button>
 
             {/* Mobile Administrative console based on verified role */}
             {isLoggedIn && (

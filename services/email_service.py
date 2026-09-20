@@ -213,4 +213,131 @@ class EmailService:
             expires_hours=expires_hours
         )
 
+
+    def send_contact_email(self, name: str, email: str, message: str,
+                           phone: str = '', subject_line: str = '',
+                           recipient_email: str = None) -> bool:
+        """Send contact form submission to support/admin via SMTP."""
+        import html
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
+        target_email = (
+            recipient_email
+            or os.environ.get('CONTACT_RECEIVER_EMAIL')
+            or os.environ.get('SUPPORT_EMAIL')
+            or self.smtp_from
+            or self.smtp_user
+        )
+
+        subject = f"[SkillSense Contact] New message from {name}"
+        if subject_line and subject_line.strip():
+            subject = f"[SkillSense Contact] {subject_line.strip()} — from {name}"
+
+        safe_name = html.escape(name or '')
+        safe_email = html.escape(email or '')
+        safe_phone = html.escape(phone or 'N/A')
+        safe_subject = html.escape(subject_line or 'N/A')
+        safe_message = html.escape(message or '').replace('\n', '<br>')
+
+        phone_row = f'<div class="info-row"><span class="info-label">Phone:</span><span class="info-value">{safe_phone}</span></div>' if phone else ''
+        subject_row = f'<div class="info-row"><span class="info-label">Subject:</span><span class="info-value">{safe_subject}</span></div>' if subject_line else ''
+
+        html_body = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4fbf7; margin: 0; padding: 24px; color: #1c1c1e; }}
+        .card {{ max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 36px 30px; border: 1px solid rgba(0, 168, 107, 0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.05); }}
+        .brand {{ font-size: 1.5rem; font-weight: 800; color: #09A3A3; margin-bottom: 20px; text-align: center; letter-spacing: -0.02em; }}
+        .brand span {{ color: #04302E; }}
+        .badge {{ display: inline-block; background: #f0fdf4; color: #078686; border: 1px solid #bbf7d0; border-radius: 999px; padding: 5px 16px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }}
+        .title {{ font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 16px; line-height: 1.3; }}
+        .info-box {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 22px; margin-bottom: 24px; }}
+        .info-row {{ display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; font-size: 0.92rem; }}
+        .info-row:last-child {{ margin-bottom: 0; }}
+        .info-label {{ color: #71717a; font-weight: 600; min-width: 90px; }}
+        .info-value {{ color: #0f172a; font-weight: 700; word-break: break-all; text-align: right; }}
+        .message-box {{ background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid #09A3A3; border-radius: 12px; padding: 18px 20px; font-size: 0.95rem; color: #1e293b; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap; }}
+        .footer {{ font-size: 0.8rem; color: #94a3b8; text-align: center; line-height: 1.6; border-top: 1px solid #f1f5f9; padding-top: 18px; }}
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="brand">SkillSense<span>.</span></div>
+        <div style="text-align:center">
+            <span class="badge">Contact Form Submission</span>
+        </div>
+        <div class="title">New Message from {safe_name}</div>
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span class="info-value">{safe_name}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email:</span>
+                <span class="info-value"><a href="mailto:{safe_email}" style="color:#078686; text-decoration:none;">{safe_email}</a></span>
+            </div>
+            {phone_row}
+            {subject_row}
+            <div class="info-row">
+                <span class="info-label">Submitted At:</span>
+                <span class="info-value">{timestamp}</span>
+            </div>
+        </div>
+        <div style="font-size:0.85rem; font-weight:700; color:#475569; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.04em;">Message:</div>
+        <div class="message-box">{safe_message}</div>
+        <div class="footer">
+            This message was submitted through the SkillSense Contact Form.<br>
+            You can reply directly to this email to contact {safe_name}.
+        </div>
+    </div>
+</body>
+</html>"""
+
+        phone_text = f"Phone:\n{phone}\n\n" if phone else ""
+        subject_text = f"Subject:\n{subject_line}\n\n" if subject_line else ""
+
+        text_body = (
+            "New Contact Form Submission\n"
+            "--------------------------------\n\n"
+            f"Name:\n{name}\n\n"
+            f"Email:\n{email}\n\n"
+            f"{phone_text}"
+            f"{subject_text}"
+            f"Message:\n{message}\n\n"
+            f"Submitted At:\n{timestamp}\n\n"
+            "--------------------------------\n"
+            "This message was submitted through the SkillSense Contact Form."
+        )
+
+        if not self.smtp_user or not self.smtp_password:
+            print(f"[INFO] [MOCK EMAIL] Contact form from {name} <{email}> to {target_email}:\n{text_body}")
+            return True
+
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = self.smtp_from
+            msg["To"] = target_email
+            msg["Reply-To"] = email
+            msg.attach(MIMEText(text_body, "plain", "utf-8"))
+            msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+            if self.smtp_secure:
+                server = smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=12)
+            else:
+                server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=12)
+                server.starttls()
+
+            server.login(self.smtp_user, self.smtp_password)
+            server.sendmail(self.smtp_from, [target_email], msg.as_string())
+            server.quit()
+            print(f"[SUCCESS] Sent contact form email from {email} to {target_email}")
+            return True
+        except Exception as e:
+            print(f"[ERROR] Failed to send contact form email: {e}")
+            return False
+
 email_service = EmailService()
