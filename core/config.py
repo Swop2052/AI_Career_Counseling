@@ -58,7 +58,6 @@ class Config:
     career_db_path: str = os.path.join(base_dir, "Data.json")
     riasec_questions_path: str = os.path.join(base_dir, "questions", "english.json")
 
-    db_path: str = os.path.join(base_dir, "data", "career_guide.db")
     db_name: str = os.getenv("DB_NAME", "skillsense")
     db_port: str = os.getenv("DB_PORT", "5432")
     db_host: str = os.getenv("DB_HOST", "localhost")
@@ -69,7 +68,11 @@ class Config:
     def database_url(self) -> str:
         env_url = os.getenv("DATABASE_URL")
         if env_url:
+            if "sqlite" in env_url.lower():
+                raise RuntimeError("PostgreSQL DATABASE_URL is required. SQLite fallback is disabled.")
             return env_url
+        if not self.db_name or not self.db_user:
+            raise RuntimeError("PostgreSQL configuration (DATABASE_URL or DB_NAME/DB_USER) is required. SQLite fallback is disabled.")
         import urllib.parse
         encoded_pwd = urllib.parse.quote_plus(self.db_password)
         host = "127.0.0.1" if self.db_host in ("localhost", "127.0.0.1") else self.db_host

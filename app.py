@@ -891,7 +891,7 @@ def career_detail():
         career_name = data.get('career_name')
         language = data.get('language', 'en')
         
-        # Check SQLite database first
+        # Check database first
         from modules.conversation_memory import conversation_memory
         target_record = conversation_memory.get_career_detail(career_name)
         
@@ -1014,7 +1014,7 @@ def chat():
                 'response': "You have reached your limit of 20 messages per hour. Please wait a bit before continuing our conversation! Don't worry, your chat history is automatically saved."
             })
         
-        # Get persona from SQLite session store or create default
+        # Get persona from database session store or create default
         persona = conversation_memory.get_persona(session_id)
         if not persona:
             persona = {
@@ -1025,7 +1025,7 @@ def chat():
                 'preferences': {}
             }
         
-        # Check SQLite session store for career matches
+        # Check database session store for career matches
         career_matches = conversation_memory.get_career_matches(session_id)
         has_taken_test = session.get('has_taken_test', False) or (persona is not None and persona.get('riasec_profile') != {})
         

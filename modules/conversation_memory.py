@@ -19,29 +19,25 @@ class ConversationMemory:
     
     def __init__(self):
         self._max_history = config.max_chat_history
-        self._db_available = False
+        self._init_db()
+        self._db_available = True
         try:
-            self._init_db()
             self.cleanup_old_sessions()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARNING] Session cleanup error: {e}")
         
     def _get_connection(self):
         """Get a connection to the PostgreSQL database."""
+        db_url = config.database_url
+        if not db_url or "sqlite" in db_url.lower():
+            raise RuntimeError("PostgreSQL DATABASE_URL is required. SQLite fallback is disabled.")
         try:
-            import socket
-            host = getattr(config, 'db_host', '127.0.0.1')
-            port = int(getattr(config, 'db_port', 5434))
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(0.2)
-            s.connect((host, port))
-            s.close()
-            conn = psycopg2.connect(config.database_url, connect_timeout=1)
+            conn = psycopg2.connect(db_url, connect_timeout=5)
             psycopg2.extras.register_default_jsonb(conn)
             psycopg2.extras.register_default_json(conn)
             return conn
         except Exception as e:
-            raise e
+            raise RuntimeError(f"PostgreSQL connection failed in conversation_memory: {e}. SQLite fallback is disabled.") from e
         
     def _init_db(self):
         """Initialize PostgreSQL database schema."""
@@ -54,7 +50,6 @@ class ConversationMemory:
             schema_sql = f.read()
 
         conn = None
-        cursor = None
         try:
             conn = self._get_connection()
             with conn:
@@ -64,7 +59,7 @@ class ConversationMemory:
             print("[SUCCESS] PostgreSQL database successfully initialized.")
         except Exception as e:
             self._db_available = False
-            print(f"[WARNING] PostgreSQL unavailable on {config.db_host}:{config.db_port}: {e}")
+            raise RuntimeError(f"PostgreSQL database initialization failed in conversation_memory: {e}. SQLite fallback is disabled.") from e
         finally:
             if conn:
                 conn.close()
