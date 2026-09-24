@@ -37,8 +37,8 @@ export default function CareerDetailModal({ career, onClose }) {
 
   // Expected Income
   const incomeStr = career.salary || raw.expected_income?.fresher_salary || '';
-  const minInc = raw.expected_income?.minimum_monthly_salary;
-  const maxInc = raw.expected_income?.maximum_monthly_salary;
+  const minInc = raw.expected_income?.minimum_monthly_salary_inr || raw.expected_income?.minimum_monthly_salary;
+  const maxInc = raw.expected_income?.maximum_monthly_salary_inr || raw.expected_income?.maximum_monthly_salary;
 
   // Scholarships & Loans
   const scholarships = raw.scholarships;
@@ -55,7 +55,7 @@ export default function CareerDetailModal({ career, onClose }) {
 
   // Growth Path
   const growthPath = career.growthPath || raw.growth_path || '';
-  const growthSteps = Array.isArray(growthPath) ? growthPath : growthPath.split('→').map(s => s.trim()).filter(Boolean);
+  const growthSteps = Array.isArray(growthPath) ? growthPath : (typeof growthPath === 'string' ? growthPath.split(/\u2192|->|\+|\u2022|\u203a/).map(s => s.trim()).filter(Boolean) : []);
 
   // Skill Development Plan
   const skillPlan = raw.skill_development_plan || '';

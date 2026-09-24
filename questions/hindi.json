@@ -28,7 +28,7 @@
       ],
       "icons": [
         "/images/icons/hammer.png",
-        "/images/icons/tools.png",
+        "/images/icons/hammer.png",
         "/images/icons/balance.png",
         "/images/icons/brain.png",
         "/images/icons/thinking.png"
@@ -444,7 +444,7 @@
         "/images/icons/brain.png",
         "/images/icons/take-note.png",
         "/images/icons/neutral.png",
-        "/images/icons/heart.png",
+        "/images/icons/like.png",
         "/images/icons/team.png"
       ]
     },
@@ -478,7 +478,7 @@
         "/images/icons/bar-chart.png",
         "/images/icons/take-note.png",
         "/images/icons/balance.png",
-        "/images/icons/heart.png",
+        "/images/icons/like.png",
         "/images/icons/team.png"
       ]
     }

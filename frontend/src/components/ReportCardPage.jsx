@@ -1,7 +1,8 @@
+import { parseEducationPath, parseStreamInfo, parseSalary, parseCourseFee, parseTraits, parseGrowthPath } from '../utils/careerDataParser';
 import React, { useState, useEffect, useRef } from 'react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { useReactToPrint } from 'react-to-print';
 import LinkedInShareCard from './LinkedInShareCard';
+import SkillSensePrintReport from './SkillSensePrintReport';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from 'recharts';
 import {
@@ -171,13 +172,13 @@ export default function ReportCardPage({
   const { language } = useLanguage();
   const shareCardRef = useRef(null);
   const reportRef = useRef(null);
+  const printReportRef = useRef(null);
   const t = repT[language] || repT.en;
 
   const [selectedCareer, setSelectedCareer] = useState(null);
   const [activeTrait, setActiveTrait] = useState(null);
   const [defaultCareers, setDefaultCareers] = useState(FALLBACK_CAREERS);
   const [defaultRIASEC, setDefaultRIASEC] = useState(() => getFallbackRIASEC(t));
-  const [preGeneratedBlob, setPreGeneratedBlob] = useState(null);
 
   useEffect(() => {
     if (!reportData) {
@@ -186,22 +187,23 @@ export default function ReportCardPage({
         .then(data => {
           if (data && data.careers) {
             const placeholderCareers = data.careers.slice(0, 6).map((c, idx) => {
-              let streamInfo = 'Any Stream';
-              if (c.educational_pathway && c.educational_pathway.length > 0) {
-                  streamInfo = c.educational_pathway[0]?.stream || c.educational_pathway[0]?.degree || 'Any Stream';
-              }
-              const traits = c.personality_traits?.join(', ') || c.personality_traits || 'Problem solving, logical reasoning';
-              const growthPath = Array.isArray(c.growth_path) ? c.growth_path.join(' → ') : (c.growth_path || 'Junior → Senior → Lead');
+              const streamInfo = parseStreamInfo(c);
+              const educationPath = parseEducationPath(c);
+              const salaryStr = parseSalary(c);
+              const feeStr = parseCourseFee(c);
+              const traitsStr = parseTraits(c);
+              const growthPath = parseGrowthPath(c);
           
               return {
                 rank: idx + 1,
-                title: c.career_name,
+                title: c.career_name || 'Career Exploration',
                 stream: streamInfo,
+                educationPath: educationPath,
                 match: 95 - idx * 3,
-                salary: '₹1,50,000 – ₹3,00,000 / mo',
-                fee: '₹50,000 – ₹2,00,000',
+                salary: salaryStr,
+                fee: feeStr,
                 description: c.description || '',
-                traits: traits,
+                traits: traitsStr,
                 growthPath: growthPath,
                 icon: [Rocket, TrendingUp, Award, Compass, Target, Briefcase][idx % 6],
                 color: [PURPLE, TEAL, GOLD, '#2E86AB', TEAL, PURPLE][idx % 6],
@@ -311,32 +313,29 @@ export default function ReportCardPage({
             : null));
 
   const dynamicCareers = incomingCareers ? incomingCareers.map((c, idx) => {
-    const careerData = (c.data && typeof c.data === 'object' && Object.keys(c.data).length > 0) ? c.data : c;
-    const minSalary = careerData?.expected_income?.minimum_monthly_salary || careerData?.minimum_monthly_salary || '';
-    const maxSalary = careerData?.expected_income?.maximum_monthly_salary || careerData?.maximum_monthly_salary || '';
-    const salaryStr = (minSalary && maxSalary) ? `${minSalary} – ${maxSalary} / mo` : (minSalary || maxSalary || '₹1,50,000 – ₹3,00,000 / mo');
-    
-    const feeInfo = careerData?.course_fee?.estimated_total_fee || careerData?.course_fee?.fee_range || careerData?.estimated_total_fee || '₹50,000 – ₹2,00,000';
-    let streamInfo = 'Any Stream';
-    if (careerData?.educational_pathway && Array.isArray(careerData.educational_pathway) && careerData.educational_pathway.length > 0) {
-        streamInfo = careerData.educational_pathway[0]?.stream || careerData.educational_pathway[0]?.degree || 'Any Stream';
-    }
-    const traits = Array.isArray(careerData?.personality_traits) ? careerData.personality_traits.join(', ') : (careerData?.personality_traits || 'Problem solving, logical reasoning');
-    const growthPath = Array.isArray(careerData?.growth_path) ? careerData.growth_path.join(' → ') : (careerData?.growth_path || 'Junior → Senior → Lead');
+    const careerData = (c.data && typeof c.data === 'object' && Object.keys(c.data).length > 0) ? { ...c, ...c.data } : c;
+
+    const salaryStr = parseSalary(careerData);
+    const feeStr = parseCourseFee(careerData);
+    const educationPath = parseEducationPath(careerData);
+    const streamInfo = parseStreamInfo(careerData);
+    const traitsStr = parseTraits(careerData);
+    const growthPathStr = parseGrowthPath(careerData);
 
     const rawScore = c.match_score ?? c.score ?? c.fit_score ?? (95 - idx * 3);
     const matchScore = Math.round(Number(rawScore) || (95 - idx * 3));
 
     return {
       rank: idx + 1,
-      title: c.name || c.career_name || 'Career Match',
+      title: c.name || c.career_name || careerData?.career_name || 'Career Match',
       stream: streamInfo,
+      educationPath: educationPath,
       match: matchScore,
       salary: salaryStr,
-      fee: feeInfo,
+      fee: feeStr,
       description: careerData?.description || c.reason || '',
-      traits: traits,
-      growthPath: growthPath,
+      traits: traitsStr,
+      growthPath: growthPathStr,
       icon: [Rocket, TrendingUp, Award, Compass, Target, Briefcase][idx % 6],
       color: [PURPLE, TEAL, GOLD, '#2E86AB', TEAL, PURPLE][idx % 6],
       rawData: careerData,
@@ -344,20 +343,8 @@ export default function ReportCardPage({
     };
   }) : (defaultCareers || FALLBACK_CAREERS);
 
-  useEffect(() => {
-    if (shareCardRef.current && dynamicCareers && dynamicCareers.length > 0) {
-      const timer = setTimeout(() => {
-        html2canvas(shareCardRef.current, { backgroundColor: '#ffffff', scale: 2, logging: false })
-          .then(canvas => {
-            canvas.toBlob(blob => {
-              if (blob) setPreGeneratedBlob(blob);
-            }, 'image/png');
-          })
-          .catch(err => console.error("Failed to pre-generate share card", err));
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [dynamicCareers]);
+  // Share card snapshot removed (html2canvas not needed)
+  // LinkedIn share now uses text-only approach
 
   if (!dynamicCareers || !dynamicRIASEC) {
     return (
@@ -373,40 +360,27 @@ export default function ReportCardPage({
   const profilePhoto = resolveAvatarUrl(rawAvatar) || (rawAvatar && typeof rawAvatar === 'string' && (rawAvatar.startsWith('/') || rawAvatar.startsWith('data:')) ? rawAvatar : null);
   const topMatch = dynamicCareers[0];
 
-  const handleDownloadReport = async () => {
-    if (!reportRef.current) return;
-    try {
-      const canvas = await html2canvas(reportRef.current, { 
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: '#F6FBFA' 
-      });
-      
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      let heightLeft = pdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+  const handleDownloadReport = useReactToPrint({
+    contentRef: printReportRef,
+    documentTitle: `${studentName}_SkillSense_Report`,
+    pageStyle: `
+      @page {
+        size: A4 portrait;
+        margin: 5mm 8mm;
       }
+      @media print {
+        body, html {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          background: #ffffff !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+      }
+    `,
+    onAfterPrint: () => console.log('Print successful')
+  });
 
-      pdf.save(`SkillSense_Career_Report_${studentName}.pdf`);
-    } catch (err) {
-      console.error("Error generating report", err);
-      alert("Failed to download report. Please try again.");
-    }
-  };
 
   const handleLinkedInShare = async () => {
     const matchScore = topMatch?.match || 96;
@@ -428,12 +402,7 @@ export default function ReportCardPage({
     const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(shareText)}`;
 
     try {
-      if (preGeneratedBlob) {
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': preGeneratedBlob })
-        ]);
-        alert("📸 Your report image has been copied! Just Paste (Ctrl+V) when LinkedIn opens to attach it to your post.");
-      }
+      await navigator.clipboard.writeText(shareText);
     } catch (err) {
       console.warn("Clipboard write failed:", err);
     }
@@ -466,7 +435,7 @@ export default function ReportCardPage({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="max-w-[1200px] w-full relative"
+        className="screen-dashboard-container max-w-[1200px] w-full relative"
         style={{ fontFamily: "'Inter', sans-serif" }}
       >
         <div className={`transition-all duration-500 ${!isPurchased ? 'blur-[6px] select-none pointer-events-none opacity-70' : ''}`}>
@@ -863,7 +832,22 @@ export default function ReportCardPage({
             />
           )}
         </AnimatePresence>
-      </motion.div>
+      
+          
+        </motion.div>
+
+
+      
+      {/* SkillSense Dedicated 2-Page Print / PDF Report (matches user reference specification) */}
+      <SkillSensePrintReport
+        refProp={printReportRef}
+        user={user}
+        reportData={reportData}
+        dynamicCareers={dynamicCareers}
+        dynamicRIASEC={dynamicRIASEC}
+        personalityCode={personalityCode}
+        dateStr={getDayStr()}
+      />
 
       {/* Canonical SkillSense Modal for Locked State */}
       {!isPurchased && !suppressLockedModal && (

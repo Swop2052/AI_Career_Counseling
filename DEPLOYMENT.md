@@ -54,7 +54,7 @@ SkillSense operates with a strict authoritative backend architecture:
 
 The production application requires PostgreSQL (version 14 or higher).
 
-1. Ensure PostgreSQL is installed and running:
+1. Ensure PostgreSQL is installed and running:  
    ```bash
    sudo systemctl status postgresql
    ```

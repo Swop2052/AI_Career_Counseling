@@ -52,3 +52,93 @@ body::-webkit-scrollbar {
 .thin-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(9, 163, 163, 0.5);
 }
+
+/* Screen mode: hide dedicated print report container from regular screen view */
+@media screen {
+  .skillsense-print-root {
+    position: absolute !important;
+    left: -99999px !important;
+    top: 0 !important;
+    width: 210mm !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
+  }
+}
+
+/* Print mode: format clean 2-page document */
+@media print {
+  @page {
+    margin: 5mm 8mm;
+    size: A4 portrait;
+  }
+
+  /* Force background colors/images to render in PDF */
+  body, html {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: #ffffff !important;
+  }
+
+  /* Hide screen dashboard during printing so it NEVER prints */
+  .screen-dashboard-container,
+  nav,
+  header,
+  footer,
+  .no-print,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  /* Make print root visible and properly positioned */
+  .skillsense-print-root {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    opacity: 1 !important;
+    z-index: auto !important;
+  }
+
+  .skillsense-pdf-document {
+    display: block !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  .skillsense-pdf-page {
+    width: 100% !important;
+    height: 285mm !important;
+    max-height: 285mm !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  .skillsense-pdf-page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Remove blur/lock overlay when printing */
+  [class*="blur-"] {
+    filter: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+}
