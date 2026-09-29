@@ -29,8 +29,16 @@ KEY REQUIREMENTS FULFILLED:
 - Compiles all generated reports into a timestamped ZIP archive.
 
 USAGE:
-    python scripts/export_all_student_pdfs.py --limit 3
+    # Interactive date selection menu (lists dates with assessment counts):
     python scripts/export_all_student_pdfs.py
+
+    # Filter by specific date directly:
+    python scripts/export_all_student_pdfs.py --date "2026-09-23"
+    python scripts/export_all_student_pdfs.py --date "23 9 2026"
+    python scripts/export_all_student_pdfs.py --date "23-09-2026"
+
+    # Export all dates without interactive prompt:
+    python scripts/export_all_student_pdfs.py --all
 =============================================================================
 """
 
@@ -92,7 +100,145 @@ def validate_pdf(file_path: str):
         return False, f"Cannot read file: {e}", 0
 
 
-def fetch_all_student_assessments(target_email=None, limit=None):
+def parse_date_input(val_str: str):
+    """
+    Parse a flexible user date input into standard YYYY-MM-DD.
+    Accepts:
+      - '23 9 2026', '23 09 2026'
+      - '23-09-2026', '2026-09-23'
+      - '23/09/2026', '2026/09/23'
+      - 'all', 'a', '*' -> returns 'all'
+    """
+    if not val_str:
+        return None
+    val_str = str(val_str).strip().lower()
+    if val_str in ['all', 'a', '*', 'all dates', 'none']:
+        return 'all'
+
+    # Check 3 parts separated by space, slash, dot, dash (e.g. '23 9 2026')
+    parts = re.split(r'[-_\s\/\.]+', val_str)
+    if len(parts) == 3:
+        p1, p2, p3 = parts
+        if len(p3) == 4 and p1.isdigit() and p2.isdigit():
+            try:
+                return datetime(int(p3), int(p2), int(p1)).strftime('%Y-%m-%d')
+            except ValueError:
+                pass
+        elif len(p1) == 4 and p2.isdigit() and p3.isdigit():
+            try:
+                return datetime(int(p1), int(p2), int(p3)).strftime('%Y-%m-%d')
+            except ValueError:
+                pass
+
+    cleaned = re.sub(r'[\s\/\.]+', '-', val_str)
+    for fmt in ['%Y-%m-%d', '%d-%m-%Y', '%d-%m-%y', '%d-%b-%Y', '%d-%B-%Y']:
+        try:
+            return datetime.strptime(cleaned, fmt).strftime('%Y-%m-%d')
+        except ValueError:
+            pass
+
+    raise ValueError(f"Could not parse date '{val_str}'. Please use YYYY-MM-DD or DD-MM-YYYY (e.g. 2026-09-23 or 23 9 2026).")
+
+
+def fetch_available_assessment_dates():
+    """Fetch distinct assessment dates with counts of student assessments."""
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT 
+                DATE(COALESCE(a.completed_at, a.created_at))::text as assessment_date,
+                COUNT(*) as student_count
+            FROM assessment_attempts a
+            JOIN users u ON a.user_id = u.id
+            WHERE a.user_id IS NOT NULL
+            GROUP BY DATE(COALESCE(a.completed_at, a.created_at))
+            ORDER BY assessment_date DESC
+        """)
+        return [(str(r[0]), int(r[1])) for r in cur.fetchall() if r[0] is not None]
+    except Exception as e:
+        print(f"[WARNING] Could not query assessment dates: {e}")
+        return []
+    finally:
+        conn.close()
+
+
+def prompt_or_resolve_date(cli_date=None, cli_all=False):
+    """
+    Resolve target date from CLI or interactive menu.
+    Returns:
+        target_date: str ('YYYY-MM-DD') or None (for all dates)
+    """
+    if cli_all:
+        return None
+
+    if cli_date:
+        parsed = parse_date_input(cli_date)
+        if parsed == 'all':
+            return None
+        return parsed
+
+    # Query available dates from DB
+    available = fetch_available_assessment_dates()
+    if not available:
+        print("[INFO] No assessment dates found in database. Proceeding with all records.")
+        return None
+
+    # Check if running in an interactive terminal
+    is_interactive = sys.stdin.isatty()
+    if not is_interactive:
+        print("[INFO] Non-interactive environment detected. Exporting for all dates (use --date to filter).")
+        return None
+
+    total_assessments = sum(count for _, count in available)
+    print("\n" + "=" * 70)
+    print(" SkillSense - Select Assessment Date to Export")
+    print("=" * 70)
+    print("Available assessment dates in database:")
+    for idx, (dt, count) in enumerate(available, 1):
+        print(f"  [{idx}] {dt}  ({count} student{'s' if count != 1 else ''})")
+    print(f"  [A] All Dates    ({total_assessments} students total)")
+    print("-" * 70)
+
+    while True:
+        try:
+            choice = input(f"Select option [1-{len(available)} / A] or enter date (e.g. 23 9 2026): ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            sys.exit(0)
+
+        if not choice:
+            continue
+
+        # Check if choice is a menu index
+        if choice.isdigit():
+            idx = int(choice)
+            if 1 <= idx <= len(available):
+                selected_date = available[idx - 1][0]
+                print(f"[SELECTED] Date: {selected_date} ({available[idx - 1][1]} students)\n")
+                return selected_date
+            else:
+                print(f"Invalid selection: {choice}. Enter a number between 1 and {len(available)}.")
+                continue
+
+        # Check if choice is 'A' / 'all'
+        if choice.lower() in ['a', 'all']:
+            print("[SELECTED] Exporting assessments for ALL dates.\n")
+            return None
+
+        # Try parsing custom date input (e.g. "23 9 2026")
+        try:
+            parsed = parse_date_input(choice)
+            if parsed == 'all':
+                print("[SELECTED] Exporting assessments for ALL dates.\n")
+                return None
+            print(f"[SELECTED] Date: {parsed}\n")
+            return parsed
+        except ValueError as e:
+            print(f"Error: {e}")
+
+
+def fetch_all_student_assessments(target_email=None, target_date=None, limit=None):
     """Fetch all completed assessment attempts belonging to registered students."""
     conn = get_db_connection()
     try:
@@ -124,6 +270,10 @@ def fetch_all_student_assessments(target_email=None, limit=None):
         if target_email:
             query += " AND LOWER(u.email) = %s"
             params.append(target_email.strip().lower())
+
+        if target_date:
+            query += " AND (DATE(a.created_at) = %s OR DATE(a.completed_at) = %s)"
+            params.extend([target_date, target_date])
 
         query += " ORDER BY a.created_at DESC"
 
@@ -333,22 +483,37 @@ def run_export(args):
         print("=" * 70 + "\n")
         sys.exit(1)
 
-    # 2. Output directory
+    # 2. Resolve Date Filter (Interactive Menu or CLI argument)
+    target_date = prompt_or_resolve_date(cli_date=args.date, cli_all=args.all)
+
+    # 3. Output directory
     out_dir = os.path.abspath(args.out)
     os.makedirs(out_dir, exist_ok=True)
 
     base_url = args.url or detect_base_url()
     print(f"\n[INFO] Target Frontend URL: {base_url}")
     print(f"[INFO] Output Directory: {out_dir}")
+    if target_date:
+        print(f"[INFO] Assessment Date Filter: {target_date}")
+    else:
+        print("[INFO] Assessment Date Filter: ALL DATES")
 
-    # 3. Query records from PostgreSQL
+    # 4. Query records from PostgreSQL
     print("[INFO] Querying student assessments from PostgreSQL...")
-    students = fetch_all_student_assessments(target_email=args.email, limit=args.limit)
+    students = fetch_all_student_assessments(target_email=args.email, target_date=target_date, limit=args.limit)
     total = len(students)
     print(f"[SUCCESS] Found {total} completed student assessment records to export.\n")
 
     if total == 0:
-        print("[INFO] No assessment attempts found matching criteria. Exiting.")
+        if target_date:
+            print(f"[INFO] No completed student assessments found for date '{target_date}'.")
+            available = fetch_available_assessment_dates()
+            if available:
+                print("Available dates with assessments in database:")
+                for dt, count in available:
+                    print(f"  - {dt}: {count} student{'s' if count != 1 else ''}")
+        else:
+            print("[INFO] No assessment attempts found matching criteria. Exiting.")
         return
 
     # 4. Launch headless browser
@@ -550,7 +715,8 @@ def run_export(args):
     # 5. Create ZIP Archive
     if generated_files:
         timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        zip_filename = f"SkillSense_All_Student_Reports_{timestamp_str}.zip"
+        date_tag = f"_{target_date}" if target_date else ""
+        zip_filename = f"SkillSense_Student_Reports{date_tag}_{timestamp_str}.zip"
         zip_path = os.path.join(out_dir, zip_filename)
 
         print(f"\n[INFO] Packaging all {len(generated_files)} PDF reports into ZIP file...")
@@ -561,6 +727,7 @@ def run_export(args):
         zip_size_mb = round(os.path.getsize(zip_path) / (1024 * 1024), 2)
         print("=" * 70)
         print("EXPORT COMPLETED SUCCESSFULLY!")
+        print(f"Date Filter            : {target_date or 'ALL DATES'}")
         print(f"Successfully generated : {success_count}")
         print(f"Failed                 : {fail_count}")
         print(f"Total                  : {total}")
@@ -569,6 +736,7 @@ def run_export(args):
     else:
         print("\n" + "=" * 70)
         print("EXPORT FINISHED - NO PDFS GENERATED")
+        print(f"Date Filter            : {target_date or 'ALL DATES'}")
         print(f"Successfully generated : {success_count}")
         print(f"Failed                 : {fail_count}")
         print(f"Total                  : {total}")
@@ -584,6 +752,8 @@ def main():
         description="SkillSense - Export 100% Platform-Identical Assessment PDFs for All Registered Students"
     )
     parser.add_argument("--url", help="Base URL of frontend (e.g., https://skillsense.aisense.co.in)")
+    parser.add_argument("--date", help="Assessment date to export (e.g. '2026-09-23', '23 9 2026', '23-09-2026', or 'all')")
+    parser.add_argument("--all", action="store_true", help="Export assessments for all dates without prompting")
     parser.add_argument("--limit", type=int, help="Export only first N attempts")
     parser.add_argument("--email", help="Export for a specific student email only")
     parser.add_argument("--out", default="./exported_student_reports", help="Output directory")
