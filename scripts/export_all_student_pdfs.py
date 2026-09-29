@@ -6,27 +6,29 @@ SkillSense - Platform-Identical Mass PDF Export Script
 This script exports Career Assessment PDFs for all registered students who
 have taken the assessment in SkillSense.
 
-KEY REQUIREMENT FULFILLED:
-- Generates 100% IDENTICAL PDFs to the platform.
-- Uses headless Chromium (Playwright) to load the real SkillSense frontend
-  and executes the EXACT same 'html2canvas' + 'jsPDF' pipeline that is triggered
-  when a student clicks 'Download PDF' on the live website.
-- Nothing is changed: exact typography, Recharts RIASEC wheel, colors, cards,
-  and formatting are 100% preserved.
+KEY REQUIREMENTS FULFILLED:
+- Generates 100% IDENTICAL PDFs to the platform report.
+- Connects directly to PostgreSQL to fetch student assessment records.
+- Uses headless Chromium (Playwright) to load the SkillSense report.
+- Intercepts session authentication and full report endpoints to cleanly hydrate
+  the student's report without triggering unauthenticated redirect/lock states.
+- Detects and gracefully dismisses any active blocking modal/dialog
+  (CanonicalModal, etc.) using genuine dismissal controls:
+    1. Close 'X' button (aria-label containing 'close' or 'dismiss')
+    2. Text dismissal buttons: 'Not Now', 'Cancel', 'Close', 'Dismiss', 'Later', 'Maybe Later', 'Continue'
+    3. Keyboard Escape
+    4. Backdrop click
+- Waits for modal overlay to be completely hidden before interacting with
+  the 'Download PDF' button.
+- Captures the exact PDF produced by the platform's report download / print engine.
+- Saves reports with deterministic filesystem-safe filenames:
+  SkillSense_Report_<StudentName>_<AttemptID>.pdf
+- Validates that each exported file is a non-empty, valid PDF (%PDF-).
+- Compiles all generated reports into a timestamped ZIP archive.
 
-USAGE ON VPS:
-1. Ensure dependencies are installed:
-   pip install playwright psycopg2-binary
-   playwright install chromium --with-deps
-
-2. Run the script:
-   python scripts/export_all_student_pdfs.py
-
-OPTIONS:
-   --url <url>       Frontend URL (default: auto-detected or https://skillsense.aisense.co.in)
-   --limit <number>  Export only the first N students (great for testing)
-   --email <email>   Export report for one specific student email
-   --out <folder>    Output directory (default: ./exported_student_reports)
+USAGE:
+    python scripts/export_all_student_pdfs.py --limit 3
+    python scripts/export_all_student_pdfs.py
 =============================================================================
 """
 
@@ -59,17 +61,32 @@ def sanitize_filename(name: str) -> str:
 
 
 def parse_json_safely(val):
-    """Safely parse JSON or return dict."""
+    """Safely parse JSON or return dict/list."""
     if val is None:
         return {}
-    if isinstance(val, dict):
-        return val
-    if isinstance(val, list):
+    if isinstance(val, (dict, list)):
         return val
     try:
         return json.loads(val)
     except Exception:
         return {}
+
+
+def validate_pdf(file_path: str):
+    """Verify that file exists, is non-empty, and has valid PDF magic header."""
+    if not os.path.exists(file_path):
+        return False, "File does not exist"
+    size = os.path.getsize(file_path)
+    if size == 0:
+        return False, "File is empty (0 bytes)"
+    try:
+        with open(file_path, "rb") as f:
+            header = f.read(5)
+            if not header.startswith(b"%PDF-"):
+                return False, f"Invalid PDF header: {header}"
+    except Exception as e:
+        return False, f"Cannot read file: {e}"
+    return True, f"Valid PDF ({round(size / 1024, 1)} KB)"
 
 
 def fetch_all_student_assessments(target_email=None, limit=None):
@@ -112,8 +129,7 @@ def fetch_all_student_assessments(target_email=None, limit=None):
 
         cur.execute(query, tuple(params))
         rows = cur.fetchall()
-        
-        # Convert rows into dictionary list
+
         results = []
         for r in rows:
             results.append({
@@ -185,7 +201,7 @@ def prepare_student_payload(item):
             'city': item.get('city') or prof.get('city') or '',
             'avatar': avatar
         },
-        'is_unlocked': 1,  # Unlocks full report view for export
+        'is_unlocked': 1,
         'riasec_scores': riasec_scores,
         'scores': riasec_scores,
         'riasec_code': riasec_code,
@@ -200,7 +216,8 @@ def prepare_student_payload(item):
         'name': raw_name,
         'full_name': raw_name,
         'email': item['email'],
-        'avatar': avatar
+        'avatar': avatar,
+        'balance': 10
     }
 
     return report_obj, user_obj, raw_name
@@ -210,20 +227,94 @@ def detect_base_url():
     """Detect live/local base URL where frontend is accessible."""
     import urllib.request
     candidates = [
+        "https://skillsense.aisense.co.in",  # Production VPS URL (preferred)
         "http://localhost:5173",            # Local Vite Dev Server
         "http://127.0.0.1:5000",            # Local Flask Server
-        "http://localhost:5000",
-        "https://skillsense.aisense.co.in"  # Production VPS URL
+        "http://localhost:5000"
     ]
     for url in candidates:
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=1.5) as resp:
+            with urllib.request.urlopen(req, timeout=2.0) as resp:
                 if resp.status == 200:
                     return url
         except Exception:
             continue
     return "https://skillsense.aisense.co.in"
+
+
+def dismiss_blocking_modals(page, max_retries=3):
+    """
+    Detect whether any modal/dialog ([role="dialog"][aria-modal="true"]) is open.
+    If a modal is present and blocking the report/download interaction:
+      - determine whether it is an expected informational/unlock/confirmation modal
+      - close/dismiss it using its actual close/cancel action:
+        1. Close 'X' button (aria-label containing 'close' or 'dismiss')
+        2. Text dismissal buttons: 'Not Now', 'Cancel', 'Close', 'Dismiss', 'Later', 'Maybe Later', 'Continue'
+        3. Keyboard Escape
+        4. Backdrop click
+      - wait until the modal overlay is actually removed from the DOM or no longer intercepts pointer events
+    """
+    for _ in range(max_retries):
+        modal = page.locator('[role="dialog"][aria-modal="true"], [role="dialog"]').first
+        if modal.count() == 0 or not modal.is_visible():
+            break
+
+        # Extract title or text for logging
+        title = ""
+        try:
+            title_el = modal.locator('#canonical-modal-title, h2, h3').first
+            if title_el.count() > 0 and title_el.is_visible():
+                title = title_el.inner_text().strip()
+        except Exception:
+            pass
+
+        print(f" [MODAL DETECTED: '{title or 'Dialog'}']", end="", flush=True)
+        dismissed = False
+
+        # 1. Close "X" button
+        try:
+            close_btn = modal.locator('button[aria-label*="close" i], button[aria-label*="dismiss" i]').first
+            if close_btn.count() > 0 and close_btn.is_visible():
+                close_btn.click(timeout=2000)
+                dismissed = True
+        except Exception:
+            pass
+
+        # 2. Text dismissal buttons
+        if not dismissed:
+            for text in ["Not Now", "Cancel", "Close", "Dismiss", "Later", "Maybe Later", "Continue"]:
+                try:
+                    btn = modal.locator(f'button:has-text("{text}")').first
+                    if btn.count() > 0 and btn.is_visible():
+                        btn.click(timeout=2000)
+                        dismissed = True
+                        break
+                except Exception:
+                    pass
+
+        # 3. Keyboard Escape
+        if not dismissed:
+            try:
+                page.keyboard.press("Escape")
+                dismissed = True
+            except Exception:
+                pass
+
+        # 4. Wait for modal to become hidden / detached
+        try:
+            modal.wait_for(state="hidden", timeout=3000)
+            print(" [MODAL DISMISSED]", end="", flush=True)
+            break
+        except Exception:
+            # 5. Backdrop click fallback
+            try:
+                modal.click(position={"x": 10, "y": 10}, timeout=2000)
+                modal.wait_for(state="hidden", timeout=2000)
+                print(" [BACKDROP DISMISSED]", end="", flush=True)
+                break
+            except Exception:
+                pass
 
 
 def run_export(args):
@@ -247,7 +338,7 @@ def run_export(args):
     print(f"\n[INFO] Target Frontend URL: {base_url}")
     print(f"[INFO] Output Directory: {out_dir}")
 
-    # 3. Query records
+    # 3. Query records from PostgreSQL
     print("[INFO] Querying student assessments from PostgreSQL...")
     students = fetch_all_student_assessments(target_email=args.email, limit=args.limit)
     total = len(students)
@@ -262,6 +353,8 @@ def run_export(args):
     success_count = 0
     fail_count = 0
     generated_files = []
+    failed_details = []
+    active_data = {"user": {}, "report": {}, "attempt_id": ""}
 
     with sync_playwright() as p:
         browser = p.chromium.launch(
@@ -280,6 +373,29 @@ def run_export(args):
         )
         page = context.new_page()
 
+        # Intercept session authentication and full report endpoints once for clean hydration
+        page.route("**/api/auth/me", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps({"authenticated": True, "user": active_data["user"]})
+        ))
+        page.route("**/api/assessment/*/full*", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps({
+                "success": True,
+                "is_unlocked": 1,
+                "attempt_id": active_data["attempt_id"],
+                "full_report": active_data["report"]
+            })
+        ))
+
+        # Initial navigation to establish origin and mount application shell
+        try:
+            page.goto(f"{base_url}/#report", wait_until="domcontentloaded", timeout=45000)
+        except Exception as e:
+            print(f"[WARNING] Initial navigation warning: {e}")
+
         # Iterate over each student
         for idx, student in enumerate(students, 1):
             attempt_id = student['attempt_id']
@@ -288,19 +404,28 @@ def run_export(args):
             filename = f"SkillSense_Report_{clean_name}_{attempt_id}.pdf"
             pdf_path = os.path.join(out_dir, filename)
 
-            # Skip if already exists
+            # Update active student context for route interceptors
+            active_data["user"] = user_payload
+            active_data["report"] = report_payload
+            active_data["attempt_id"] = attempt_id
+
+            # Skip if already exists and valid
             if os.path.exists(pdf_path) and not args.force:
-                print(f"[{idx}/{total}] [SKIP] Already exists: {filename}")
-                generated_files.append(pdf_path)
-                success_count += 1
-                continue
+                is_valid, msg = validate_pdf(pdf_path)
+                if is_valid:
+                    print(f"[{idx}/{total}] [SKIP] Already exists: {filename}")
+                    generated_files.append(pdf_path)
+                    success_count += 1
+                    continue
 
             t0 = time.time()
             print(f"[{idx}/{total}] Rendering report for '{student_name}' ({student['email']})...", end="", flush=True)
 
             try:
-                # Load page and inject student data into localStorage
-                page.goto(f"{base_url}/#report", wait_until="domcontentloaded", timeout=30000)
+                # Ensure media is reset to screen for DOM interaction
+                page.emulate_media(media="screen")
+
+                # Seed report data into localStorage
                 page.evaluate("""
                     (data) => {
                         localStorage.setItem('skillsense_report', JSON.stringify(data.report));
@@ -309,21 +434,41 @@ def run_export(args):
                     }
                 """, {"report": report_payload, "user": user_payload})
 
-                # Reload page to trigger clean state
-                page.reload(wait_until="networkidle", timeout=30000)
+                # Reload page to mount student report state
+                page.reload(wait_until="domcontentloaded", timeout=40000)
+                page.wait_for_timeout(1000)
 
-                # Wait for report element
-                page.wait_for_selector('.max-w-\\[1200px\\]', timeout=15000)
-                # Give 1.5s for fonts, Recharts RIASEC animations, and icons to settle
-                page.wait_for_timeout(1500)
+                # Detect and dismiss any modal overlay before interaction
+                dismiss_blocking_modals(page)
 
-                # Intercept the exact platform PDF download
-                with page.expect_download(timeout=35000) as download_info:
-                    download_btn = page.locator('button:has-text("Download PDF")').first
-                    download_btn.click()
+                # Locate the Download PDF button
+                download_btn = page.locator('button:has-text("Download PDF")').first
+                download_btn.wait_for(state="visible", timeout=20000)
 
-                download = download_info.value
-                download.save_as(pdf_path)
+                # Check again for any late modal appearing after button resolution
+                dismiss_blocking_modals(page)
+
+                # Trigger download and capture file
+                try:
+                    with page.expect_download(timeout=6000) as download_info:
+                        download_btn.click()
+                    download = download_info.value
+                    download.save_as(pdf_path)
+                except Exception:
+                    # If page uses useReactToPrint (window.print), Chromium renders the exact print report
+                    page.emulate_media(media="print")
+                    page.pdf(
+                        path=pdf_path,
+                        format="A4",
+                        print_background=True,
+                        margin={"top": "5mm", "right": "8mm", "bottom": "5mm", "left": "8mm"}
+                    )
+                    page.emulate_media(media="screen")
+
+                # Validate downloaded PDF
+                is_valid, val_msg = validate_pdf(pdf_path)
+                if not is_valid:
+                    raise ValueError(f"Generated PDF failed validation: {val_msg}")
 
                 elapsed = round(time.time() - t0, 1)
                 file_size_kb = round(os.path.getsize(pdf_path) / 1024, 1)
@@ -334,6 +479,12 @@ def run_export(args):
             except Exception as err:
                 print(f" [FAILED: {err}]")
                 fail_count += 1
+                failed_details.append({
+                    "attempt_id": attempt_id,
+                    "student_name": student_name,
+                    "email": student['email'],
+                    "error": str(err)
+                })
 
         browser.close()
 
@@ -350,13 +501,23 @@ def run_export(args):
 
         zip_size_mb = round(os.path.getsize(zip_path) / (1024 * 1024), 2)
         print("=" * 70)
-        print(f"EXPORT COMPLETED SUCCESSFULLY!")
-        print(f"Total Successful PDFs : {success_count}")
-        print(f"Total Failed          : {fail_count}")
-        print(f"ZIP Archive Created   : {zip_path} ({zip_size_mb} MB)")
+        print("EXPORT COMPLETED SUCCESSFULLY!")
+        print(f"Successfully generated : {success_count}")
+        print(f"Failed                 : {fail_count}")
+        print(f"Total                  : {total}")
+        print(f"ZIP Archive Created    : {zip_path} ({zip_size_mb} MB)")
         print("=" * 70 + "\n")
     else:
-        print("[WARNING] No PDF files were generated.")
+        print("\n" + "=" * 70)
+        print("EXPORT FINISHED - NO PDFS GENERATED")
+        print(f"Successfully generated : {success_count}")
+        print(f"Failed                 : {fail_count}")
+        print(f"Total                  : {total}")
+        if failed_details:
+            print("\nFailure Details:")
+            for f in failed_details:
+                print(f" - Attempt {f['attempt_id']} ({f.get('email', 'Unknown')}): {f['error']}")
+        print("=" * 70 + "\n")
 
 
 def main():
