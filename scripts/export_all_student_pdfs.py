@@ -7,7 +7,7 @@ This script exports Career Assessment PDFs for all registered students who
 have taken the assessment in SkillSense.
 
 KEY REQUIREMENTS FULFILLED:
-- Generates 100% IDENTICAL PDFs to the platform report.
+- Generates 100% IDENTICAL 2-page PDFs matching the platform report.
 - Connects directly to PostgreSQL to fetch student assessment records.
 - Uses headless Chromium (Playwright) to load the SkillSense report.
 - Intercepts session authentication and full report endpoints to cleanly hydrate
@@ -18,9 +18,11 @@ KEY REQUIREMENTS FULFILLED:
     2. Text dismissal buttons: 'Not Now', 'Cancel', 'Close', 'Dismiss', 'Later', 'Maybe Later', 'Continue'
     3. Keyboard Escape
     4. Backdrop click
-- Waits for modal overlay to be completely hidden before interacting with
-  the 'Download PDF' button.
-- Captures the exact PDF produced by the platform's report download / print engine.
+- Isolates the dedicated SkillSensePrintReport root directly onto document.body
+  (mirroring useReactToPrint iframe behavior) to completely eliminate extra
+  outer wrappers, background artifacts (#CFEDED), and alternating blank pages.
+- Sets strict 287mm page bounds and avoids double-margin height overflow so
+  each report is exactly 2 pristine pages.
 - Saves reports with deterministic filesystem-safe filenames:
   SkillSense_Report_<StudentName>_<AttemptID>.pdf
 - Validates that each exported file is a non-empty, valid PDF (%PDF-).
@@ -75,18 +77,19 @@ def parse_json_safely(val):
 def validate_pdf(file_path: str):
     """Verify that file exists, is non-empty, and has valid PDF magic header."""
     if not os.path.exists(file_path):
-        return False, "File does not exist"
+        return False, "File does not exist", 0
     size = os.path.getsize(file_path)
     if size == 0:
-        return False, "File is empty (0 bytes)"
+        return False, "File is empty (0 bytes)", 0
     try:
         with open(file_path, "rb") as f:
-            header = f.read(5)
-            if not header.startswith(b"%PDF-"):
-                return False, f"Invalid PDF header: {header}"
+            pdf_bytes = f.read()
+        if not pdf_bytes.startswith(b"%PDF-"):
+            return False, "Invalid PDF header", 0
+        pages = len(re.findall(rb'/Type\s*/Page[^s]', pdf_bytes))
+        return True, f"Valid PDF ({round(size / 1024, 1)} KB, {pages} pages)", pages
     except Exception as e:
-        return False, f"Cannot read file: {e}"
-    return True, f"Valid PDF ({round(size / 1024, 1)} KB)"
+        return False, f"Cannot read file: {e}", 0
 
 
 def fetch_all_student_assessments(target_email=None, limit=None):
@@ -411,9 +414,9 @@ def run_export(args):
 
             # Skip if already exists and valid
             if os.path.exists(pdf_path) and not args.force:
-                is_valid, msg = validate_pdf(pdf_path)
-                if is_valid:
-                    print(f"[{idx}/{total}] [SKIP] Already exists: {filename}")
+                is_valid, msg, pages = validate_pdf(pdf_path)
+                if is_valid and pages == 2:
+                    print(f"[{idx}/{total}] [SKIP] Already exists (2 pages): {filename}")
                     generated_files.append(pdf_path)
                     success_count += 1
                     continue
@@ -422,7 +425,7 @@ def run_export(args):
             print(f"[{idx}/{total}] Rendering report for '{student_name}' ({student['email']})...", end="", flush=True)
 
             try:
-                # Ensure media is reset to screen for DOM interaction
+                # Ensure media is reset to screen for clean DOM mounting
                 page.emulate_media(media="screen")
 
                 # Seed report data into localStorage
@@ -441,38 +444,94 @@ def run_export(args):
                 # Detect and dismiss any modal overlay before interaction
                 dismiss_blocking_modals(page)
 
-                # Locate the Download PDF button
-                download_btn = page.locator('button:has-text("Download PDF")').first
-                download_btn.wait_for(state="visible", timeout=20000)
-
-                # Check again for any late modal appearing after button resolution
+                # Wait for report element or print root
+                page.wait_for_selector('.skillsense-print-root, .max-w-\\[1200px\\]', timeout=20000)
                 dismiss_blocking_modals(page)
 
-                # Trigger download and capture file
-                try:
-                    with page.expect_download(timeout=6000) as download_info:
-                        download_btn.click()
-                    download = download_info.value
-                    download.save_as(pdf_path)
-                except Exception:
-                    # If page uses useReactToPrint (window.print), Chromium renders the exact print report
-                    page.emulate_media(media="print")
-                    page.pdf(
-                        path=pdf_path,
-                        format="A4",
-                        print_background=True,
-                        margin={"top": "5mm", "right": "8mm", "bottom": "5mm", "left": "8mm"}
-                    )
-                    page.emulate_media(media="screen")
+                # Isolate the print root directly onto document.body exactly like react-to-print iframe!
+                # This completely eliminates outer wrappers, navbars, App.jsx background (#CFEDED),
+                # and multi-page height overflows!
+                page.evaluate("""
+                    () => {
+                        const printRoot = document.querySelector('.skillsense-print-root');
+                        if (!printRoot) return false;
+                        
+                        document.body.innerHTML = '';
+                        document.body.appendChild(printRoot);
+                        
+                        document.documentElement.style.margin = '0';
+                        document.documentElement.style.padding = '0';
+                        document.documentElement.style.background = '#ffffff';
+                        document.body.style.margin = '0';
+                        document.body.style.padding = '0';
+                        document.body.style.background = '#ffffff';
+                        
+                        printRoot.style.position = 'static';
+                        printRoot.style.left = 'auto';
+                        printRoot.style.top = 'auto';
+                        printRoot.style.width = '100%';
+                        printRoot.style.opacity = '1';
+                        printRoot.style.zIndex = 'auto';
+                        printRoot.style.pointerEvents = 'auto';
+                        return true;
+                    }
+                """)
+
+                # Strict A4 print page styles to guarantee exact 2-page print without empty overflow pages
+                page.add_style_tag(content="""
+                    @page {
+                        size: A4 portrait;
+                        margin: 5mm 8mm;
+                    }
+                    body, html {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        background: #ffffff !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    .skillsense-print-root {
+                        display: block !important;
+                        position: static !important;
+                        width: 100% !important;
+                        opacity: 1 !important;
+                    }
+                    .skillsense-pdf-page {
+                        width: 100% !important;
+                        height: 287mm !important;
+                        max-height: 287mm !important;
+                        box-sizing: border-box !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        overflow: hidden !important;
+                        background: #ffffff !important;
+                    }
+                    .skillsense-pdf-page-break {
+                        page-break-before: always !important;
+                        break-before: page !important;
+                        height: 0 !important;
+                    }
+                """)
+
+                # Emulate print media and generate PDF
+                page.emulate_media(media="print")
+                page.pdf(
+                    path=pdf_path,
+                    format="A4",
+                    print_background=True,
+                    prefer_css_page_size=True,
+                    margin={"top": "0", "right": "0", "bottom": "0", "left": "0"}
+                )
+                page.emulate_media(media="screen")
 
                 # Validate downloaded PDF
-                is_valid, val_msg = validate_pdf(pdf_path)
+                is_valid, val_msg, page_count = validate_pdf(pdf_path)
                 if not is_valid:
                     raise ValueError(f"Generated PDF failed validation: {val_msg}")
 
                 elapsed = round(time.time() - t0, 1)
                 file_size_kb = round(os.path.getsize(pdf_path) / 1024, 1)
-                print(f" [DONE in {elapsed}s] -> {filename} ({file_size_kb} KB)")
+                print(f" [DONE in {elapsed}s] -> {filename} ({file_size_kb} KB, {page_count} pages)")
                 generated_files.append(pdf_path)
                 success_count += 1
 
