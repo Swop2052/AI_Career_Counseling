@@ -33,9 +33,9 @@ const fieldVariants = {
 };
 
 const getContactInfo = (t) => [
-  { icon: Mail, title: t('emailUs'), value: 'hello@skillsense.com' },
-  { icon: Phone, title: t('callUs'), value: '+91 98765 43210' },
-  { icon: MapPin, title: t('visitUs'), value: 'Mumbai, Maharashtra, India' },
+  { icon: Mail, title: t('emailUs'), value: 'support@skillsense.aisense.co.in' },
+  { icon: Phone, title: t('callUs'), value: '+91 76208 07474' },
+  { icon: MapPin, title: t('visitUs'), value: 'AiSense LLP, Maharashtra, India' },
 ];
 
 export default function Contact() {

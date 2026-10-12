@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Home Page -->
+  <url>
+    <loc>https://skillsense.aisense.co.in/</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="en-IN" href="https://skillsense.aisense.co.in/" />
+    <xhtml:link rel="alternate" hreflang="hi-IN" href="https://skillsense.aisense.co.in/" />
+    <xhtml:link rel="alternate" hreflang="mr-IN" href="https://skillsense.aisense.co.in/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://skillsense.aisense.co.in/" />
+  </url>
+
+  <!-- Landing Page 1: After 10th Career Guidance -->
+  <url>
+    <loc>https://skillsense.aisense.co.in/after-10th-career-guidance</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Landing Page 2: After 12th Science Career Options -->
+  <url>
+    <loc>https://skillsense.aisense.co.in/after-12th-science-career-options</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Landing Page 3: Career Test for Commerce Students -->
+  <url>
+    <loc>https://skillsense.aisense.co.in/career-test-for-commerce-students</loc>
+    <lastmod>2026-10-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+</urlset>

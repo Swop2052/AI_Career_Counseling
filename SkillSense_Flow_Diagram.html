@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SkillSense - How It Works (Simple & Visual Guide)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070b14;
+  --bg-card:#0f172a;
+  --bg-card-hover:#172544;
+  --border:#1e293b;
+  --border-glow:#38bdf8;
+  --blue:#38bdf8;
+  --teal:#2dd4bf;
+  --green:#34d399;
+  --purple:#a855f7;
+  --orange:#fb923c;
+  --pink:#f43f5e;
+  --yellow:#fbbf24;
+  --text:#f8fafc;
+  --text-dim:#94a3b8;
+  --font-main:'Plus Jakarta Sans',sans-serif;
+  --font-display:'Space Grotesk',sans-serif;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-main);
+  height:100vh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Top App Header */
+header{
+  padding:14px 24px;
+  background:rgba(15,23,42,0.95);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+  z-index:30;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.brand-icon{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  background:linear-gradient(135deg,#38bdf8,#a855f7);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.3rem;
+  box-shadow:0 0 20px rgba(56,189,248,0.4);
+}
+.brand-text h1{
+  font-family:var(--font-display);
+  font-size:1.25rem;
+  font-weight:700;
+  letter-spacing:-0.5px;
+  background:linear-gradient(90deg,#ffffff,#38bdf8,#2dd4bf);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.brand-text p{
+  font-size:0.75rem;
+  color:var(--text-dim);
+  margin-top:1px;
+}
+
+.view-switcher{
+  display:flex;
+  background:#090d16;
+  padding:3px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+.view-btn{
+  padding:7px 16px;
+  border-radius:8px;
+  font-size:0.8rem;
+  font-weight:600;
+  cursor:pointer;
+  border:none;
+  background:none;
+  color:var(--text-dim);
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.view-btn.active{
+  background:linear-gradient(135deg,#0284c7,#2563eb);
+  color:#fff;
+  box-shadow:0 2px 10px rgba(37,99,235,0.4);
+}
+
+/* Sub-Header & Global Player Controls */
+.player-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 24px;
+  background:rgba(15,23,42,0.7);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.player-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.pbtn{
+  padding:6px 14px;
+  border-radius:8px;
+  font-size:0.78rem;
+  font-weight:700;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--bg-card);
+  color:var(--text);
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.pbtn:hover{
+  background:var(--bg-card-hover);
+  border-color:var(--blue);
+}
+.pbtn-main{
+  background:linear-gradient(135deg,#0284c7,#0369a1);
+  border-color:#38bdf8;
+  color:#fff;
+  padding:6px 18px;
+  box-shadow:0 0 16px rgba(56,189,248,0.3);
+}
+.pbtn-main:hover{
+  box-shadow:0 0 22px rgba(56,189,248,0.5);
+}
+.pbtn-toggle.active{
+  background:rgba(52,211,153,0.15);
+  border-color:var(--green);
+  color:var(--green);
+}
+.speed-group{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  background:#090d16;
+  padding:2px 5px;
+  border-radius:8px;
+  border:1px solid var(--border);
+}
+.speed-opt{
+  font-size:0.7rem;
+  font-weight:700;
+  padding:3px 8px;
+  border-radius:6px;
+  cursor:pointer;
+  color:var(--text-dim);
+}
+.speed-opt.active{
+  background:var(--blue);
+  color:#090d16;
+}
+
+.step-indicator{
+  font-family:var(--font-display);
+  font-size:0.85rem;
+  font-weight:700;
+  color:var(--blue);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* Horizontal Visual Stepper Bar */
+.stepper-nav{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 24px;
+  background:#090e1a;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  flex-shrink:0;
+  scrollbar-width:thin;
+}
+.stepper-nav::-webkit-scrollbar{height:3px}
+.stepper-nav::-webkit-scrollbar-thumb{background:var(--border)}
+.step-pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  border-radius:30px;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  font-size:0.75rem;
+  font-weight:600;
+  color:var(--text-dim);
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all 0.2s;
+  flex-shrink:0;
+}
+.step-pill:hover{
+  border-color:var(--text-dim);
+  color:var(--text);
+}
+.step-pill.active{
+  background:linear-gradient(135deg,rgba(56,189,248,0.2),rgba(168,85,247,0.2));
+  border-color:var(--blue);
+  color:#fff;
+  box-shadow:0 0 12px rgba(56,189,248,0.25);
+}
+.step-pill.completed{
+  border-color:rgba(52,211,153,0.4);
+  color:var(--green);
+}
+.step-pill-num{
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.65rem;
+  font-weight:700;
+}
+.step-pill.active .step-pill-num{
+  background:var(--blue);
+  color:#090d16;
+}
+.step-pill.completed .step-pill-num{
+  background:var(--green);
+  color:#090d16;
+}
+
+/* Main Split Viewport */
+.main-viewport{
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 420px;
+  position:relative;
+  overflow:hidden;
+}
+
+/* Left Interactive Visual Stage */
+.stage-area{
+  position:relative;
+  overflow:hidden;
+  background:radial-gradient(circle at 50% 50%, #0d1527 0%, #070b14 100%);
+  display:flex;
+  flex-direction:column;
+}
+#journeyCanvas{
+  width:100%;
+  height:100%;
+  display:block;
+  cursor:grab;
+}
+#journeyCanvas:active{
+  cursor:grabbing;
+}
+
+/* Right Detail Spotlight Panel */
+.detail-panel{
+  background:var(--bg-card);
+  border-left:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow-y:auto;
+  padding:24px 22px;
+  gap:20px;
+  position:relative;
+}
+.detail-panel::-webkit-scrollbar{width:5px}
+.detail-panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+
+.stage-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 10px;
+  border-radius:20px;
+  background:rgba(56,189,248,0.12);
+  border:1px solid rgba(56,189,248,0.3);
+  color:var(--blue);
+  font-size:0.72rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.8px;
+  width:fit-content;
+}
+.stage-hero-title{
+  font-family:var(--font-display);
+  font-size:1.45rem;
+  font-weight:700;
+  line-height:1.25;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.stage-hero-desc{
+  font-size:0.85rem;
+  color:var(--text-dim);
+  line-height:1.5;
+}
+
+/* Feature Breakdown Cards */
+.info-card{
+  background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  transition:all 0.2s;
+}
+.info-card:hover{
+  border-color:rgba(56,189,248,0.4);
+  background:rgba(255,255,255,0.04);
+}
+.info-card-header{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:0.75rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.info-card-header.student{color:var(--blue)}
+.info-card-header.ai{color:var(--purple)}
+.info-card-header.result{color:var(--green)}
+.info-card-text{
+  font-size:0.82rem;
+  color:#e2e8f0;
+  line-height:1.45;
+}
+
+/* Key Highlights List */
+.highlight-box{
+  background:linear-gradient(135deg,rgba(56,189,248,0.08),rgba(168,85,247,0.08));
+  border:1px solid rgba(56,189,248,0.25);
+  border-radius:12px;
+  padding:14px;
+}
+.highlight-title{
+  font-size:0.75rem;
+  font-weight:700;
+  color:var(--blue);
+  text-transform:uppercase;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.highlight-list{
+  list-style:none;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.highlight-list li{
+  font-size:0.78rem;
+  color:#cbd5e1;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  line-height:1.35;
+}
+.highlight-list li span{
+  color:var(--green);
+  font-weight:700;
+}
+
+/* Progress bar inside panel */
+.step-timer-wrap{
+  margin-top:auto;
+  padding-top:16px;
+  border-top:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.step-timer-meta{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.7rem;
+  color:var(--text-dim);
+}
+.step-timer-bg{
+  height:6px;
+  background:#1e293b;
+  border-radius:4px;
+  overflow:hidden;
+}
+.step-timer-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#38bdf8,#2dd4bf,#a855f7);
+  transition:width 0.2s linear;
+}
+
+/* Floating on-canvas tooltip/instructions */
+.canvas-hint{
+  position:absolute;
+  bottom:14px;
+  left:16px;
+  background:rgba(15,23,42,0.9);
+  backdrop-filter:blur(8px);
+  border:1px solid var(--border);
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:0.72rem;
+  color:var(--text-dim);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  pointer-events:none;
+}
+.canvas-hint kbd{
+  background:#1e293b;
+  padding:2px 6px;
+  border-radius:4px;
+  color:#fff;
+  font-size:0.65rem;
+}
+
+/* Developer Mode Overlay Container */
+.dev-container{
+  display:none;
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+.dev-container.active{
+  display:flex;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">🚀</div>
+    <div class="brand-text">
+      <h1>SkillSense &bull; How It Works</h1>
+      <p>Continuous Visual Story &bull; Step-by-Step Interactive Guide for Students, Parents & Educators</p>
+    </div>
+  </div>
+
+  <div class="view-switcher">
+    <button class="view-btn active" id="btnViewNonTech">
+      <span>🌟</span> User Journey (Simple)
+    </button>
+    <button class="view-btn" id="btnViewTech">
+      <span>⚙️</span> Technical View (Developers)
+    </button>
+  </div>
+</header>
+
+<!-- Global Player Controls -->
+<div class="player-bar">
+  <div class="player-controls">
+    <button class="pbtn pbtn-main" id="btnPlay">⏸ Pause</button>
+    <button class="pbtn" id="btnPrev">◀ Previous Step</button>
+    <button class="pbtn" id="btnNext">Next Step ▶</button>
+    <button class="pbtn" id="btnReset">↺ Restart from Step 1</button>
+    <button class="pbtn pbtn-toggle active" id="btnLoop">🔁 Auto-Loop: ON</button>
+    
+    <div class="speed-group">
+      <span style="font-size:0.7rem;color:var(--text-dim);margin:0 4px">Speed:</span>
+      <span class="speed-opt" data-speed="0.5">0.5x</span>
+      <span class="speed-opt active" data-speed="1">1x</span>
+      <span class="speed-opt" data-speed="2">2x</span>
+    </div>
+  </div>
+
+  <div class="step-indicator">
+    <span id="stepCounterText">STEP 1 OF 10</span>
+  </div>
+</div>
+
+<!-- Horizontal Stepper Bar -->
+<div class="stepper-nav" id="stepperNav">
+  <!-- Populated by JavaScript -->
+</div>
+
+<!-- MAIN VIEWPORT (Simple Non-Technical Mode) -->
+<div class="main-viewport" id="nonTechViewport">
+  <!-- Canvas Visualization Area -->
+  <div class="stage-area">
+    <canvas id="journeyCanvas"></canvas>
+    <div class="canvas-hint">
+      <span>💡</span> Drag to pan &bull; Scroll wheel to zoom &bull; Click any step above or on the map to jump
+    </div>
+  </div>
+
+  <!-- Detail Spotlight Card Panel -->
+  <aside class="detail-panel">
+    <div class="stage-badge" id="badgeStep">STAGE 1: DISCOVERY</div>
+    
+    <div>
+      <h2 class="stage-hero-title" id="stageTitle">
+        <span>🌐</span> Student Discovers SkillSense
+      </h2>
+      <p class="stage-hero-desc" id="stageSummary">
+        The student visits the website on any phone, tablet, or laptop. They are greeted with an intuitive career exploration platform available in English, Hindi, and Marathi.
+      </p>
+    </div>
+
+    <!-- 3 Simple Pillars -->
+    <div class="info-card">
+      <div class="info-card-header student">
+        <span>👤</span> What the Student Does
+      </div>
+      <div class="info-card-text" id="cardStudentAction">
+        Lands on the homepage, selects their preferred regional language, and clicks "Start Free Career Test".
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header ai">
+        <span>🧠</span> What SkillSense AI Does Behind The Scenes
+      </div>
+      <div class="info-card-text" id="cardAIAction">
+        Instantly prepares a personalized testing session, loads localized questions, and ensures lightning-fast loading with zero clutter.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-card-header result">
+        <span>🎯</span> The Value & Outcome
+      </div>
+      <div class="info-card-text" id="cardResult">
+        Clear guidance with zero confusion. No technical setup required; instant access from any web browser.
+      </div>
+    </div>
+
+    <!-- Key Highlights / Fun Facts -->
+    <div class="highlight-box">
+      <div class="highlight-title">
+        <span>✨</span> Key Highlights
+      </div>
+      <ul class="highlight-list" id="listHighlights">
+        <li><span>✔</span> Available in English, Hindi, and Marathi</li>
+        <li><span>✔</span> Works seamlessly on mobile phones & computers</li>
+        <li><span>✔</span> Completely free to start with instant preview</li>
+      </ul>
+    </div>
+
+    <!-- Step Timer Progress -->
+    <div class="step-timer-wrap">
+      <div class="step-timer-meta">
+        <span>AUTO-ADVANCE IN</span>
+        <span id="timerSeconds">3s</span>
+      </div>
+      <div class="step-timer-bg">
+        <div class="step-timer-fill" id="timerBar"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- TECHNICAL VIEW EMBED CONTAINER -->
+<div class="dev-container" id="techViewport">
+  <iframe id="techIframe" style="width:100%;height:100%;border:none;" src="about:blank"></iframe>
+</div>
+
+<script>
+/* =========================================================================
+   NON-TECHNICAL END-USER JOURNEY DATA (10 STEP CONTINUOUS FLOW)
+   ========================================================================= */
+
+const JOURNEY_STEPS = [
+  {
+    id: 'step1',
+    num: 1,
+    icon: '🌐',
+    shortTitle: '1. Discovery',
+    badge: 'STAGE 1: DISCOVERY & EXPLORATION',
+    title: 'Student Discovers SkillSense',
+    summary: 'The student opens https://skillsense.aisense.co.in on their phone or laptop. They see clean career guidance designed specifically for high school and college students in India.',
+    studentAction: 'Browses the hero section, chooses their language (English / Hindi / Marathi), and clicks "Start Free Test".',
+    aiAction: 'Prepares a localized session, fetches updated question banks, and configures an intuitive student dashboard.',
+    result: 'Zero confusion, instant mobile-friendly access, and immediate motivation to discover their true talents.',
+    highlights: [
+      'Multi-language support: English, Hindi, and Marathi',
+      'Works smoothly on any smartphone or tablet',
+      'Zero download required — runs instantly in the browser'
+    ],
+    // Position on canvas (x, y)
+    x: 100, y: 320,
+    color: '#38bdf8'
+  },
+  {
+    id: 'step2',
+    num: 2,
+    icon: '👤',
+    shortTitle: '2. Sign Up',
+    badge: 'STAGE 2: FAST & SECURE ACCOUNT',
+    title: 'Creates a Free Student Account',
+    summary: 'Signing up takes under 30 seconds. The student registers with their email or phone number to ensure all their test scores, personality reports, and roadmaps are saved securely.',
+    studentAction: 'Enters their name, email, and password. Can also sign in anytime to view previous test history.',
+    aiAction: 'Protects the account with bank-grade encryption and prepares a private career profile folder.',
+    result: 'Safe personal dashboard where progress, test history, and counseling chats are kept private forever.',
+    highlights: [
+      'Bank-grade encrypted login with password protection',
+      'Instant access to personal student profile',
+      'Welcome email dispatched with helpful guidance tips'
+    ],
+    x: 270, y: 160,
+    color: '#2dd4bf'
+  },
+  {
+    id: 'step3',
+    num: 3,
+    icon: '📋',
+    shortTitle: '3. School Profile',
+    badge: 'STAGE 3: ACADEMIC BACKGROUND',
+    title: 'Tells Us Their School & Interests',
+    summary: 'Before taking the test, the student spends 20 seconds selecting their current class (Class 9, 10, 11, 12, or College), target stream (Science, Commerce, Arts, or Undecided), and favorite subjects.',
+    studentAction: 'Selects their grade, stream preference, and clicks favorite subjects like Mathematics, Physics, Biology, Fine Arts, or Accounts.',
+    aiAction: 'Customizes the evaluation matrix based on whether the student is choosing streams after Class 10 or colleges after Class 12.',
+    result: 'Tailored recommendations that fit their exact academic reality rather than generic advice.',
+    highlights: [
+      'Covers Classes 8 through 12 and College graduates',
+      'Supports Science (PCM/PCB), Commerce, and Arts/Humanities',
+      'Takes less than 30 seconds to complete'
+    ],
+    x: 440, y: 320,
+    color: '#34d399'
+  },
+  {
+    id: 'step4',
+    num: 4,
+    icon: '🧩',
+    shortTitle: '4. 48-Question Test',
+    badge: 'STAGE 4: RIASEC PSYCHOMETRIC QUIZ',
+    title: 'Takes the 48-Question RIASEC Quiz',
+    summary: 'No stressful exam questions! Instead, the student rates 48 simple real-world activities on a 1-5 scale (e.g., "Do you like solving puzzles?", "Do you like leading a team?", "Do you like sketching or building?").',
+    studentAction: 'Taps through 48 engaging scenario cards at their own pace. Takes approximately 8 to 10 minutes.',
+    aiAction: 'Measures natural interest patterns across 6 global psychological dimensions: Realistic, Investigative, Artistic, Social, Enterprising, and Conventional.',
+    result: 'A scientifically accurate map of where the student naturally thrives, without any pressure or test anxiety.',
+    highlights: [
+      'Based on the internationally recognized Holland RIASEC Model',
+      'Simple rating scale (Strongly Dislike to Strongly Like)',
+      'Idempotent autosave — answers are never lost if internet drops'
+    ],
+    x: 610, y: 160,
+    color: '#a855f7'
+  },
+  {
+    id: 'step5',
+    num: 5,
+    icon: '🧠',
+    shortTitle: '5. AI Evaluation',
+    badge: 'STAGE 5: INTELLIGENT MATCHING',
+    title: 'AI Analyzes Traits & Matches 100+ Careers',
+    summary: 'The moment the test is submitted, SkillSense’s AI calculates the student’s dominant Holland Code and runs semantic matching across a rich database of 100+ modern careers in India.',
+    studentAction: 'Watches an animated calculating screen as the AI evaluates thousands of career paths against their answers.',
+    aiAction: 'Converts student traits into high-dimensional vectors and cross-references salary curves, future industry demand, and skill requirements.',
+    result: 'Uncovers both popular and hidden emerging careers that perfectly match the student’s true personality.',
+    highlights: [
+      'Evaluates over 100+ careers in Engineering, Medicine, Business, Design, Law, etc.',
+      'Matches future-proof careers (AI, Robotics, UI/UX, Green Energy)',
+      'Instant calculation in under 1.5 seconds'
+    ],
+    x: 780, y: 320,
+    color: '#fbbf24'
+  },
+  {
+    id: 'step6',
+    num: 6,
+    icon: '🏆',
+    shortTitle: '6. Free Preview',
+    badge: 'STAGE 6: INSTANT RESULTS PREVIEW',
+    title: 'Instant Free Personality & Career Preview',
+    summary: 'The student immediately sees their Personality Archetype (e.g., "The Innovative Problem Solver") with a dynamic radar chart and a sneak peek of their #1 matched career.',
+    studentAction: 'Views their dominant personality traits, strengths, and primary career recommendation completely free of charge.',
+    aiAction: 'Prepares the comprehensive 6-career breakdown with education roadmaps, pending report unlock.',
+    result: 'Immediate validation and excitement for students and parents without having to pay upfront.',
+    highlights: [
+      'Beautiful visual radar chart showing RIASEC personality scores',
+      'Top career recommendation previewed instantly for free',
+      'Clear summary of personal strengths and work styles'
+    ],
+    x: 950, y: 160,
+    color: '#fb923c'
+  },
+  {
+    id: 'step7',
+    num: 7,
+    icon: '💳',
+    shortTitle: '7. Simple Unlock',
+    badge: 'STAGE 7: EASY UPI & CARD UNLOCK',
+    title: 'Safe 1-Click Payment via UPI / Cards',
+    summary: 'To access the complete career blueprint, the student or parent unlocks the report via Razorpay using PhonePe, Google Pay, Paytm, UPI, or Credit/Debit Cards.',
+    studentAction: 'Chooses an affordable plan (e.g. Essential or Pro with AI counseling credits) and authorizes payment seamlessly on their phone.',
+    aiAction: 'Instantly verifies payment with HMAC cryptographic security and permanently unlocks the assessment in their account.',
+    result: 'Instant unlock with zero waiting time and automated invoice/receipt.',
+    highlights: [
+      '100% Secure via Razorpay (PhonePe, GPay, Paytm, Cards, NetBanking)',
+      'Affordable transparent student pricing (no hidden subscriptions)',
+      'Bonus AI counseling chat credits included with Pro plans'
+    ],
+    x: 1120, y: 320,
+    color: '#f43f5e'
+  },
+  {
+    id: 'step8',
+    num: 8,
+    icon: '🗺️',
+    shortTitle: '8. Full Blueprint',
+    badge: 'STAGE 8: COMPLETE 360° CAREER REPORT',
+    title: 'Explores Full Career Roadmaps & Colleges',
+    summary: 'The full report unlocks 6 detailed career matches. Each career includes step-by-step educational pathways, top colleges in India and abroad, starting salaries, and essential entrance exams.',
+    studentAction: 'Explores career roadmaps: which stream to pick, which degree to pursue, which entrance exams to write (JEE, NEET, CLAT, CUET, CAT, etc.), and expected salary growth.',
+    aiAction: 'Generates detailed salary curves, course fee estimates, and recommended skill certifications.',
+    result: 'A concrete, actionable roadmap from high school to a dream career, eliminating guesswork.',
+    highlights: [
+      'Top 6 matched careers with percentage fit scores',
+      'Top colleges in India & globally with entrance exam lists',
+      'Realistic starting, mid-level, and senior salary expectations'
+    ],
+    x: 1290, y: 160,
+    color: '#38bdf8'
+  },
+  {
+    id: 'step9',
+    num: 9,
+    icon: '🤖',
+    shortTitle: '9. AI Mentor VERA',
+    badge: 'STAGE 9: 24/7 AI CAREER COUNSELOR',
+    title: 'Chats Anytime with VERA (AI Counselor)',
+    summary: 'Whenever the student or parent has a question, they open "VERA"—SkillSense’s 24/7 AI Counselor. Powered by Anthropic Claude 3.5 Sonnet, VERA gives personalized, empathetic answers tailored to their test results.',
+    studentAction: 'Asks questions like: "What subjects should I take in 11th?", "How do I prepare for CUET?", "What is the work-life balance of a UX Designer in India?".',
+    aiAction: 'Fuses student RIASEC scores, academic grade, and verified career data to deliver accurate, non-hallucinated guidance.',
+    result: 'A patient, knowledgeable career mentor available round-the-clock right in their pocket.',
+    highlights: [
+      'Powered by Anthropic Claude 3.5 Sonnet AI Engine',
+      'Knows the student’s test scores and custom interests',
+      'Strict guardrails prevent misinformation or false promises'
+    ],
+    x: 1460, y: 320,
+    color: '#a855f7'
+  },
+  {
+    id: 'step10',
+    num: 10,
+    icon: '📄',
+    shortTitle: '10. Share & Action',
+    badge: 'STAGE 10: ACTION & PARENT SHARING',
+    title: 'Downloads PDF Report & Starts Action Plan',
+    summary: 'The student downloads an executive PDF dossier to share with parents, school teachers, or mentors. They now have clarity on subject selection, entrance exam timelines, and career milestones.',
+    studentAction: 'Clicks "Download PDF Report", prints or shares via WhatsApp with parents, and starts preparing for the recommended exams with confidence.',
+    aiAction: 'Logs milestones, updates credit balance, and prepares ongoing recommendation updates as new industry trends emerge.',
+    result: 'Complete confidence and alignment between students, parents, and teachers for a bright future.',
+    highlights: [
+      'Downloadable, high-res PDF career blueprint',
+      'Easy to share with parents, tutors, and school counselors',
+      'Continuous clarity from school through college admissions'
+    ],
+    x: 1630, y: 160,
+    color: '#34d399'
+  }
+];
+
+/* =========================================================================
+   CANVAS RENDERING & ANIMATED JOURNEY HIGHWAY
+   ========================================================================= */
+
+const canvas = document.getElementById('journeyCanvas');
+const ctx = canvas.getContext('2d');
+
+let currentStep = 0;
+let isPlaying = true;
+let isLooping = true;
+let speed = 1.0;
+let autoTimer = null;
+let timerProgress = 0;
+const STEP_DURATION = 4200; // ms per step
+
+// Pan & Zoom
+let scale = 0.85;
+let panX = 40;
+let panY = 50;
+let isDragging = false;
+let startX, startY;
+let hoveredStepIdx = -1;
+
+// Traveling Avatar / Packet
+let avatarT = 0;
+let avatarTargetT = 0;
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+}
+
+function toScreen(x, y) {
+  return { x: x * scale + panX, y: y * scale + panY };
+}
+function toWorld(sx, sy) {
+  return { x: (sx - panX) / scale, y: (sy - panY) / scale };
+}
+
+// Draw the continuous glowing highway connecting all 10 stages
+function drawHighway() {
+  if (JOURNEY_STEPS.length < 2) return;
+
+  // Background smooth curved track
+  ctx.save();
+  ctx.beginPath();
+
+  const first = toScreen(JOURNEY_STEPS[0].x, JOURNEY_STEPS[0].y);
+  ctx.moveTo(first.x, first.y);
+
+  for (let i = 0; i < JOURNEY_STEPS.length - 1; i++) {
+    const p1 = toScreen(JOURNEY_STEPS[i].x, JOURNEY_STEPS[i].y);
+    const p2 = toScreen(JOURNEY_STEPS[i + 1].x, JOURNEY_STEPS[i + 1].y);
+    const cpx = (p1.x + p2.x) / 2;
+    const cpy = (p1.y + p2.y) / 2 + (i % 2 === 0 ? -40 * scale : 40 * scale);
+    ctx.quadraticCurveTo(cpx, cpy, p2.x, p2.y);
+  }
+
+  // Inactive base track
+  ctx.strokeStyle = 'rgba(30, 41, 59, 0.7)';
+  ctx.lineWidth = 14 * scale;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Active glowing trail up to current step
+  const activeSteps = JOURNEY_STEPS.slice(0, currentStep + 1);
+  if (activeSteps.length > 1) {
+    ctx.beginPath();
+    const startPt = toScreen(activeSteps[0].x, activeSteps[0].y);
+    ctx.moveTo(startPt.x, startPt.y);
+
+    for (let i = 0; i < activeSteps.length - 1; i++) {
+      const p1 = toScreen(activeSteps[i].x, activeSteps[i].y);
+      const p2 = toScreen(activeSteps[i + 1].x, activeSteps[i + 1].y);
+      const cpx = (p1.x + p2.x) / 2;
+      const cpy = (p1.y + p2.y) / 2 + (i % 2 === 0 ? -40 * scale : 40 * scale);
+      ctx.quadraticCurveTo(cpx, cpy, p2.x, p2.y);
+    }
+
+    ctx.shadowBlur = 18 * scale;
+    ctx.shadowColor = '#38bdf8';
+    ctx.strokeStyle = 'url(#glowTrack)';
+    const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    grad.addColorStop(0, '#38bdf8');
+    grad.addColorStop(0.5, '#2dd4bf');
+    grad.addColorStop(1, '#a855f7');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 6 * scale;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// Draw Stage Checkpoints (Nodes)
+function drawCheckpoints() {
+  JOURNEY_STEPS.forEach((step, idx) => {
+    const s = toScreen(step.x, step.y);
+    const isCurrent = idx === currentStep;
+    const isCompleted = idx < currentStep;
+    const isHovered = idx === hoveredStepIdx;
+
+    ctx.save();
+
+    // Pulse wave for current step
+    if (isCurrent) {
+      const pulseSize = (40 + Math.sin(Date.now() / 200) * 6) * scale;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, pulseSize, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+      ctx.fill();
+    }
+
+    // Outer Circle
+    const radius = (isCurrent ? 32 : (isHovered ? 28 : 24)) * scale;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+
+    if (isCurrent) {
+      ctx.shadowBlur = 24 * scale;
+      ctx.shadowColor = step.color;
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = step.color;
+      ctx.lineWidth = 3.5 * scale;
+    } else if (isCompleted) {
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 2 * scale;
+    } else {
+      ctx.fillStyle = '#0a0f1d';
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+      ctx.lineWidth = 1.5 * scale;
+    }
+
+    ctx.fill();
+    ctx.stroke();
+
+    // Icon in center
+    ctx.font = `${(isCurrent ? 20 : 16) * scale}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(step.icon, s.x, s.y);
+
+    // Number Badge (top right)
+    const badgeR = 9 * scale;
+    const bx = s.x + radius * 0.7;
+    const by = s.y - radius * 0.7;
+    ctx.beginPath();
+    ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+    ctx.fillStyle = isCurrent ? step.color : (isCompleted ? '#34d399' : '#1e293b');
+    ctx.fill();
+
+    ctx.font = `bold ${8 * scale}px sans-serif`;
+    ctx.fillStyle = isCurrent ? '#090d16' : (isCompleted ? '#090d16' : '#94a3b8');
+    ctx.fillText(step.num.toString(), bx, by);
+
+    // Label under circle
+    ctx.font = `bold ${Math.max(9, 11 * scale)}px var(--font-main)`;
+    ctx.fillStyle = isCurrent ? '#ffffff' : (isCompleted ? '#cbd5e1' : '#64748b');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(step.shortTitle, s.x, s.y + radius + 10 * scale);
+
+    ctx.restore();
+  });
+}
+
+// Draw Traveling Rocket Avatar
+function drawTravelingAvatar() {
+  const cur = JOURNEY_STEPS[currentStep];
+  const s = toScreen(cur.x, cur.y);
+
+  ctx.save();
+  const floatOffset = Math.sin(Date.now() / 250) * 6 * scale;
+  const ay = s.y - 48 * scale + floatOffset;
+
+  // Avatar bubble
+  ctx.beginPath();
+  ctx.arc(s.x, ay, 18 * scale, 0, Math.PI * 2);
+  ctx.fillStyle = 'linear-gradient(135deg, #0284c7, #38bdf8)';
+  ctx.shadowBlur = 18 * scale;
+  ctx.shadowColor = '#38bdf8';
+  ctx.fillStyle = '#0284c7';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2 * scale;
+  ctx.stroke();
+
+  ctx.font = `${14 * scale}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🚀', s.x, ay);
+
+  // Little down arrow
+  ctx.beginPath();
+  ctx.moveTo(s.x - 5 * scale, ay + 18 * scale);
+  ctx.lineTo(s.x + 5 * scale, ay + 18 * scale);
+  ctx.lineTo(s.x, ay + 24 * scale);
+  ctx.closePath();
+  ctx.fillStyle = '#38bdf8';
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Subtle grid
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+  ctx.lineWidth = 1;
+  const grid = 50 * scale;
+  const ox = panX % grid;
+  const oy = panY % grid;
+  for (let x = ox; x < canvas.width; x += grid) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+  }
+  for (let y = oy; y < canvas.height; y += grid) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+  }
+  ctx.restore();
+
+  drawHighway();
+  drawCheckpoints();
+  drawTravelingAvatar();
+
+  requestAnimationFrame(render);
+}
+
+/* =========================================================================
+   UI CONTROLLER & DETAILS UPDATE
+   ========================================================================= */
+
+function updateDetails(idx) {
+  const step = JOURNEY_STEPS[idx];
+  if (!step) return;
+
+  currentStep = idx;
+
+  // Header & Counter
+  document.getElementById('stepCounterText').textContent = `STEP ${step.num} OF ${JOURNEY_STEPS.length}`;
+  document.getElementById('badgeStep').textContent = step.badge;
+  document.getElementById('badgeStep').style.color = step.color;
+
+  // Titles
+  document.getElementById('stageTitle').innerHTML = `<span>${step.icon}</span> ${step.title}`;
+  document.getElementById('stageSummary').textContent = step.summary;
+
+  // Cards
+  document.getElementById('cardStudentAction').textContent = step.studentAction;
+  document.getElementById('cardAIAction').textContent = step.aiAction;
+  document.getElementById('cardResult').textContent = step.result;
+
+  // Highlights
+  const list = document.getElementById('listHighlights');
+  list.innerHTML = '';
+  step.highlights.forEach(h => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>✔</span> ${h}`;
+    list.appendChild(li);
+  });
+
+  // Update Stepper Nav Pills
+  document.querySelectorAll('.step-pill').forEach((pill, i) => {
+    pill.classList.remove('active');
+    if (i < idx) pill.classList.add('completed');
+    else if (i === idx) {
+      pill.classList.add('active');
+      pill.classList.remove('completed');
+      pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    } else {
+      pill.classList.remove('completed');
+    }
+  });
+
+  // Smoothly center camera slightly on current step
+  const targetX = (canvas.width * 0.45) - step.x * scale;
+  const targetY = (canvas.height * 0.5) - step.y * scale;
+  panX += (targetX - panX) * 0.4;
+  panY += (targetY - panY) * 0.4;
+}
+
+function initStepperNav() {
+  const nav = document.getElementById('stepperNav');
+  nav.innerHTML = '';
+
+  JOURNEY_STEPS.forEach((step, idx) => {
+    const pill = document.createElement('div');
+    pill.className = `step-pill ${idx === 0 ? 'active' : ''}`;
+    pill.innerHTML = `
+      <span class="step-pill-num">${step.num}</span>
+      <span>${step.icon} ${step.shortTitle.split('. ')[1]}</span>
+    `;
+    pill.onclick = () => {
+      goToStep(idx);
+    };
+    nav.appendChild(pill);
+  });
+}
+
+function goToStep(idx) {
+  if (idx < 0) idx = 0;
+  if (idx >= JOURNEY_STEPS.length) idx = JOURNEY_STEPS.length - 1;
+  updateDetails(idx);
+  resetTimer();
+}
+
+function nextStep() {
+  if (currentStep < JOURNEY_STEPS.length - 1) {
+    goToStep(currentStep + 1);
+  } else {
+    // Reached the end
+    if (isLooping) {
+      goToStep(0);
+    } else {
+      pausePlayback();
+    }
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    goToStep(currentStep - 1);
+  }
+}
+
+// Automatic Playback Timer
+function resetTimer() {
+  timerProgress = 0;
+  document.getElementById('timerBar').style.width = '0%';
+}
+
+function startTimer() {
+  if (autoTimer) clearInterval(autoTimer);
+  const intervalMs = 50;
+
+  autoTimer = setInterval(() => {
+    if (!isPlaying) return;
+
+    timerProgress += (intervalMs / (STEP_DURATION / speed));
+    const pct = Math.min(100, timerProgress * 100);
+    document.getElementById('timerBar').style.width = `${pct}%`;
+
+    const remainingSec = Math.max(0, Math.ceil(((1 - timerProgress) * (STEP_DURATION / speed)) / 1000));
+    document.getElementById('timerSeconds').textContent = `${remainingSec}s`;
+
+    if (timerProgress >= 1) {
+      resetTimer();
+      nextStep();
+    }
+  }, intervalMs);
+}
+
+function playPlayback() {
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = '⏸ Pause';
+  document.getElementById('btnPlay').classList.add('pbtn-main');
+  startTimer();
+}
+
+function pausePlayback() {
+  isPlaying = false;
+  document.getElementById('btnPlay').textContent = '▶ Play';
+  document.getElementById('btnPlay').classList.remove('pbtn-main');
+}
+
+/* =========================================================================
+   USER CONTROLS & EVENT LISTENERS
+   ========================================================================= */
+
+document.getElementById('btnPlay').onclick = () => {
+  if (isPlaying) pausePlayback();
+  else playPlayback();
+};
+document.getElementById('btnPrev').onclick = () => {
+  prevStep();
+};
+document.getElementById('btnNext').onclick = () => {
+  nextStep();
+};
+document.getElementById('btnReset').onclick = () => {
+  goToStep(0);
+  playPlayback();
+};
+
+const btnLoop = document.getElementById('btnLoop');
+btnLoop.onclick = () => {
+  isLooping = !isLooping;
+  btnLoop.classList.toggle('active', isLooping);
+  btnLoop.textContent = isLooping ? '🔁 Auto-Loop: ON' : '🔁 Auto-Loop: OFF';
+};
+
+// Speed Toggles
+document.querySelectorAll('.speed-opt').forEach(opt => {
+  opt.onclick = () => {
+    document.querySelectorAll('.speed-opt').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    speed = parseFloat(opt.dataset.speed);
+  };
+});
+
+// View Switcher (Simple Non-Technical vs Technical)
+const btnViewNonTech = document.getElementById('btnViewNonTech');
+const btnViewTech = document.getElementById('btnViewTech');
+const nonTechViewport = document.getElementById('nonTechViewport');
+const techViewport = document.getElementById('techViewport');
+const techIframe = document.getElementById('techIframe');
+
+btnViewNonTech.onclick = () => {
+  btnViewNonTech.classList.add('active');
+  btnViewTech.classList.remove('active');
+  nonTechViewport.style.display = 'grid';
+  techViewport.classList.remove('active');
+};
+
+btnViewTech.onclick = () => {
+  btnViewTech.classList.add('active');
+  btnViewNonTech.classList.remove('active');
+  nonTechViewport.style.display = 'none';
+  techViewport.classList.add('active');
+
+  // Load the technical diagram in the embedded iframe if not loaded
+  if (techIframe.src === 'about:blank' || techIframe.src.endsWith('about:blank')) {
+    techIframe.src = 'SkillSense_Flow_Diagram_Tech.html';
+  }
+};
+
+// Canvas Interaction (Pan & Zoom & Click)
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  startX = e.clientX - panX;
+  startY = e.clientY - panY;
+});
+
+window.addEventListener('mousemove', e => {
+  if (isDragging) {
+    panX = e.clientX - startX;
+    panY = e.clientY - startY;
+  }
+
+  // Hover detection over checkpoints
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const world = toWorld(mx, my);
+
+  hoveredStepIdx = -1;
+  JOURNEY_STEPS.forEach((step, idx) => {
+    const dist = Math.hypot(world.x - step.x, world.y - step.y);
+    if (dist <= 35) {
+      hoveredStepIdx = idx;
+      canvas.style.cursor = 'pointer';
+    }
+  });
+  if (hoveredStepIdx === -1 && !isDragging) {
+    canvas.style.cursor = 'grab';
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+canvas.addEventListener('click', e => {
+  if (hoveredStepIdx !== -1) {
+    goToStep(hoveredStepIdx);
+  }
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  panX = mouseX - (mouseX - panX) * zoomFactor;
+  panY = mouseY - (mouseY - panY) * zoomFactor;
+  scale = Math.max(0.4, Math.min(2.5, scale * zoomFactor));
+}, { passive: false });
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+});
+
+// INITIALIZE
+resizeCanvas();
+initStepperNav();
+updateDetails(0);
+startTimer();
+render();
+
+</script>
+</body>
+</html>

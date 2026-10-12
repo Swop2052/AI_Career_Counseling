@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SkillSense - Interactive System Flow & Database ER Diagram</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#070d18;
+  --bg-panel:#0c1527;
+  --card:#101e36;
+  --border:#1e3256;
+  --border-light:#2c4777;
+  --blue:#38bdf8;
+  --green:#34d399;
+  --emerald:#10b981;
+  --purple:#c084fc;
+  --orange:#fb923c;
+  --yellow:#fbbf24;
+  --pink:#f43f5e;
+  --dim:#64748b;
+  --text:#f1f5f9;
+  --text-muted:#94a3b8;
+  --font-main:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-main);
+  overflow:hidden;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Header */
+header{
+  padding:12px 20px 8px;
+  background:linear-gradient(180deg,#0a1324 0%,rgba(10,19,36,0.95) 100%);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-shrink:0;
+  gap:16px;
+}
+.header-brand h1{
+  font-size:1.15rem;
+  font-weight:800;
+  background:linear-gradient(90deg,#38bdf8,#34d399,#c084fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:-0.3px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.header-brand p{
+  font-size:0.75rem;
+  color:var(--text-muted);
+  margin-top:2px;
+}
+.header-modes{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--bg-panel);
+  padding:3px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+.mode-btn{
+  padding:6px 14px;
+  border-radius:7px;
+  font-size:0.78rem;
+  font-weight:700;
+  cursor:pointer;
+  border:none;
+  background:none;
+  color:var(--text-muted);
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.mode-btn.active{
+  background:linear-gradient(135deg,#1e3a8a,#2563eb);
+  color:#fff;
+  box-shadow:0 2px 10px rgba(37,99,235,0.4);
+}
+.mode-btn.er-mode.active{
+  background:linear-gradient(135deg,#7e22ce,#9333ea);
+  box-shadow:0 2px 10px rgba(147,51,234,0.4);
+}
+
+/* Toolbar & Subnav */
+.subbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:7px 16px;
+  background:rgba(12,21,39,0.9);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.tabs-group{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+.tab-btn{
+  padding:5px 12px;
+  border-radius:6px;
+  font-size:0.73rem;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text-muted);
+  transition:all 0.15s;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.tab-btn:hover{
+  border-color:var(--border-light);
+  color:var(--text);
+}
+.tab-btn.active{
+  border-color:var(--active-color,#38bdf8);
+  background:rgba(56,189,248,0.12);
+  color:var(--active-color,#38bdf8);
+  box-shadow:0 0 12px rgba(56,189,248,0.2);
+}
+
+.controls-group{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.btn{
+  padding:5px 11px;
+  border-radius:6px;
+  font-size:0.73rem;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--text);
+  transition:all 0.15s;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.btn:hover{background:var(--border);color:#fff}
+.btn-primary{
+  background:linear-gradient(135deg,#0284c7,#0369a1);
+  border-color:#38bdf8;
+  color:#fff;
+}
+.btn-primary:hover{box-shadow:0 0 12px rgba(56,189,248,0.4)}
+.btn-loop.on{
+  background:rgba(52,211,153,0.15);
+  border-color:var(--green);
+  color:var(--green);
+}
+.btn-trace.on{
+  background:rgba(192,132,252,0.15);
+  border-color:var(--purple);
+  color:var(--purple);
+}
+.speed-pill{
+  font-size:0.68rem;
+  padding:2px 7px;
+  border-radius:4px;
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--text-muted);
+  cursor:pointer;
+}
+.speed-pill.active{
+  border-color:var(--blue);
+  color:var(--blue);
+}
+
+/* Main Layout */
+.workspace{
+  flex:1;
+  display:flex;
+  position:relative;
+  overflow:hidden;
+}
+
+/* Left Stepper Sidebar */
+.steps-sidebar{
+  width:290px;
+  background:var(--bg-panel);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  flex-shrink:0;
+  transition:transform 0.25s ease;
+  z-index:20;
+}
+.steps-sidebar.collapsed{
+  transform:translateX(-100%);
+  position:absolute;
+  height:100%;
+}
+.sidebar-header{
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.sidebar-title{
+  font-size:0.75rem;
+  font-weight:700;
+  color:var(--blue);
+  text-transform:uppercase;
+  letter-spacing:0.8px;
+}
+.steps-list{
+  flex:1;
+  overflow-y:auto;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.steps-list::-webkit-scrollbar{width:4px}
+.steps-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.step-item{
+  padding:8px 10px;
+  border-radius:7px;
+  border:1px solid transparent;
+  background:rgba(255,255,255,0.02);
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.step-item:hover{
+  background:rgba(255,255,255,0.05);
+  border-color:var(--border);
+}
+.step-item.active{
+  background:rgba(56,189,248,0.12);
+  border-color:var(--blue);
+  box-shadow:0 2px 10px rgba(56,189,248,0.15);
+}
+.step-item.completed{
+  border-color:rgba(52,211,153,0.3);
+  background:rgba(52,211,153,0.04);
+}
+.step-item-top{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:3px;
+}
+.step-num{
+  font-size:0.65rem;
+  font-weight:700;
+  padding:1px 6px;
+  border-radius:10px;
+  background:var(--border);
+  color:var(--text-muted);
+}
+.step-item.active .step-num{
+  background:var(--blue);
+  color:#04101e;
+}
+.step-item.completed .step-num{
+  background:var(--green);
+  color:#02150d;
+}
+.step-name{
+  font-size:0.75rem;
+  font-weight:600;
+  color:var(--text);
+  flex:1;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.step-desc-short{
+  font-size:0.68rem;
+  color:var(--text-muted);
+  line-height:1.3;
+}
+
+/* Canvas Area */
+.canvas-wrap{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+  background:#050912;
+}
+#flowCanvas{
+  display:block;
+  width:100%;
+  height:100%;
+  cursor:grab;
+}
+#flowCanvas:active{
+  cursor:grabbing;
+}
+
+/* Bottom Status Banner */
+.bottom-banner{
+  position:absolute;
+  bottom:12px;
+  left:16px;
+  right:16px;
+  background:rgba(12,21,39,0.96);
+  backdrop-filter:blur(14px);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 16px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  z-index:15;
+  box-shadow:0 8px 30px rgba(0,0,0,0.5);
+}
+.banner-badge{
+  font-size:0.68rem;
+  font-weight:700;
+  padding:4px 9px;
+  border-radius:6px;
+  background:var(--border);
+  color:var(--blue);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+  flex-shrink:0;
+}
+.banner-content{
+  flex:1;
+  min-width:0;
+}
+.banner-title{
+  font-size:0.83rem;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:2px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.banner-path{
+  font-family:var(--font-mono);
+  font-size:0.72rem;
+  color:var(--blue);
+  font-weight:600;
+}
+.banner-desc{
+  font-size:0.74rem;
+  color:var(--text-muted);
+  line-height:1.35;
+}
+.banner-progress{
+  width:140px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  flex-shrink:0;
+}
+.progress-meta{
+  display:flex;
+  justify-content:space-between;
+  font-size:0.66rem;
+  color:var(--text-muted);
+  font-family:var(--font-mono);
+}
+.progress-bar-bg{
+  height:5px;
+  background:var(--border);
+  border-radius:3px;
+  overflow:hidden;
+}
+.progress-bar-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#38bdf8,#34d399);
+  transition:width 0.25s ease;
+}
+
+/* Floating Controls (Sidebar toggle & mini legend) */
+.floating-tools{
+  position:absolute;
+  top:12px;
+  left:14px;
+  display:flex;
+  gap:8px;
+  z-index:16;
+}
+.icon-btn{
+  width:32px;
+  height:32px;
+  border-radius:7px;
+  background:rgba(12,21,39,0.9);
+  border:1px solid var(--border);
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.icon-btn:hover{background:var(--card);border-color:var(--blue)}
+
+/* ER Schema Card Tooltip */
+.er-legend{
+  position:absolute;
+  top:12px;
+  right:14px;
+  background:rgba(12,21,39,0.95);
+  backdrop-filter:blur(10px);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:0.68rem;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  z-index:16;
+}
+.er-legend-title{
+  font-weight:700;
+  color:var(--text-muted);
+  text-transform:uppercase;
+  letter-spacing:0.6px;
+  font-size:0.62rem;
+  margin-bottom:2px;
+}
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  color:var(--text-muted);
+}
+.legend-dot{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <h1>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#g1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#34d399"/>
+          </linearGradient>
+        </defs>
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+      </svg>
+      SkillSense Live System Architecture & ER Pipeline
+    </h1>
+    <p>Continuous animated data flows &bull; Interactive pan/zoom &bull; Live relational database ER schema</p>
+  </div>
+  
+  <div class="header-modes">
+    <button class="mode-btn active" id="btnModeSystem">
+      <span>⚡</span> System Architecture Flow
+    </button>
+    <button class="mode-btn er-mode" id="btnModeER">
+      <span>🗄️</span> Database ER Diagram
+    </button>
+  </div>
+</header>
+
+<div class="subbar">
+  <div class="tabs-group" id="tabsContainer">
+    <!-- Populated by JavaScript according to view mode -->
+  </div>
+
+  <div class="controls-group">
+    <button class="btn btn-primary" id="btnPlayPause">▶ Play</button>
+    <button class="btn" id="btnPrev">◀ Prev</button>
+    <button class="btn" id="btnNext">Next ▶</button>
+    <button class="btn" id="btnReset">↺ Reset</button>
+    <button class="btn btn-loop on" id="btnLoop" title="Toggle Continuous Looping">🔁 Loop: ON</button>
+    <button class="btn btn-trace on" id="btnTrace" title="Keep continuous full flow visible">✨ Trail: Full</button>
+    <div style="display:flex;align-items:center;gap:3px;margin-left:4px">
+      <span style="font-size:0.68rem;color:var(--text-muted);font-weight:600">Speed:</span>
+      <span class="speed-pill" data-s="0.5">0.5x</span>
+      <span class="speed-pill active" data-s="1">1x</span>
+      <span class="speed-pill" data-s="2">2x</span>
+    </div>
+    <button class="btn" id="btnFit" title="Fit to screen">⊞ Fit</button>
+  </div>
+</div>
+
+<div class="workspace">
+  <!-- Left Step Stepper Sidebar -->
+  <aside class="steps-sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title" id="sidebarTitle">Flow Sequence</div>
+      <span style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-mono)" id="sidebarCount">0/0</span>
+    </div>
+    <div class="steps-list" id="stepsList"></div>
+  </aside>
+
+  <!-- Canvas Container -->
+  <div class="canvas-wrap">
+    <div class="floating-tools">
+      <button class="icon-btn" id="btnToggleSidebar" title="Toggle Sequence Sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btnZoomIn" title="Zoom In">+</button>
+      <button class="icon-btn" id="btnZoomOut" title="Zoom Out">-</button>
+    </div>
+
+    <div class="er-legend" id="legendBox">
+      <div class="er-legend-title">Legend</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div>Frontend React SPA</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div>Flask API Gateway</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Backend Services</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>AI / ML & ChromaDB</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>PostgreSQL Tables</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fb923c"></div>Razorpay Payment</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div>External Services</div>
+    </div>
+
+    <canvas id="flowCanvas"></canvas>
+
+    <!-- Bottom Status Banner -->
+    <div class="bottom-banner" id="bottomBanner">
+      <div class="banner-badge" id="bannerBadge">STEP 1</div>
+      <div class="banner-content">
+        <div class="banner-title">
+          <span id="bannerTitle">Browser Loads SkillSense SPA</span>
+          <span class="banner-path" id="bannerPath">browser ➔ home</span>
+        </div>
+        <div class="banner-desc" id="bannerDesc">Select a flow or click Play to begin continuous live animation.</div>
+      </div>
+      <div class="banner-progress">
+        <div class="progress-meta">
+          <span>PROGRESS</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   SKILLSENSE SYSTEM ARCHITECTURE & ER SCHEMA DATA DEFINITIONS
+   ========================================================================= */
+
+// Colors
+const C = {
+  blue: '#38bdf8',
+  green: '#34d399',
+  emerald: '#10b981',
+  purple: '#c084fc',
+  orange: '#fb923c',
+  yellow: '#fbbf24',
+  pink: '#f43f5e',
+  dim: '#64748b',
+  border: '#1e3256'
+};
+
+// Node types & styles
+const NODE_STYLES = {
+  frontend: { bg: '#081729', stroke: '#38bdf8', text: '#38bdf8', badge: 'REACT SPA' },
+  backend:  { bg: '#061a14', stroke: '#34d399', text: '#34d399', badge: 'FLASK ROUTE' },
+  service:  { bg: '#061f18', stroke: '#10b981', text: '#10b981', badge: 'SERVICE' },
+  ai:       { bg: '#1c1704', stroke: '#fbbf24', text: '#fbbf24', badge: 'AI / ML' },
+  db:       { bg: '#170b28', stroke: '#c084fc', text: '#c084fc', badge: 'POSTGRESQL' },
+  payment:  { bg: '#1f1005', stroke: '#fb923c', text: '#fb923c', badge: 'PAYMENT' },
+  email:    { bg: '#210614', stroke: '#f43f5e', text: '#f43f5e', badge: 'SMTP' },
+  external: { bg: '#0d131f', stroke: '#64748b', text: '#94a3b8', badge: 'EXTERNAL' }
+};
+
+/* ---------------------------------------------------------
+   1. SYSTEM ARCHITECTURE NODES (Horizontal Clean Flow Layout)
+   --------------------------------------------------------- */
+const SYSTEM_NODES = [
+  // COLUMN 1: Frontend UI (x: 40)
+  { id: 'browser',   x: 40,  y: 60,  w: 180, h: 54, type: 'frontend', title: 'Student Browser', sub: 'React SPA (Vite)' },
+  { id: 'navbar',    x: 40,  y: 136, w: 180, h: 48, type: 'frontend', title: 'Navbar & Lang',   sub: 'en/hi/mr & Auth state' },
+  { id: 'home',      x: 40,  y: 206, w: 180, h: 48, type: 'frontend', title: 'Home Page',       sub: 'Hero + Dynamic SEO' },
+  { id: 'onboard',   x: 40,  y: 276, w: 180, h: 48, type: 'frontend', title: 'Onboarding Modal',sub: 'Grade / stream / subjects' },
+  { id: 'quiz',      x: 40,  y: 346, w: 180, h: 48, type: 'frontend', title: 'Quiz Interface',  sub: '48 RIASEC Questions' },
+  { id: 'report',    x: 40,  y: 416, w: 180, h: 48, type: 'frontend', title: 'Career Report',   sub: 'Preview + Full Unlock' },
+  { id: 'pricing',   x: 40,  y: 486, w: 180, h: 48, type: 'frontend', title: 'Pricing & Plans', sub: 'Razorpay checkout' },
+  { id: 'login',     x: 40,  y: 556, w: 180, h: 48, type: 'frontend', title: 'Auth Forms',      sub: 'Login / Sign Up' },
+  { id: 'counselor', x: 40,  y: 626, w: 180, h: 48, type: 'frontend', title: 'VERA AI Chatbot', sub: 'Career counselor UI' },
+  { id: 'admin_ui',  x: 40,  y: 696, w: 180, h: 48, type: 'frontend', title: 'Admin Dashboard', sub: 'Dev & SuperAdmin portal' },
+
+  // COLUMN 2: API Gateway & Routes (x: 270)
+  { id: 'nginx',     x: 270, y: 60,  w: 180, h: 54, type: 'external', title: 'Nginx Proxy',      sub: 'SSL & Reverse Proxy' },
+  { id: 'flask',     x: 270, y: 136, w: 180, h: 48, type: 'backend',  title: 'Flask Core API',  sub: 'CORS & Rate Limiter' },
+  { id: 'auth_r',    x: 270, y: 206, w: 180, h: 48, type: 'backend',  title: 'auth_routes.py',  sub: '/signup, /login, /me' },
+  { id: 'assess_r',  x: 270, y: 276, w: 180, h: 48, type: 'backend',  title: 'assessment_routes',sub: '/submit-answers, /full' },
+  { id: 'pay_r',     x: 270, y: 346, w: 180, h: 48, type: 'backend',  title: 'payment_routes',  sub: '/create-order, /verify' },
+  { id: 'chat_r',    x: 270, y: 416, w: 180, h: 48, type: 'backend',  title: 'chat_routes.py',  sub: '/api/chat (VERA)' },
+  { id: 'dev_r',     x: 270, y: 486, w: 180, h: 48, type: 'backend',  title: 'developer_routes',sub: '/stats, /users, /plans' },
+  { id: 'qs_r',      x: 270, y: 556, w: 180, h: 48, type: 'backend',  title: 'questions_routes',sub: 'Load RIASEC questions' },
+  { id: 'contact_r', x: 270, y: 626, w: 180, h: 48, type: 'backend',  title: 'contact_routes',  sub: 'Contact form & queries' },
+
+  // COLUMN 3: Business Services Layer (x: 500)
+  { id: 'auth_s',    x: 500, y: 136, w: 180, h: 48, type: 'service',  title: 'auth_service.py', sub: 'BCrypt & JWT token' },
+  { id: 'assess_s',  x: 500, y: 206, w: 180, h: 48, type: 'service',  title: 'assessment_serv.',sub: 'Holland scoring engine' },
+  { id: 'ranking_s', x: 500, y: 276, w: 180, h: 48, type: 'service',  title: 'ranking_engine',  sub: 'Career match score' },
+  { id: 'pay_s',     x: 500, y: 346, w: 180, h: 48, type: 'service',  title: 'payment_service', sub: 'Razorpay HMAC check' },
+  { id: 'wallet_s',  x: 500, y: 416, w: 180, h: 48, type: 'service',  title: 'wallet_service',  sub: 'Credits deduction' },
+  { id: 'pricing_s', x: 500, y: 486, w: 180, h: 48, type: 'service',  title: 'pricing_service', sub: 'Plans & coupons' },
+  { id: 'email_s',   x: 500, y: 556, w: 180, h: 48, type: 'email',    title: 'email_service.py',sub: 'SMTP Welcome & OTP' },
+  { id: 'stats_s',   x: 500, y: 626, w: 180, h: 48, type: 'service',  title: 'stats_service',   sub: 'Dashboard analytics' },
+
+  // COLUMN 4: AI & ML Engine (x: 730)
+  { id: 'llm_eng',   x: 730, y: 136, w: 180, h: 54, type: 'ai',       title: 'LLM Engine',      sub: 'Anthropic Claude 3.5' },
+  { id: 'intent_c',  x: 730, y: 206, w: 180, h: 48, type: 'ai',       title: 'Intent Classifier',sub: 'Career/Exam/College' },
+  { id: 'persona_f', x: 730, y: 276, w: 180, h: 48, type: 'ai',       title: 'Persona Fusion',  sub: 'Student profile context' },
+  { id: 'retrieval', x: 730, y: 346, w: 180, h: 48, type: 'ai',       title: 'Retrieval Pipe',  sub: 'Semantic career search' },
+  { id: 'sentence_t',x: 730, y: 416, w: 180, h: 48, type: 'ai',       title: 'all-MiniLM-L6-v2',sub: '384-dim vector embed' },
+  { id: 'vec_store', x: 730, y: 486, w: 180, h: 48, type: 'ai',       title: 'ChromaDB Local',  sub: 'Cosine vector index' },
+  { id: 'prompt_b',  x: 730, y: 556, w: 180, h: 48, type: 'ai',       title: 'Prompt Builder',  sub: 'Dynamic system prompts' },
+  { id: 'validator', x: 730, y: 626, w: 180, h: 48, type: 'ai',       title: 'Response Valid.', sub: 'Hallucination check' },
+
+  // COLUMN 5: PostgreSQL Database (x: 960)
+  { id: 'db_users',    x: 960, y: 136, w: 190, h: 48, type: 'db', title: 'users',           sub: 'id, email, role, hash' },
+  { id: 'db_profiles', x: 960, y: 206, w: 190, h: 48, type: 'db', title: 'user_profiles',   sub: 'user_id FK, class, stream' },
+  { id: 'db_attempts', x: 960, y: 276, w: 190, h: 48, type: 'db', title: 'assessments',     sub: 'riasec, top_careers JSON' },
+  { id: 'db_careers',  x: 960, y: 346, w: 190, h: 48, type: 'db', title: 'careers',         sub: 'title, roadmaps, salary' },
+  { id: 'db_plans',    x: 960, y: 416, w: 190, h: 48, type: 'db', title: 'pricing_plans',   sub: 'tier, price, credits' },
+  { id: 'db_payments', x: 960, y: 486, w: 190, h: 48, type: 'db', title: 'payments',        sub: 'order_id, status, amount' },
+  { id: 'db_wallet',   x: 960, y: 556, w: 190, h: 48, type: 'db', title: 'wallet_credits',  sub: 'user_id FK, balance' },
+  { id: 'db_audit',    x: 960, y: 626, w: 190, h: 48, type: 'db', title: 'audit_log',       sub: 'admin action trail' },
+
+  // COLUMN 6: External APIs (x: 1200)
+  { id: 'ext_claude',   x: 1200, y: 136, w: 170, h: 54, type: 'ai',       title: 'Anthropic Claude',sub: 'Claude 3.5 Sonnet' },
+  { id: 'ext_razorpay', x: 1200, y: 236, w: 170, h: 48, type: 'payment',  title: 'Razorpay Gateway',sub: 'UPI, Card, NetBanking' },
+  { id: 'ext_smtp',     x: 1200, y: 336, w: 170, h: 48, type: 'email',    title: 'SMTP Mail Server',sub: 'Welcome & OTP Delivery' },
+  { id: 'ext_ga4',      x: 1200, y: 436, w: 170, h: 48, type: 'external', title: 'Google Analytics',sub: 'GA4 Student Events' }
+];
+
+/* ---------------------------------------------------------
+   2. SYSTEM ARCHITECTURE CONNECTIONS (EDGES)
+   --------------------------------------------------------- */
+const SYSTEM_EDGES = [
+  // Browser initial load
+  { from: 'browser', to: 'nginx', label: 'HTTPS request', color: C.blue },
+  { from: 'nginx',   to: 'flask', label: 'Reverse proxy', color: C.green },
+  { from: 'browser', to: 'home',  label: 'Mount React',   color: C.blue },
+  { from: 'browser', to: 'navbar',label: 'Render nav',    color: C.blue },
+  { from: 'browser', to: 'ext_ga4',label: 'Pageview',     color: C.dim, dashed: true },
+
+  // Auth flow
+  { from: 'home',    to: 'login',    label: 'Sign In / Up',   color: C.blue },
+  { from: 'login',   to: 'auth_r',   label: 'POST /signup',   color: C.green },
+  { from: 'auth_r',  to: 'auth_s',   label: 'Hash & Validate',color: C.emerald },
+  { from: 'auth_s',  to: 'db_users', label: 'INSERT user',    color: C.purple },
+  { from: 'auth_s',  to: 'db_profiles',label: 'INSERT profile',color: C.purple },
+  { from: 'auth_s',  to: 'wallet_s', label: 'Init balance',   color: C.emerald },
+  { from: 'wallet_s',to: 'db_wallet',label: 'INSERT wallet',  color: C.purple },
+  { from: 'auth_s',  to: 'email_s',  label: 'Trigger welcome',color: C.pink },
+  { from: 'email_s', to: 'ext_smtp', label: 'Deliver SMTP',   color: C.pink },
+
+  // Assessment flow
+  { from: 'home',     to: 'onboard',   label: 'Start Test',     color: C.blue },
+  { from: 'onboard',  to: 'quiz',      label: 'Profile filled', color: C.blue },
+  { from: 'quiz',     to: 'qs_r',      label: 'GET /questions', color: C.green },
+  { from: 'quiz',     to: 'assess_r',  label: 'POST answers',   color: C.green },
+  { from: 'assess_r', to: 'assess_s',  label: 'Score RIASEC',   color: C.emerald },
+  { from: 'assess_s', to: 'ranking_s', label: 'Match careers',  color: C.emerald },
+  { from: 'ranking_s',to: 'retrieval', label: 'Vector query',   color: C.yellow },
+  { from: 'retrieval',to: 'sentence_t',label: 'Embed query',    color: C.yellow },
+  { from: 'retrieval',to: 'vec_store', label: 'Cosine search',  color: C.yellow },
+  { from: 'assess_s', to: 'db_attempts',label: 'Save attempt',  color: C.purple },
+  { from: 'assess_s', to: 'db_careers',label: 'Fetch data',     color: C.purple },
+  { from: 'quiz',     to: 'report',    label: 'Teaser preview', color: C.blue },
+
+  // Payment flow
+  { from: 'report',   to: 'pricing',     label: 'Unlock Full',    color: C.blue },
+  { from: 'pricing',  to: 'pay_r',       label: 'POST order',     color: C.orange },
+  { from: 'pay_r',    to: 'pricing_s',   label: 'Check plans',    color: C.emerald },
+  { from: 'pricing_s',to: 'db_plans',    label: 'Query plans',    color: C.purple },
+  { from: 'pay_r',    to: 'pay_s',       label: 'Create order',   color: C.orange },
+  { from: 'pay_s',    to: 'ext_razorpay',label: 'SDK create',     color: C.orange },
+  { from: 'pricing',  to: 'ext_razorpay',label: 'Customer pays',  color: C.orange },
+  { from: 'pay_r',    to: 'pay_s',       label: 'Verify HMAC',    color: C.orange },
+  { from: 'pay_s',    to: 'db_payments', label: 'INSERT payment', color: C.purple },
+  { from: 'pay_s',    to: 'wallet_s',    label: 'Credit wallet',  color: C.emerald },
+  { from: 'wallet_s', to: 'db_wallet',   label: 'UPDATE balance', color: C.purple },
+  { from: 'pay_r',    to: 'assess_s',    label: 'Unlock report',  color: C.emerald },
+  { from: 'assess_s', to: 'db_attempts', label: 'is_unlocked=1',  color: C.purple },
+  { from: 'report',   to: 'assess_r',    label: 'GET /full',      color: C.green },
+
+  // AI Counselor VERA
+  { from: 'home',     to: 'counselor', label: 'Open VERA',      color: C.blue },
+  { from: 'counselor',to: 'chat_r',    label: 'POST /api/chat', color: C.yellow },
+  { from: 'chat_r',   to: 'intent_c',  label: 'Classify query', color: C.yellow },
+  { from: 'intent_c', to: 'persona_f', label: 'Fuse RIASEC',    color: C.yellow },
+  { from: 'persona_f',to: 'retrieval', label: 'Semantic lookup',color: C.yellow },
+  { from: 'persona_f',to: 'prompt_b',  label: 'Format prompt',  color: C.yellow },
+  { from: 'prompt_b', to: 'llm_eng',   label: 'Send payload',   color: C.yellow },
+  { from: 'llm_eng',  to: 'ext_claude',label: 'HTTPS API',      color: C.yellow },
+  { from: 'ext_claude',to:'llm_eng',   label: 'Stream reply',   color: C.yellow },
+  { from: 'llm_eng',  to: 'validator', label: 'Validate safety',color: C.yellow },
+  { from: 'validator',to: 'chat_r',    label: 'Return text',    color: C.yellow },
+  { from: 'chat_r',   to: 'counselor', label: 'Render speech',  color: C.yellow },
+
+  // Admin flow
+  { from: 'navbar',  to: 'admin_ui',  label: 'Admin link',     color: C.pink },
+  { from: 'admin_ui',to: 'dev_r',     label: 'GET /developer', color: C.pink },
+  { from: 'dev_r',   to: 'stats_s',   label: 'Aggregate data', color: C.pink },
+  { from: 'stats_s', to: 'db_users',  label: 'Count users',    color: C.purple },
+  { from: 'stats_s', to: 'db_payments',label: 'Sum revenue',   color: C.purple },
+  { from: 'stats_s', to: 'db_audit',  label: 'Audit trail',    color: C.purple }
+];
+
+/* ---------------------------------------------------------
+   3. SYSTEM ARCHITECTURE FLOWS (Step-by-step sequence)
+   --------------------------------------------------------- */
+const SYSTEM_FLOWS = {
+  full: {
+    title: 'End-to-End Complete Flow',
+    color: C.blue,
+    steps: [
+      { from: 'browser', to: 'nginx', label: '1. HTTPS Request', title: 'Client Enters SkillSense', desc: 'Student visits https://skillsense.aisense.co.in. Nginx terminates SSL and serves React SPA.' },
+      { from: 'browser', to: 'home', label: '2. Render SPA', title: 'React SPA Mounts', desc: 'React components mount in browser. SeoHead injects dynamic JSON-LD and OpenGraph tags.' },
+      { from: 'home', to: 'onboard', label: '3. Start Test', title: 'Student Opens Assessment', desc: 'Student clicks Start Free Test. Onboarding modal prompts for class, stream, and preferred subjects.' },
+      { from: 'onboard', to: 'quiz', label: '4. Load Quiz', title: '48-Question RIASEC Loaded', desc: 'Questions loaded in English, Hindi, or Marathi based on user language choice.' },
+      { from: 'quiz', to: 'assess_r', label: '5. Submit Answers', title: 'POST /api/submit-answers', desc: 'Student answers submitted with UUID submission_token for idempotency.' },
+      { from: 'assess_r', to: 'assess_s', label: '6. Calculate RIASEC', title: 'Scoring Engine Evaluates', desc: 'assessment_service calculates Holland Codes across Realistic, Investigative, Artistic, Social, Enterprising, Conventional.' },
+      { from: 'assess_s', to: 'retrieval', label: '7. Vector Retrieval', title: 'Semantic Career Matching', desc: 'sentence-transformers creates 384-dim profile embedding. ChromaDB searches cosine similarities.' },
+      { from: 'assess_s', to: 'db_attempts', label: '8. Save to PostgreSQL', title: 'Assessment Persisted', desc: 'Scores, top career matches, and student profile stored with is_unlocked=0.' },
+      { from: 'quiz', to: 'report', label: '9. Teaser Displayed', title: 'Teaser Preview Shown', desc: 'Frontend reveals student personality traits and top career teaser. Full roadmap is locked.' },
+      { from: 'report', to: 'pricing', label: '10. View Plans', title: 'Pricing & Unlock Modal', desc: 'Student reviews Essential (₹99), Pro (₹249), or Unlimited plan options.' },
+      { from: 'pricing', to: 'pay_r', label: '11. Razorpay Order', title: 'POST /api/payment/create-order', desc: 'Flask calls Razorpay API to generate order_id with INR currency and receipt ID.' },
+      { from: 'pricing', to: 'ext_razorpay', label: '12. Complete Payment', title: 'Razorpay Gateway Checkout', desc: 'Student completes payment via UPI, Card, or Netbanking. Razorpay returns payment_id and signature.' },
+      { from: 'pay_r', to: 'pay_s', label: '13. HMAC Verification', title: 'HMAC-SHA256 Signature Verified', desc: 'Backend computes SHA256(order_id + "|" + payment_id, secret) to prevent tampering.' },
+      { from: 'pay_s', to: 'db_payments', label: '14. Record Payment', title: 'Payment Saved & Unlocked', desc: 'Payment row marked PAID. Assessment status updated to is_unlocked=1. Wallet credited.' },
+      { from: 'report', to: 'assess_r', label: '15. Full Access', title: 'Full Report Unlocked', desc: 'Complete 6-career breakdown with salary projections, required degrees, and skill roadmaps rendered.' },
+      { from: 'home', to: 'counselor', label: '16. Ask VERA', title: 'AI Counselor Activated', desc: 'Student opens VERA AI counselor widget for personalized career counseling backed by Claude 3.5 Sonnet.' }
+    ]
+  },
+  auth: {
+    title: 'Authentication & Profile Flow',
+    color: C.green,
+    steps: [
+      { from: 'home', to: 'login', label: '1. Click Auth', title: 'Student Opens Login / Register', desc: 'Student clicks Sign Up or Log In from navbar.' },
+      { from: 'login', to: 'auth_r', label: '2. Submit Form', title: 'POST /api/auth/signup', desc: 'Transmits email, bcrypt password hash target, full name, and education level.' },
+      { from: 'auth_r', to: 'auth_s', label: '3. Validate & Hash', title: 'BCrypt Password Hashing', desc: 'auth_service enforces password strength and generates salted BCrypt hash.' },
+      { from: 'auth_s', to: 'db_users', label: '4. Create User', title: 'INSERT into users', desc: 'New user row inserted with default role=USER and verified_email=false.' },
+      { from: 'auth_s', to: 'db_profiles', label: '5. Create Profile', title: 'INSERT into user_profiles', desc: '1:1 related student profile row created linked by user_id FK.' },
+      { from: 'auth_s', to: 'wallet_s', label: '6. Init Wallet', title: 'Initialize Credit Wallet', desc: 'wallet_service creates wallet_credits record with 0 initial balance.' },
+      { from: 'wallet_s', to: 'db_wallet', label: '7. Save Wallet', title: 'INSERT into wallet_credits', desc: 'Initializes wallet row with balance=0 and total_spent=0.' },
+      { from: 'auth_s', to: 'email_s', label: '8. Welcome Email', title: 'Trigger Welcome Notification', desc: 'Dispatches asynchronous welcome email with onboarding tips via SMTP.' },
+      { from: 'email_s', to: 'ext_smtp', label: '9. SMTP Send', title: 'Mail Delivered to Inbox', desc: 'SMTP server sends HTML welcome message to student email address.' }
+    ]
+  },
+  quiz: {
+    title: 'RIASEC Quiz & Evaluation Flow',
+    color: C.purple,
+    steps: [
+      { from: 'home', to: 'onboard', label: '1. Onboarding', title: 'Fill Educational Profile', desc: 'Collects current class, target academic stream (Science, Commerce, Arts), and favorite subjects.' },
+      { from: 'onboard', to: 'quiz', label: '2. Quiz Ready', title: 'Initialize Assessment Engine', desc: 'Sets up 48 standardized RIASEC psychological questions with responsive cards.' },
+      { from: 'quiz', to: 'qs_r', label: '3. Fetch Bank', title: 'GET /api/questions', desc: 'Loads localized question bank containing Realistic, Investigative, Artistic, Social, Enterprising, Conventional items.' },
+      { from: 'quiz', to: 'assess_r', label: '4. Submit 48 Answers', title: 'POST /api/submit-answers', desc: 'Payload includes 48 Likert scores (1-5), student_info metadata, and client timestamp.' },
+      { from: 'assess_r', to: 'assess_s', label: '5. RIASEC Scoring', title: 'Holland Hexagon Calculation', desc: 'Computes normalized percentile scores across R, I, A, S, E, C and extracts dominant top-3 code (e.g. ISC).' },
+      { from: 'assess_s', to: 'ranking_s', label: '6. Career Scoring', title: 'Heuristic Career Matcher', desc: 'Calculates cosine affinity against 100+ vetted career profiles in database.' },
+      { from: 'ranking_s', to: 'retrieval', label: '7. Semantic Embedding', title: 'Vector Space Projection', desc: 'all-MiniLM-L6-v2 encodes student traits and interests into 384-dimensional vector.' },
+      { from: 'retrieval', to: 'vec_store', label: '8. ChromaDB Lookup', title: 'Nearest Neighbor Query', desc: 'Finds top semantically aligned careers even with non-traditional subject combinations.' },
+      { from: 'assess_s', to: 'db_attempts', label: '9. Save Results', title: 'Save Assessment Attempt', desc: 'Stores attempt row with JSONB riasec_scores and top_careers. Sets is_unlocked=0.' },
+      { from: 'quiz', to: 'report', label: '10. Render Teaser', title: 'Student Views Teaser', desc: 'Personality radar chart and #1 career preview rendered. Unlock CTA presented.' }
+    ]
+  },
+  pay: {
+    title: 'Monetization & Unlock Flow',
+    color: C.orange,
+    steps: [
+      { from: 'report', to: 'pricing', label: '1. Click Unlock', title: 'Student Clicks Unlock Full Report', desc: 'Displays plan comparison: Essential (1 assessment unlock) vs Pro (unlock + 10 VERA credits).' },
+      { from: 'pricing', to: 'pay_r', label: '2. Fetch Plans', title: 'GET /api/plans', desc: 'Fetches active plans and current promotional campaign discount codes.' },
+      { from: 'pay_r', to: 'pricing_s', label: '3. Verify Plan', title: 'Pricing Service Validation', desc: 'Validates pricing tier, calculates tax/discount, and returns final payable amount.' },
+      { from: 'pricing', to: 'pay_r', label: '4. Create Order', title: 'POST /api/payment/create-order', desc: 'Sends plan_id and attempt_id. Server instantiates Razorpay order.' },
+      { from: 'pay_r', to: 'ext_razorpay', label: '5. Razorpay API', title: 'Razorpay Order ID Created', desc: 'Razorpay generates order_id (order_xxx) returned to frontend.' },
+      { from: 'pricing', to: 'ext_razorpay', label: '6. Payment Modal', title: 'Student Authorizes Payment', desc: 'Razorpay checkout modal prompts student for UPI PIN or card CVV.' },
+      { from: 'pricing', to: 'pay_r', label: '7. Verify Signature', title: 'POST /api/payment/verify', desc: 'Frontend submits razorpay_order_id, razorpay_payment_id, and signature.' },
+      { from: 'pay_r', to: 'pay_s', label: '8. Cryptographic Check', title: 'HMAC-SHA256 Match', desc: 'Ensures cryptographic proof of payment from Razorpay webhook secret.' },
+      { from: 'pay_s', to: 'db_payments', label: '9. Log Transaction', title: 'INSERT into payments', desc: 'Transaction recorded with status=PAID, payment method, and amount.' },
+      { from: 'pay_s', to: 'wallet_s', label: '10. Add Credits', title: 'Wallet Credited', desc: 'Plan bonus credits added to user balance for AI counselor chats.' },
+      { from: 'pay_r', to: 'assess_s', label: '11. Unlock Assessment', title: 'UPDATE assessments SET is_unlocked=1', desc: 'Assessment flag flipped to unlocked with unlocked_at timestamp.' },
+      { from: 'report', to: 'assess_r', label: '12. Load Full Report', title: 'Full Report Rendered', desc: 'Client loads complete roadmap, college recommendations, salary curves, and PDF download.' }
+    ]
+  },
+  ai: {
+    title: 'VERA AI Counselor Flow',
+    color: C.yellow,
+    steps: [
+      { from: 'home', to: 'counselor', label: '1. Click VERA', title: 'Student Opens Counselor Widget', desc: 'Floating AI counselor widget opens with welcome prompt and suggested questions.' },
+      { from: 'counselor', to: 'chat_r', label: '2. Send Message', title: 'POST /api/chat', desc: 'Transmits student question, conversation session ID, and user auth token.' },
+      { from: 'chat_r', to: 'intent_c', label: '3. Classify Query', title: 'Intent Classification', desc: 'Identifies query category: college_admission, salary_query, subject_choice, or career_path.' },
+      { from: 'intent_c', to: 'persona_f', label: '4. Persona Fusion', title: 'Contextual Persona Assembly', desc: 'Fuses student Holland code (RIASEC), academic grade, and unlocked career profile.' },
+      { from: 'persona_f', to: 'retrieval', label: '5. Semantic Retrieval', title: 'RAG Knowledge Retrieval', desc: 'Retrieves relevant career data, colleges, course eligibility, and syllabus requirements.' },
+      { from: 'retrieval', to: 'vec_store', label: '6. ChromaDB Query', title: 'ChromaDB Cosine Lookup', desc: 'Vector search returns top-3 most relevant career context snippets.' },
+      { from: 'persona_f', to: 'prompt_b', label: '7. Assemble Prompt', title: 'Dynamic Prompt Engineering', desc: 'Constructs strict system prompt enforcing friendly counselor tone, no hallucinations, and structured advice.' },
+      { from: 'prompt_b', to: 'llm_eng', label: '8. LLM Invocation', title: 'Invoke Anthropic Claude API', desc: 'Calls Claude 3.5 Sonnet with temperature=0.3 and safety guardrails.' },
+      { from: 'llm_eng', to: 'ext_claude', label: '9. Cloud Inference', title: 'Claude 3.5 Sonnet Processing', desc: 'Claude synthesizes student traits with industry career reality and generates empathetic guidance.' },
+      { from: 'llm_eng', to: 'validator', label: '10. Guardrail Check', title: 'Response Validation & Safety', desc: 'Checks response against harmful content, unrealistic promises, or hallucinated college names.' },
+      { from: 'validator', to: 'counselor', label: '11. Stream Response', title: 'Live Chat Response Rendered', desc: 'Formatted markdown with action steps, recommended courses, and next questions displayed to student.' }
+    ]
+  },
+  admin: {
+    title: 'SuperAdmin & Developer Portal',
+    color: C.pink,
+    steps: [
+      { from: 'navbar', to: 'admin_ui', label: '1. Admin Access', title: 'SuperAdmin Authentication', desc: 'Verifies session has DEVELOPER or SUPER_ADMIN role privilege.' },
+      { from: 'admin_ui', to: 'dev_r', label: '2. Request Metrics', title: 'GET /developer/stats', desc: 'Frontend requests platform telemetry, revenue, user signups, and test completions.' },
+      { from: 'dev_r', to: 'stats_s', label: '3. Compute Metrics', title: 'Aggregating Analytics', desc: 'stats_service calculates conversion rates, daily revenue, active users, and popular careers.' },
+      { from: 'stats_s', to: 'db_users', label: '4. Query Users', title: 'SELECT COUNT(*) FROM users', desc: 'Retrieves user breakdown by role, verification status, and registration cohort.' },
+      { from: 'stats_s', to: 'db_payments', label: '5. Query Revenue', title: 'SELECT SUM(amount) FROM payments', desc: 'Sums total collected revenue grouped by day, week, and pricing plan.' },
+      { from: 'dev_r', to: 'db_audit', label: '6. Audit Logging', title: 'INSERT into audit_log', desc: 'Every administrative lookup or modification is immutably logged with admin user_id and IP.' }
+    ]
+  }
+};
+
+/* ---------------------------------------------------------
+   4. DATABASE ER SCHEMA DEFINITION (Tables, Columns, Keys)
+   --------------------------------------------------------- */
+const ER_TABLES = [
+  {
+    id: 't_users',
+    title: 'users',
+    badge: 'CORE IDENTITY',
+    x: 60, y: 70, w: 260, h: 230,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'email', type: 'VARCHAR(255) UNIQUE', req: true },
+      { name: 'password_hash', type: 'VARCHAR(255)', req: true },
+      { name: 'full_name', type: 'VARCHAR(150)', req: false },
+      { name: 'role', type: "VARCHAR(20) DEFAULT 'USER'", req: true },
+      { name: 'is_verified', type: 'BOOLEAN DEFAULT FALSE', req: true },
+      { name: 'created_at', type: 'TIMESTAMP DEFAULT NOW()', req: true }
+    ]
+  },
+  {
+    id: 't_profiles',
+    title: 'user_profiles',
+    badge: '1:1 USER PROFILE',
+    x: 60, y: 360, w: 260, h: 220,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'user_id', type: 'BIGINT UNIQUE', fk: 'users.id', req: true },
+      { name: 'education_level', type: 'VARCHAR(50)', req: true },
+      { name: 'target_stream', type: 'VARCHAR(50)', req: false },
+      { name: 'preferred_subjects', type: 'JSONB', req: false },
+      { name: 'avatar_url', type: 'VARCHAR(255)', req: false },
+      { name: 'updated_at', type: 'TIMESTAMP', req: true }
+    ]
+  },
+  {
+    id: 't_assessments',
+    title: 'assessments',
+    badge: '1:N PSYCHOMETRIC TEST',
+    x: 400, y: 70, w: 280, h: 260,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'user_id', type: 'BIGINT', fk: 'users.id', req: true },
+      { name: 'submission_token', type: 'VARCHAR(64) UNIQUE', req: true },
+      { name: 'riasec_scores', type: 'JSONB {R,I,A,S,E,C}', req: true },
+      { name: 'holland_code', type: 'VARCHAR(10)', req: true },
+      { name: 'top_careers', type: 'JSONB (Array of 6)', req: true },
+      { name: 'is_unlocked', type: 'BOOLEAN DEFAULT FALSE', req: true },
+      { name: 'unlocked_at', type: 'TIMESTAMP', req: false },
+      { name: 'created_at', type: 'TIMESTAMP DEFAULT NOW()', req: true }
+    ]
+  },
+  {
+    id: 't_careers',
+    title: 'careers',
+    badge: 'CAREER KNOWLEDGE BASE',
+    x: 760, y: 70, w: 270, h: 240,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'title', type: 'VARCHAR(150) UNIQUE', req: true },
+      { name: 'cluster', type: 'VARCHAR(100)', req: true },
+      { name: 'riasec_affinity', type: 'VARCHAR(10)', req: true },
+      { name: 'avg_salary_inr', type: 'NUMERIC(12,2)', req: true },
+      { name: 'career_data', type: 'JSONB (roadmaps, colleges)', req: true },
+      { name: 'is_active', type: 'BOOLEAN DEFAULT TRUE', req: true }
+    ]
+  },
+  {
+    id: 't_plans',
+    title: 'pricing_plans',
+    badge: 'TIER CATALOG',
+    x: 400, y: 400, w: 270, h: 220,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'name', type: 'VARCHAR(100)', req: true },
+      { name: 'price_inr', type: 'NUMERIC(10,2)', req: true },
+      { name: 'credits_granted', type: 'INT DEFAULT 0', req: true },
+      { name: 'is_active', type: 'BOOLEAN DEFAULT TRUE', req: true },
+      { name: 'features', type: 'JSONB', req: true },
+      { name: 'created_at', type: 'TIMESTAMP', req: true }
+    ]
+  },
+  {
+    id: 't_payments',
+    title: 'payments',
+    badge: 'FINANCIAL TRANSACTIONS',
+    x: 760, y: 370, w: 280, h: 260,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'user_id', type: 'BIGINT', fk: 'users.id', req: true },
+      { name: 'attempt_id', type: 'BIGINT', fk: 'assessments.id', req: false },
+      { name: 'plan_id', type: 'BIGINT', fk: 'pricing_plans.id', req: true },
+      { name: 'razorpay_order_id', type: 'VARCHAR(100) UNIQUE', req: true },
+      { name: 'razorpay_payment_id', type: 'VARCHAR(100)', req: false },
+      { name: 'amount', type: 'NUMERIC(10,2)', req: true },
+      { name: 'status', type: "VARCHAR(30) DEFAULT 'PENDING'", req: true },
+      { name: 'created_at', type: 'TIMESTAMP DEFAULT NOW()', req: true }
+    ]
+  },
+  {
+    id: 't_wallet',
+    title: 'wallet_credits',
+    badge: '1:1 USER BALANCE',
+    x: 1110, y: 70, w: 250, h: 210,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'user_id', type: 'BIGINT UNIQUE', fk: 'users.id', req: true },
+      { name: 'balance', type: 'INT DEFAULT 0', req: true },
+      { name: 'total_earned', type: 'INT DEFAULT 0', req: true },
+      { name: 'total_spent', type: 'INT DEFAULT 0', req: true },
+      { name: 'updated_at', type: 'TIMESTAMP', req: true }
+    ]
+  },
+  {
+    id: 't_audit',
+    title: 'audit_log',
+    badge: 'COMPLIANCE AUDIT TRAIL',
+    x: 1110, y: 360, w: 250, h: 230,
+    columns: [
+      { name: 'id', type: 'BIGSERIAL', pk: true },
+      { name: 'user_id', type: 'BIGINT', fk: 'users.id', req: false },
+      { name: 'action', type: 'VARCHAR(100)', req: true },
+      { name: 'target_type', type: 'VARCHAR(50)', req: true },
+      { name: 'details', type: 'JSONB', req: false },
+      { name: 'ip_address', type: 'VARCHAR(45)', req: false },
+      { name: 'timestamp', type: 'TIMESTAMP DEFAULT NOW()', req: true }
+    ]
+  }
+];
+
+/* ---------------------------------------------------------
+   5. DATABASE ER RELATIONSHIPS (FOREIGN KEYS & CARDINALITY)
+   --------------------------------------------------------- */
+const ER_RELATIONS = [
+  {
+    from: 't_users', to: 't_profiles',
+    fromCol: 'id', toCol: 'user_id',
+    type: '1:1',
+    label: '1 : 1 (user_id FK)',
+    desc: 'Each user has exactly one profile row containing student educational metadata.'
+  },
+  {
+    from: 't_users', to: 't_assessments',
+    fromCol: 'id', toCol: 'user_id',
+    type: '1:N',
+    label: '1 : N (user_id FK)',
+    desc: 'One user can complete multiple assessment attempts over time.'
+  },
+  {
+    from: 't_assessments', to: 't_careers',
+    fromCol: 'top_careers', toCol: 'id',
+    type: 'N:M',
+    label: 'Score Match (top_careers JSONB)',
+    desc: 'Calculated top 6 career matches link directly to master careers knowledge records.'
+  },
+  {
+    from: 't_plans', to: 't_payments',
+    fromCol: 'id', toCol: 'plan_id',
+    type: '1:N',
+    label: '1 : N (plan_id FK)',
+    desc: 'Each pricing plan can be purchased by many users.'
+  },
+  {
+    from: 't_assessments', to: 't_payments',
+    fromCol: 'id', toCol: 'attempt_id',
+    type: '1:N',
+    label: '1 : N (attempt_id FK)',
+    desc: 'When unlocking a specific test report, the payment links to the assessment attempt.'
+  },
+  {
+    from: 't_users', to: 't_payments',
+    fromCol: 'id', toCol: 'user_id',
+    type: '1:N',
+    label: '1 : N (user_id FK)',
+    desc: 'One user can perform multiple payment transactions.'
+  },
+  {
+    from: 't_users', to: 't_wallet',
+    fromCol: 'id', toCol: 'user_id',
+    type: '1:1',
+    label: '1 : 1 (user_id FK)',
+    desc: 'Each user owns one wallet balance record for VERA AI counseling.'
+  },
+  {
+    from: 't_users', to: 't_audit',
+    fromCol: 'id', toCol: 'user_id',
+    type: '1:N',
+    label: '1 : N (user_id FK)',
+    desc: 'Admin actions, logins, and permission promotions are recorded with actor user_id.'
+  }
+];
+
+const ER_FLOWS = {
+  er_full: {
+    title: 'Complete Relational Data Flow',
+    color: C.purple,
+    steps: [
+      { from: 't_users', to: 't_profiles', label: '1:1 Profile', title: 'User Profile Binding', desc: 'When a student registers, users.id creates exactly 1 user_profiles record via user_id FK.' },
+      { from: 't_users', to: 't_assessments', label: '1:N Assessment', title: 'Assessment Creation', desc: 'Student starts a test. A new assessments record is inserted with user_id FK and status is_unlocked=0.' },
+      { from: 't_assessments', to: 't_careers', label: 'Career Matching', title: 'Master Career Cross-Reference', desc: 'Holland score algorithm matches top 6 career recommendations from master careers catalog.' },
+      { from: 't_plans', to: 't_payments', label: 'Plan Selection', title: 'Pricing Plan Selection', desc: 'Student selects a plan (e.g. Pro ₹249). The plan_id is embedded in the payment order request.' },
+      { from: 't_users', to: 't_payments', label: '1:N Payments', title: 'Payment Association', desc: 'The payment row links user_id FK to track who authorized the transaction.' },
+      { from: 't_assessments', to: 't_payments', label: 'Attempt Unlocking', title: 'Assessment Report Unlock', desc: 'Payment attempt_id FK specifies which test report to flip from is_unlocked=0 to 1.' },
+      { from: 't_users', to: 't_wallet', label: '1:1 Wallet', title: 'Wallet Balance Credit', desc: 'Upon successful payment verification, user_id FK updates wallet_credits balance atomically.' },
+      { from: 't_users', to: 't_audit', label: '1:N Audit Log', title: 'Audit Trail Recording', desc: 'Transaction confirmation, role changes, and admin views logged to audit_log with user_id FK.' }
+    ]
+  }
+};
+
+/* =========================================================================
+   CANVAS INTERACTION & CONTINUOUS RENDERING ENGINE
+   ========================================================================= */
+
+const canvas = document.getElementById('flowCanvas');
+const ctx = canvas.getContext('2d');
+
+// State
+let currentMode = 'system'; // 'system' | 'er'
+let activeFlowKey = 'full';
+let currentStepIdx = 0;
+let isPlaying = true;
+let isLooping = true;
+let isFullTrace = true;
+let speedFactor = 1.0;
+let stepTimer = null;
+let continuousParticleTimer = null;
+
+// Camera & Dragging
+let scale = 1.0;
+let panX = 0;
+let panY = 0;
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let hoveredNodeId = null;
+
+// Active edges / trails
+let activeEdgeKeys = new Set();
+let particles = [];
+
+// Particle Class for continuous, smooth pulse streaming
+class Particle {
+  constructor(x1, y1, x2, y2, color, speed = 1) {
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+    this.color = color;
+    this.progress = 0;
+    this.speed = (0.012 + Math.random() * 0.006) * speed;
+    this.radius = 3.5;
+    this.done = false;
+  }
+
+  update() {
+    this.progress += this.speed * speedFactor;
+    if (this.progress >= 1) {
+      this.done = true;
+    }
+  }
+
+  draw(ctx) {
+    // Quadratic bezier midpoint curve
+    const cx = (this.x1 + this.x2) / 2;
+    const cy = (this.y1 + this.y2) / 2 - 25;
+    const t = this.progress;
+
+    // Bezier point formula: (1-t)^2*P0 + 2(1-t)t*P1 + t^2*P2
+    const x = (1 - t) * (1 - t) * this.x1 + 2 * (1 - t) * t * cx + t * t * this.x2;
+    const y = (1 - t) * (1 - t) * this.y1 + 2 * (1 - t) * t * cy + t * t * this.y2;
+
+    const screenPos = toScreen(x, y);
+
+    ctx.save();
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = this.color;
+    ctx.beginPath();
+    ctx.arc(screenPos.x, screenPos.y, this.radius * scale, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// Coordinate conversions
+function toScreen(x, y) {
+  return { x: x * scale + panX, y: y * scale + panY };
+}
+function toWorld(sx, sy) {
+  return { x: (sx - panX) / scale, y: (sy - panY) / scale };
+}
+
+// Helpers
+function getActiveFlow() {
+  if (currentMode === 'er') {
+    return ER_FLOWS[activeFlowKey] || ER_FLOWS.er_full;
+  }
+  return SYSTEM_FLOWS[activeFlowKey] || SYSTEM_FLOWS.full;
+}
+
+function getActiveNodes() {
+  return currentMode === 'er' ? ER_TABLES : SYSTEM_NODES;
+}
+
+function getActiveEdges() {
+  return currentMode === 'er' ? ER_RELATIONS : SYSTEM_EDGES;
+}
+
+function getNodeById(id) {
+  const nodes = getActiveNodes();
+  return nodes.find(n => n.id === id);
+}
+
+function getNodeCenter(node) {
+  return { x: node.x + node.w / 2, y: node.y + node.h / 2 };
+}
+
+// Rounded rectangle helper
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+/* ---------------------------------------------------------
+   DRAWING ROUTINES
+   --------------------------------------------------------- */
+
+function resizeCanvas() {
+  const container = canvas.parentElement;
+  canvas.width = container.clientWidth;
+  canvas.height = container.clientHeight;
+}
+
+function fitToScreen() {
+  const nodes = getActiveNodes();
+  if (!nodes || nodes.length === 0) return;
+
+  const minX = Math.min(...nodes.map(n => n.x));
+  const maxX = Math.max(...nodes.map(n => n.x + n.w));
+  const minY = Math.min(...nodes.map(n => n.y));
+  const maxY = Math.max(...nodes.map(n => n.y + n.h));
+
+  const pad = 90;
+  const contentW = maxX - minX + pad * 2;
+  const contentH = maxY - minY + pad * 2;
+
+  scale = Math.min(canvas.width / contentW, canvas.height / contentH, 1.25);
+  scale = Math.max(0.35, scale);
+
+  panX = (canvas.width - contentW * scale) / 2 - minX * scale + pad * scale;
+  panY = (canvas.height - contentH * scale) / 2 - minY * scale + pad * scale;
+}
+
+// Draw Column / Tier labels for System Architecture
+function drawTierHeaders() {
+  if (currentMode !== 'system') return;
+
+  const tiers = [
+    { x: 40,   title: '1. CLIENT TIER', sub: 'React SPA (Vite)', color: C.blue },
+    { x: 270,  title: '2. API GATEWAY', sub: 'Flask Routes & Nginx', color: C.green },
+    { x: 500,  title: '3. SERVICES', sub: 'Business Logic Engines', color: C.emerald },
+    { x: 730,  title: '4. AI & ML', sub: 'ChromaDB & Claude 3.5', color: C.yellow },
+    { x: 960,  title: '5. DATABASE', sub: 'PostgreSQL Tables', color: C.purple },
+    { x: 1200, title: '6. EXTERNAL', sub: 'APIs & Services', color: C.orange }
+  ];
+
+  tiers.forEach(tier => {
+    const pos = toScreen(tier.x, 22);
+    ctx.save();
+    ctx.font = `800 ${Math.max(8, 10 * scale)}px var(--font-main)`;
+    ctx.fillStyle = tier.color;
+    ctx.fillText(tier.title, pos.x, pos.y);
+
+    ctx.font = `500 ${Math.max(7, 8 * scale)}px var(--font-main)`;
+    ctx.fillStyle = 'rgba(148,163,184,0.7)';
+    ctx.fillText(tier.sub, pos.x, pos.y + 13 * scale);
+    ctx.restore();
+  });
+}
+
+// Draw System Architecture Node
+function drawSystemNode(n) {
+  const style = NODE_STYLES[n.type] || NODE_STYLES.external;
+  const s = toScreen(n.x, n.y);
+  const sw = n.w * scale;
+  const sh = n.h * scale;
+
+  const flow = getActiveFlow();
+  const currentStep = flow.steps[currentStepIdx];
+  const isCurrent = currentStep && (currentStep.from === n.id || currentStep.to === n.id);
+  const isPathActive = isNodeInActivePath(n.id);
+  const isHovered = hoveredNodeId === n.id;
+
+  ctx.save();
+
+  // Opacity & Dimming: Inactive nodes dim down so the active path is crystal clear!
+  if (!isPathActive && !isHovered && activeEdgeKeys.size > 0) {
+    ctx.globalAlpha = 0.22;
+  } else {
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Glowing shadow for active step nodes
+  if (isCurrent) {
+    ctx.shadowBlur = 20 * scale;
+    ctx.shadowColor = style.stroke;
+  } else if (isHovered) {
+    ctx.shadowBlur = 15 * scale;
+    ctx.shadowColor = style.stroke;
+  }
+
+  // Background Box
+  drawRoundedRect(ctx, s.x, s.y, sw, sh, 8 * scale);
+  ctx.fillStyle = style.bg;
+  ctx.fill();
+
+  // Border
+  ctx.lineWidth = (isCurrent ? 2.5 : (isPathActive ? 1.8 : 1)) * scale;
+  ctx.strokeStyle = isCurrent ? style.stroke : (isPathActive ? style.stroke : 'rgba(44,71,119,0.5)');
+  ctx.stroke();
+
+  // Badge pill
+  if (scale > 0.45) {
+    const badgeW = 60 * scale;
+    const badgeH = 14 * scale;
+    drawRoundedRect(ctx, s.x + sw - badgeW - 6 * scale, s.y + 5 * scale, badgeW, badgeH, 4 * scale);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fill();
+    ctx.font = `700 ${Math.max(6, 7 * scale)}px var(--font-mono)`;
+    ctx.fillStyle = style.text;
+    ctx.textAlign = 'center';
+    ctx.fillText(style.badge, s.x + sw - badgeW / 2 - 6 * scale, s.y + 14 * scale);
+  }
+
+  // Node Title
+  ctx.textAlign = 'left';
+  ctx.font = `700 ${Math.max(8, 10.5 * scale)}px var(--font-main)`;
+  ctx.fillStyle = isPathActive ? '#ffffff' : style.text;
+  ctx.fillText(n.title, s.x + 10 * scale, s.y + sh * 0.42);
+
+  // Node Subtitle
+  ctx.font = `500 ${Math.max(6, 8 * scale)}px var(--font-mono)`;
+  ctx.fillStyle = isPathActive ? '#94a3b8' : '#64748b';
+  const subText = n.sub.length > 28 ? n.sub.substring(0, 26) + '..' : n.sub;
+  ctx.fillText(subText, s.x + 10 * scale, s.y + sh * 0.76);
+
+  ctx.restore();
+}
+
+// Draw ER Schema Table Node
+function drawERTable(t) {
+  const s = toScreen(t.x, t.y);
+  const sw = t.w * scale;
+  const sh = t.h * scale;
+
+  const flow = getActiveFlow();
+  const currentStep = flow.steps[currentStepIdx];
+  const isCurrent = currentStep && (currentStep.from === t.id || currentStep.to === t.id);
+  const isPathActive = isNodeInActivePath(t.id);
+  const isHovered = hoveredNodeId === t.id;
+
+  ctx.save();
+
+  if (!isPathActive && !isHovered && activeEdgeKeys.size > 0) {
+    ctx.globalAlpha = 0.25;
+  } else {
+    ctx.globalAlpha = 1.0;
+  }
+
+  if (isCurrent) {
+    ctx.shadowBlur = 24 * scale;
+    ctx.shadowColor = C.purple;
+  }
+
+  // Outer container
+  drawRoundedRect(ctx, s.x, s.y, sw, sh, 9 * scale);
+  ctx.fillStyle = '#0d1527';
+  ctx.fill();
+  ctx.lineWidth = (isCurrent ? 2.5 : 1.2) * scale;
+  ctx.strokeStyle = isCurrent ? C.purple : (isPathActive ? 'rgba(192,132,252,0.8)' : '#22385e');
+  ctx.stroke();
+
+  // Header Banner
+  const headerH = 34 * scale;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(s.x, s.y + 9 * scale);
+  ctx.quadraticCurveTo(s.x, s.y, s.x + 9 * scale, s.y);
+  ctx.lineTo(s.x + sw - 9 * scale, s.y);
+  ctx.quadraticCurveTo(s.x + sw, s.y, s.x + sw, s.y + 9 * scale);
+  ctx.lineTo(s.x + sw, s.y + headerH);
+  ctx.lineTo(s.x, s.y + headerH);
+  ctx.closePath();
+  ctx.fillStyle = isCurrent ? 'rgba(192,132,252,0.2)' : 'rgba(30,50,86,0.5)';
+  ctx.fill();
+  ctx.restore();
+
+  // Table Title & Icon
+  ctx.textAlign = 'left';
+  ctx.font = `700 ${Math.max(8, 11 * scale)}px var(--font-mono)`;
+  ctx.fillStyle = isCurrent ? '#f3e8ff' : C.purple;
+  ctx.fillText('🗄️ ' + t.title, s.x + 9 * scale, s.y + headerH * 0.65);
+
+  // Badge
+  if (scale > 0.45) {
+    ctx.font = `600 ${Math.max(6, 7 * scale)}px var(--font-main)`;
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'right';
+    ctx.fillText(t.badge, s.x + sw - 8 * scale, s.y + headerH * 0.65);
+  }
+
+  // Divider Line
+  ctx.beginPath();
+  ctx.moveTo(s.x, s.y + headerH);
+  ctx.lineTo(s.x + sw, s.y + headerH);
+  ctx.strokeStyle = '#22385e';
+  ctx.lineWidth = 1 * scale;
+  ctx.stroke();
+
+  // Columns Rows
+  const rowH = 21 * scale;
+  t.columns.forEach((col, idx) => {
+    const rowY = s.y + headerH + (idx + 1) * rowH - 6 * scale;
+    if (rowY > s.y + sh) return;
+
+    // Key Icon
+    ctx.textAlign = 'left';
+    ctx.font = `600 ${Math.max(6, 7.5 * scale)}px var(--font-mono)`;
+    if (col.pk) {
+      ctx.fillStyle = C.yellow;
+      ctx.fillText('🔑 PK', s.x + 8 * scale, rowY);
+    } else if (col.fk) {
+      ctx.fillStyle = C.blue;
+      ctx.fillText('🔗 FK', s.x + 8 * scale, rowY);
+    } else {
+      ctx.fillStyle = 'rgba(148,163,184,0.4)';
+      ctx.fillText('•', s.x + 12 * scale, rowY);
+    }
+
+    // Column Name
+    ctx.font = `600 ${Math.max(7, 8.5 * scale)}px var(--font-mono)`;
+    ctx.fillStyle = col.pk ? '#fef08a' : (col.fk ? '#bae6fd' : '#e2e8f0');
+    ctx.fillText(col.name, s.x + 42 * scale, rowY);
+
+    // Column Data Type
+    if (scale > 0.5) {
+      ctx.textAlign = 'right';
+      ctx.font = `400 ${Math.max(6, 7.5 * scale)}px var(--font-mono)`;
+      ctx.fillStyle = '#64748b';
+      ctx.fillText(col.type, s.x + sw - 8 * scale, rowY);
+    }
+  });
+
+  ctx.restore();
+}
+
+// Draw Connecting Bezier Arrow Edge
+function drawEdge(edge, isActive, isCurrentStep) {
+  const fromNode = getNodeById(edge.from);
+  const toNode = getNodeById(edge.to);
+  if (!fromNode || !toNode) return;
+
+  const fc = getNodeCenter(fromNode);
+  const tc = getNodeCenter(toNode);
+
+  const start = toScreen(fc.x, fc.y);
+  const end = toScreen(tc.x, tc.y);
+
+  // Bezier control point arched slightly upward
+  const cpx = (start.x + end.x) / 2;
+  const cpy = (start.y + end.y) / 2 - 25 * scale;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.quadraticCurveTo(cpx, cpy, end.x, end.y);
+
+  if (isCurrentStep) {
+    ctx.shadowBlur = 12 * scale;
+    ctx.shadowColor = edge.color || C.blue;
+    ctx.strokeStyle = edge.color || C.blue;
+    ctx.lineWidth = 2.4 * scale;
+    ctx.globalAlpha = 0.95;
+  } else if (isActive) {
+    ctx.strokeStyle = edge.color || C.blue;
+    ctx.lineWidth = 1.6 * scale;
+    ctx.globalAlpha = 0.7;
+  } else {
+    ctx.strokeStyle = 'rgba(44,71,119,0.3)';
+    ctx.lineWidth = 0.8 * scale;
+    ctx.globalAlpha = 0.25;
+  }
+
+  if (edge.dashed) {
+    ctx.setLineDash([4 * scale, 4 * scale]);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw Arrowhead on active / current lines
+  if (isActive || isCurrentStep) {
+    const angle = Math.atan2(end.y - cpy, end.x - cpx);
+    const arrowLen = 9 * scale;
+
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(end.x - arrowLen * Math.cos(angle - 0.4), end.y - arrowLen * Math.sin(angle - 0.4));
+    ctx.lineTo(end.x - arrowLen * Math.cos(angle + 0.4), end.y - arrowLen * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fillStyle = edge.color || C.blue;
+    ctx.fill();
+
+    // Edge Label
+    if (edge.label && scale > 0.5) {
+      const lblSize = Math.max(7, 8 * scale);
+      ctx.font = `600 ${lblSize}px var(--font-main)`;
+      ctx.fillStyle = edge.color || '#fff';
+      ctx.textAlign = 'center';
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = '#000';
+      ctx.fillText(edge.label, cpx, cpy - 4 * scale);
+    }
+  }
+
+  ctx.restore();
+}
+
+// Background Grid
+function drawGrid() {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+  ctx.lineWidth = 1;
+
+  const gridSize = 40 * scale;
+  const offsetX = panX % gridSize;
+  const offsetY = panY % gridSize;
+
+  for (let x = offsetX; x < canvas.width; x += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+  }
+  for (let y = offsetY; y < canvas.height; y += gridSize) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function isNodeInActivePath(id) {
+  for (let key of activeEdgeKeys) {
+    const [from, to] = key.split('->');
+    if (from === id || to === id) return true;
+  }
+  return false;
+}
+
+// Main Render Loop
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawGrid();
+  drawTierHeaders();
+
+  const edges = getActiveEdges();
+  const nodes = getActiveNodes();
+  const flow = getActiveFlow();
+  const currentStep = flow.steps[currentStepIdx];
+  const currentKey = currentStep ? `${currentStep.from}->${currentStep.to}` : '';
+
+  // 1. Draw Inactive Edges
+  edges.forEach(e => {
+    const k = `${e.from}->${e.to}`;
+    if (!activeEdgeKeys.has(k)) {
+      drawEdge(e, false, false);
+    }
+  });
+
+  // 2. Draw Active Edges
+  edges.forEach(e => {
+    const k = `${e.from}->${e.to}`;
+    if (activeEdgeKeys.has(k)) {
+      const isCur = k === currentKey;
+      drawEdge(e, true, isCur);
+    }
+  });
+
+  // 3. Draw Nodes / Tables
+  if (currentMode === 'er') {
+    nodes.forEach(drawERTable);
+  } else {
+    nodes.forEach(drawSystemNode);
+  }
+
+  // 4. Update & Draw Streaming Particles
+  particles.forEach(p => {
+    p.update();
+    p.draw(ctx);
+  });
+  particles = particles.filter(p => !p.done);
+
+  requestAnimationFrame(render);
+}
+
+/* =========================================================================
+   CONTINUOUS STEP EXECUTION & PULSE GENERATOR
+   ========================================================================= */
+
+function updateBannerAndUI(step, idx, total) {
+  const badge = document.getElementById('bannerBadge');
+  const title = document.getElementById('bannerTitle');
+  const path = document.getElementById('bannerPath');
+  const desc = document.getElementById('bannerDesc');
+  const percent = document.getElementById('progressPercent');
+  const bar = document.getElementById('progressBar');
+
+  badge.textContent = `STEP ${idx + 1} OF ${total}`;
+  title.textContent = step.title;
+  path.textContent = `${step.from} ➔ ${step.to}`;
+  desc.textContent = step.desc;
+
+  const pct = Math.round(((idx + 1) / total) * 100);
+  percent.textContent = `${pct}%`;
+  bar.style.width = `${pct}%`;
+
+  // Update sidebar list items
+  document.querySelectorAll('.step-item').forEach((item, i) => {
+    item.classList.remove('active');
+    if (i < idx) {
+      item.classList.add('completed');
+    } else if (i === idx) {
+      item.classList.add('active');
+      item.classList.remove('completed');
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      item.classList.remove('completed');
+    }
+  });
+}
+
+function spawnParticlesForStep(fromId, toId, color) {
+  const fromNode = getNodeById(fromId);
+  const toNode = getNodeById(toId);
+  if (!fromNode || !toNode) return;
+
+  const fc = getNodeCenter(fromNode);
+  const tc = getNodeCenter(toNode);
+
+  particles.push(new Particle(fc.x, fc.y, tc.x, tc.y, color || C.blue, 1.0));
+}
+
+function executeStep(stepIndex) {
+  const flow = getActiveFlow();
+  if (!flow || !flow.steps || stepIndex < 0 || stepIndex >= flow.steps.length) return;
+
+  currentStepIdx = stepIndex;
+  const step = flow.steps[currentStepIdx];
+  const stepKey = `${step.from}->${step.to}`;
+
+  if (!isFullTrace) {
+    activeEdgeKeys.clear();
+  }
+  activeEdgeKeys.add(stepKey);
+
+  updateBannerAndUI(step, currentStepIdx, flow.steps.length);
+
+  // Spawn initial burst of particles
+  for (let i = 0; i < 4; i++) {
+    setTimeout(() => {
+      spawnParticlesForStep(step.from, step.to, flow.color);
+    }, i * 140);
+  }
+}
+
+// Continuous interval that keeps streaming particles on all active edges!
+function startContinuousParticleStream() {
+  if (continuousParticleTimer) clearInterval(continuousParticleTimer);
+
+  continuousParticleTimer = setInterval(() => {
+    if (!isPlaying) return;
+
+    const flow = getActiveFlow();
+    if (!flow || !flow.steps) return;
+    const currentStep = flow.steps[currentStepIdx];
+    if (currentStep) {
+      spawnParticlesForStep(currentStep.from, currentStep.to, flow.color);
+    }
+  }, 240 / speedFactor);
+}
+
+function nextStep() {
+  const flow = getActiveFlow();
+  if (!flow || !flow.steps) return;
+
+  if (currentStepIdx < flow.steps.length - 1) {
+    executeStep(currentStepIdx + 1);
+    scheduleNext();
+  } else {
+    // Flow complete
+    if (isLooping) {
+      // Loop smoothly back to beginning after a 1.6s pause
+      stepTimer = setTimeout(() => {
+        if (!isPlaying) return;
+        if (!isFullTrace) activeEdgeKeys.clear();
+        executeStep(0);
+        scheduleNext();
+      }, 1600 / speedFactor);
+    } else {
+      pausePlayback();
+      document.getElementById('bannerTitle').textContent = 'Flow Complete! Press Reset or Play to re-run.';
+    }
+  }
+}
+
+function scheduleNext() {
+  clearTimeout(stepTimer);
+  if (isPlaying) {
+    stepTimer = setTimeout(nextStep, 2400 / speedFactor);
+  }
+}
+
+function playPlayback() {
+  isPlaying = true;
+  document.getElementById('btnPlayPause').textContent = '⏸ Pause';
+  document.getElementById('btnPlayPause').classList.add('btn-primary');
+  startContinuousParticleStream();
+  scheduleNext();
+}
+
+function pausePlayback() {
+  isPlaying = false;
+  clearTimeout(stepTimer);
+  document.getElementById('btnPlayPause').textContent = '▶ Play';
+  document.getElementById('btnPlayPause').classList.remove('btn-primary');
+}
+
+function resetPlayback() {
+  pausePlayback();
+  activeEdgeKeys.clear();
+  particles = [];
+  currentStepIdx = 0;
+  executeStep(0);
+}
+
+/* =========================================================================
+   UI TABS & SIDEBAR POPULATION
+   ========================================================================= */
+
+function populateTabs() {
+  const container = document.getElementById('tabsContainer');
+  container.innerHTML = '';
+
+  if (currentMode === 'er') {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn active';
+    btn.textContent = '🗄️ Database ER Relations';
+    btn.onclick = () => switchFlow('er_full');
+    container.appendChild(btn);
+  } else {
+    const tabs = [
+      { key: 'full', label: '🌐 Full System', color: C.blue },
+      { key: 'auth', label: '🔐 Auth Flow', color: C.green },
+      { key: 'quiz', label: '📝 RIASEC Quiz', color: C.purple },
+      { key: 'pay',  label: '💳 Payment & Unlock', color: C.orange },
+      { key: 'ai',   label: '🧠 VERA AI Chat', color: C.yellow },
+      { key: 'admin',label: '🛡️ Admin Portal', color: C.pink }
+    ];
+
+    tabs.forEach(tab => {
+      const btn = document.createElement('button');
+      btn.className = `tab-btn ${activeFlowKey === tab.key ? 'active' : ''}`;
+      btn.style.setProperty('--active-color', tab.color);
+      btn.textContent = tab.label;
+      btn.onclick = () => switchFlow(tab.key);
+      container.appendChild(btn);
+    });
+  }
+}
+
+function populateSidebar() {
+  const flow = getActiveFlow();
+  const list = document.getElementById('stepsList');
+  const title = document.getElementById('sidebarTitle');
+  const count = document.getElementById('sidebarCount');
+
+  title.textContent = flow.title;
+  count.textContent = `0 / ${flow.steps.length}`;
+  list.innerHTML = '';
+
+  flow.steps.forEach((step, idx) => {
+    const item = document.createElement('div');
+    item.className = 'step-item';
+    item.innerHTML = `
+      <div class="step-item-top">
+        <span class="step-num">${idx + 1}</span>
+        <span class="step-name">${step.title}</span>
+      </div>
+      <div class="step-desc-short">${step.desc.substring(0, 75)}...</div>
+    `;
+    item.onclick = () => {
+      pausePlayback();
+      executeStep(idx);
+    };
+    list.appendChild(item);
+  });
+}
+
+function switchFlow(flowKey) {
+  activeFlowKey = flowKey;
+  populateTabs();
+  populateSidebar();
+  resetPlayback();
+  fitToScreen();
+  playPlayback();
+}
+
+function switchMode(newMode) {
+  if (currentMode === newMode) return;
+  currentMode = newMode;
+
+  document.getElementById('btnModeSystem').classList.toggle('active', currentMode === 'system');
+  document.getElementById('btnModeER').classList.toggle('active', currentMode === 'er');
+
+  if (currentMode === 'er') {
+    activeFlowKey = 'er_full';
+  } else {
+    activeFlowKey = 'full';
+  }
+
+  populateTabs();
+  populateSidebar();
+  resetPlayback();
+  fitToScreen();
+  playPlayback();
+}
+
+/* =========================================================================
+   EVENT LISTENERS & USER CONTROLS
+   ========================================================================= */
+
+// Mode toggle buttons
+document.getElementById('btnModeSystem').onclick = () => switchMode('system');
+document.getElementById('btnModeER').onclick = () => switchMode('er');
+
+// Play / Pause / Reset
+document.getElementById('btnPlayPause').onclick = () => {
+  if (isPlaying) pausePlayback();
+  else playPlayback();
+};
+document.getElementById('btnPrev').onclick = () => {
+  pausePlayback();
+  if (currentStepIdx > 0) executeStep(currentStepIdx - 1);
+};
+document.getElementById('btnNext').onclick = () => {
+  pausePlayback();
+  const flow = getActiveFlow();
+  if (currentStepIdx < flow.steps.length - 1) executeStep(currentStepIdx + 1);
+};
+document.getElementById('btnReset').onclick = () => {
+  resetPlayback();
+};
+
+// Continuous Loop Toggle
+const btnLoop = document.getElementById('btnLoop');
+btnLoop.onclick = () => {
+  isLooping = !isLooping;
+  btnLoop.classList.toggle('on', isLooping);
+  btnLoop.textContent = isLooping ? '🔁 Loop: ON' : '🔁 Loop: OFF';
+};
+
+// Full Trail / Step Toggle
+const btnTrace = document.getElementById('btnTrace');
+btnTrace.onclick = () => {
+  isFullTrace = !isFullTrace;
+  btnTrace.classList.toggle('on', isFullTrace);
+  btnTrace.textContent = isFullTrace ? '✨ Trail: Full' : '✨ Trail: Step';
+  if (!isFullTrace) {
+    const flow = getActiveFlow();
+    const cur = flow.steps[currentStepIdx];
+    activeEdgeKeys.clear();
+    if (cur) activeEdgeKeys.add(`${cur.from}->${cur.to}`);
+  }
+};
+
+// Speed Toggles
+document.querySelectorAll('.speed-pill').forEach(pill => {
+  pill.onclick = () => {
+    document.querySelectorAll('.speed-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    speedFactor = parseFloat(pill.dataset.s);
+    startContinuousParticleStream();
+    if (isPlaying) scheduleNext();
+  };
+});
+
+// Fit Screen
+document.getElementById('btnFit').onclick = fitToScreen;
+document.getElementById('btnZoomIn').onclick = () => {
+  scale = Math.min(3.5, scale * 1.2);
+};
+document.getElementById('btnZoomOut').onclick = () => {
+  scale = Math.max(0.2, scale * 0.82);
+};
+
+// Sidebar Toggle
+document.getElementById('btnToggleSidebar').onclick = () => {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+};
+
+// Canvas Pan & Zoom
+canvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  lastMouseX = e.clientX;
+  lastMouseY = e.clientY;
+});
+
+window.addEventListener('mousemove', e => {
+  if (isDragging) {
+    panX += e.clientX - lastMouseX;
+    panY += e.clientY - lastMouseY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  }
+
+  // Hover detection
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const worldPos = toWorld(mx, my);
+
+  const nodes = getActiveNodes();
+  hoveredNodeId = null;
+  nodes.forEach(n => {
+    if (
+      worldPos.x >= n.x &&
+      worldPos.x <= n.x + n.w &&
+      worldPos.y >= n.y &&
+      worldPos.y <= n.y + n.h
+    ) {
+      hoveredNodeId = n.id;
+    }
+  });
+});
+
+window.addEventListener('mouseup', () => {
+  isDragging = false;
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  panX = mouseX - (mouseX - panX) * zoomFactor;
+  panY = mouseY - (mouseY - panY) * zoomFactor;
+  scale = Math.max(0.2, Math.min(3.5, scale * zoomFactor));
+}, { passive: false });
+
+// Touch support for tablets/mobile
+let touchDist = 0;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    isDragging = true;
+    lastMouseX = e.touches[0].clientX;
+    lastMouseY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    touchDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchmove', e => {
+  if (e.touches.length === 1 && isDragging) {
+    panX += e.touches[0].clientX - lastMouseX;
+    panY += e.touches[0].clientY - lastMouseY;
+    lastMouseX = e.touches[0].clientX;
+    lastMouseY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    const newDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const factor = newDist / touchDist;
+    scale = Math.max(0.2, Math.min(3.5, scale * factor));
+    touchDist = newDist;
+  }
+}, { passive: true });
+
+canvas.addEventListener('touchend', () => {
+  isDragging = false;
+}, { passive: true });
+
+window.addEventListener('resize', () => {
+  resizeCanvas();
+  fitToScreen();
+});
+
+// INITIALIZE
+resizeCanvas();
+populateTabs();
+populateSidebar();
+fitToScreen();
+executeStep(0);
+startContinuousParticleStream();
+scheduleNext();
+render();
+
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react';
+﻿import { Sparkles } from 'lucide-react';
 import { authApi } from './api/authApi';
 import { assessmentApi } from './api/assessmentApi';
 import DeveloperDashboard from './components/developer/DeveloperDashboard';
@@ -19,6 +19,10 @@ import Login from './components/auth/login';
 import Signup from './components/auth/signup';
 import AssessmentOnboarding from './components/AssessmentOnboarding';
 import CanonicalModal from './components/common/CanonicalModal';
+import After10thGuidance from './components/landing/After10thGuidance';
+import After12thScience from './components/landing/After12thScience';
+import CommerceCareerTest from './components/landing/CommerceCareerTest';
+import SeoHead from './components/common/SeoHead';
 
 // Separate Legal Pages
 import TermsConditions from './components/auth/TermsConditions';
@@ -204,24 +208,43 @@ export default function App() {
       })();
       const activeUser = currentUser || cachedUser;
 
-      if (hash === '#onboarding') setCurrentPage('onboarding');
-      else if (hash === '#test') setCurrentPage('test');
-      else if (hash === '#report') setCurrentPage('report');
-      else if (hash === '#pricing') setCurrentPage('pricing');
-      else if (hash === '#login') setCurrentPage('login');
-      else if (hash === '#signup') setCurrentPage('signup');
-      else if (hash === '#terms') setCurrentPage('terms');
-      else if (hash === '#privacy') setCurrentPage('privacy');
-      else if (hash === '#profile') setCurrentPage('profile');
-      else if (hash === '#developer') {
+      // 1. If an active hash modal or action is present, prioritize it
+      if (hash === '#onboarding') {
+        setCurrentPage('onboarding');
+        return;
+      } else if (hash === '#test') {
+        setCurrentPage('test');
+        return;
+      } else if (hash === '#report') {
+        setCurrentPage('report');
+        return;
+      } else if (hash === '#pricing') {
+        setCurrentPage('pricing');
+        return;
+      } else if (hash === '#login') {
+        setCurrentPage('login');
+        return;
+      } else if (hash === '#signup') {
+        setCurrentPage('signup');
+        return;
+      } else if (hash === '#terms') {
+        setCurrentPage('terms');
+        return;
+      } else if (hash === '#privacy') {
+        setCurrentPage('privacy');
+        return;
+      } else if (hash === '#profile') {
+        setCurrentPage('profile');
+        return;
+      } else if (hash === '#developer') {
         if (canAccessDeveloperConsole(activeUser)) {
           setCurrentPage('developer');
         } else {
           setCurrentPage('home');
-          window.history.replaceState(null, '', window.location.pathname);
+          window.history.replaceState(null, '', '/');
         }
-      }
-      else if (hash === '#admin') {
+        return;
+      } else if (hash === '#admin') {
         if (isSuperAdmin(activeUser)) {
           setCurrentPage('admin');
         } else if (isDeveloper(activeUser)) {
@@ -229,16 +252,35 @@ export default function App() {
           window.history.replaceState(null, '', '#developer');
         } else {
           setCurrentPage('home');
-          window.history.replaceState(null, '', window.location.pathname);
+          window.history.replaceState(null, '', '/');
         }
-      }
-      else if (hash.startsWith('#accept-invite')) setCurrentPage('accept-invite');
-      else if (hash === '#ai-counselor') {
+        return;
+      } else if (hash.startsWith('#accept-invite')) {
+        setCurrentPage('accept-invite');
+        return;
+      } else if (hash === '#ai-counselor') {
         setCurrentPage('counselor');
         window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      } else {
-        setCurrentPage('home');
+        return;
       }
+
+      // 2. Otherwise, check pathname for dedicated SEO landing pages
+      const pathname = window.location.pathname.toLowerCase().replace(/\/$/, '');
+      if (pathname === '/after-10th-career-guidance') {
+        setCurrentPage('landing-after-10th');
+        return;
+      }
+      if (pathname === '/after-12th-science-career-options') {
+        setCurrentPage('landing-after-12th-science');
+        return;
+      }
+      if (pathname === '/career-test-for-commerce-students') {
+        setCurrentPage('landing-commerce');
+        return;
+      }
+
+      // 3. Default to homepage
+      setCurrentPage('home');
     };
 
     syncPageWithHash();
@@ -294,6 +336,13 @@ export default function App() {
   const navigateTo = (page, hash = '') => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
+    // If navigating to home, ensure pathname is reset to '/' so user is not stuck on landing sub-page
+    if (page === 'home') {
+      window.history.pushState(null, '', '/' + (hash ? hash : ''));
+      return;
+    }
+
     if (hash) {
       if (window.location.hash !== hash) {
         window.location.hash = hash;
@@ -796,6 +845,43 @@ export default function App() {
 
       {/* Main Views Routing */}
       <main className="flex-grow w-full">
+      {/* ======== SEO HEAD: Per-page meta tags ======== */}
+      {currentPage === 'home' && (
+        <SeoHead
+          title="SkillSense: Free AI Career Test & Guidance for Students"
+          description="Take SkillSense's free AI career test to discover your ideal career path. Personality-based assessment, aptitude insights, and a custom roadmap."
+          path="/"
+          exactTitle={true}
+        />
+      )}
+      {currentPage === 'pricing' && (
+        <SeoHead
+          title="Pricing - Unlock Your Full Career Report"
+          description="Get full access to your AI-generated career report. Affordable pricing for students across India."
+          path="/#pricing"
+        />
+      )}
+      {/* Private/auth pages: block Google indexing */}
+      {(currentPage === 'login' || currentPage === 'signup' || currentPage === 'report' ||
+        currentPage === 'test' || currentPage === 'onboarding' || currentPage === 'profile' ||
+        currentPage === 'developer' || currentPage === 'admin' || currentPage === 'counselor' ||
+        currentPage === 'terms' || currentPage === 'privacy' || currentPage === 'consent' ||
+        currentPage === 'accept-invite') && (
+        <SeoHead noIndex={true} />
+      )}
+
+        {currentPage === 'landing-after-10th' && (
+          <After10thGuidance onStartTest={handleStartCareerTest} />
+        )}
+
+        {currentPage === 'landing-after-12th-science' && (
+          <After12thScience onStartTest={handleStartCareerTest} />
+        )}
+
+        {currentPage === 'landing-commerce' && (
+          <CommerceCareerTest onStartTest={handleStartCareerTest} />
+        )}
+
         {currentPage === 'home' && (
           <Home onStartTest={handleStartCareerTest} />
         )}
@@ -1127,7 +1213,7 @@ export default function App() {
       )}
 
       {/* Footer */}
-      {!isFullScreenPage && <Footer onStartTest={handleStartCareerTest} />}
+      {!isFullScreenPage && <Footer onStartTest={handleStartCareerTest} onHomeClick={() => navigateTo('home', '')} />}
       {!isFullScreenPage && currentPage === 'home' && <AICounselor currentUser={currentUser} onLoginRequest={() => navigateTo('signup', '#signup')} />}
     </div>
   );

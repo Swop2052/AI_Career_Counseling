@@ -1,5 +1,4 @@
 import React from 'react';
-import { Compass } from 'lucide-react';
 import { FaInstagram, FaYoutube, FaLinkedin } from 'react-icons/fa';
 
 const SOCIALS = [
@@ -14,7 +13,6 @@ export default function Footer({
   onHomeClick 
 }) {
 
-  // होमपेजवरील कोणत्याही विशिष्ट सेक्शनवर जाण्यासाठी
   const handleNavigateToSection = (e, sectionId) => {
     e.preventDefault();
     if (onHomeClick) onHomeClick();
@@ -24,12 +22,11 @@ export default function Footer({
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
-        window.location.hash = sectionId;
+        window.location.href = `/#${sectionId}`;
       }
     }, 120);
   };
 
-  // लिंकनुसार योग्य ॲक्शन ट्रिगर करणे
   const handleLinkClick = (e, item) => {
     e.preventDefault();
 
@@ -37,7 +34,7 @@ export default function Footer({
       if (onStartTest) {
         onStartTest();
       } else {
-        window.location.hash = 'test';
+        window.location.hash = 'onboarding';
       }
     } else if (item === 'AI Counselor') {
       if (onOpenCounselor) {
@@ -52,34 +49,20 @@ export default function Footer({
     }
   };
 
-  const FOOTER_COLUMNS = [
-    {
-      h: 'EXPLORE',
-      items: ['Take Test', 'AI Counselor', 'Contact'],
-    },
-    {
-      h: 'RESOURCES',
-      items: ['Career Advice'],
-    },
-    {
-      h: 'GET STARTED',
-      items: ['Start Career Test'],
-    },
-  ];
-
   return (
     <footer className="relative overflow-hidden bg-[#04211F] text-[#CFEDED]/80 px-5 md:px-10 pt-16 pb-8">
       <div className="pointer-events-none absolute -top-32 left-1/3 w-96 h-96 rounded-full bg-[#09A3A3]/20 blur-[100px]" />
       <div className="pointer-events-none absolute -bottom-24 right-10 w-72 h-72 rounded-full bg-[#E8B04B]/10 blur-[100px]" />
 
       <div className="relative max-w-6xl mx-auto">
-        <div className="flex flex-col md:grid md:grid-cols-[1.6fr_1fr_1fr_1fr] gap-10 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-[1.5fr_1.3fr_1fr_1fr] gap-10 mb-12">
           {/* Brand block */}
           <div>
             <div 
               onClick={(e) => {
                 e.preventDefault();
                 if (onHomeClick) onHomeClick();
+                else window.location.href = '/';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className="flex items-center gap-1 mb-4 cursor-pointer w-fit group select-none transition-transform hover:scale-[1.02] active:scale-95 bg-white/95 hover:bg-white rounded-2xl px-3 py-1.5 shadow-sm"
@@ -122,32 +105,87 @@ export default function Footer({
             </div>
           </div>
 
-          {/* Navigation Columns */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-8 md:contents">
-            {FOOTER_COLUMNS.map((col) => (
-              <div key={col.h}>
-                <div className="text-xs font-semibold tracking-widest text-[#CFEDED]/35 mb-4">
-                  {col.h}
-                </div>
-                <div className="flex flex-col gap-3 text-sm">
-                  {col.items.map((it) => (
-                    <button
-                      key={it}
-                      type="button"
-                      onClick={(e) => handleLinkClick(e, it)}
-                      className="text-[#CFEDED]/65 hover:text-white transition-colors duration-200 text-left w-fit cursor-pointer"
-                    >
-                      {it}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+          {/* Column 1: CAREER GUIDES (Internal SEO Links) */}
+          <div>
+            <div className="text-xs font-semibold tracking-widest text-[#CFEDED]/40 uppercase mb-4">
+              Career Guides
+            </div>
+            <div className="flex flex-col gap-2.5 text-sm">
+              <a 
+                href="/after-10th-career-guidance" 
+                className="text-[#CFEDED]/70 hover:text-white transition-colors duration-200"
+              >
+                Which Stream After 10th?
+              </a>
+              <a 
+                href="/after-12th-science-career-options" 
+                className="text-[#CFEDED]/70 hover:text-white transition-colors duration-200"
+              >
+                Career Options After 12th Science
+              </a>
+              <a 
+                href="/career-test-for-commerce-students" 
+                className="text-[#CFEDED]/70 hover:text-white transition-colors duration-200"
+              >
+                Commerce Student Career Test
+              </a>
+            </div>
+          </div>
+
+          {/* Column 2: EXPLORE */}
+          <div>
+            <div className="text-xs font-semibold tracking-widest text-[#CFEDED]/40 uppercase mb-4">
+              Explore
+            </div>
+            <div className="flex flex-col gap-2.5 text-sm">
+              <button
+                type="button"
+                onClick={(e) => handleLinkClick(e, 'Take Test')}
+                className="text-[#CFEDED]/70 hover:text-white transition-colors duration-200 text-left w-fit cursor-pointer"
+              >
+                Free Aptitude Test
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleLinkClick(e, 'AI Counselor')}
+                className="text-[#CFEDED]/70 hover:text-white transition-colors duration-200 text-left w-fit cursor-pointer"
+              >
+                VERA AI Counselor
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleLinkClick(e, 'Contact')}
+                className="text-[#CFEDED]/70 hover:text-white transition-colors duration-200 text-left w-fit cursor-pointer"
+              >
+                Contact & Support
+              </button>
+            </div>
+          </div>
+
+          {/* Column 3: ABOUT AISENSE */}
+          <div>
+            <div className="text-xs font-semibold tracking-widest text-[#CFEDED]/40 uppercase mb-4">
+              About Platform
+            </div>
+            <div className="flex flex-col gap-2.5 text-sm text-[#CFEDED]/60">
+              <span>Incubated at SINE IIT Bombay</span>
+              <span>AiSense LLP, Maharashtra</span>
+              <a 
+                href="mailto:support@skillsense.aisense.co.in" 
+                className="hover:text-white transition-colors"
+              >
+                support@skillsense.aisense.co.in
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-[#CFEDED]/35">
-          <span>© 2026 SkillSense. Built for curious students.</span>
+        <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#CFEDED]/40">
+          <span>&copy; {new Date().getFullYear()} SkillSense by AiSense LLP. All rights reserved.</span>
+          <div className="flex items-center gap-4">
+            <a href="/#terms" className="hover:text-white transition-colors">Terms of Service</a>
+            <a href="/#privacy" className="hover:text-white transition-colors">Privacy Policy</a>
+          </div>
         </div>
       </div>
     </footer>

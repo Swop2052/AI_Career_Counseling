@@ -1,0 +1,24 @@
+# SkillSense robots.txt
+# https://skillsense.aisense.co.in/
+
+User-agent: *
+Allow: /
+
+# Explicitly allow scripts, styles, and assets so Googlebot can render the React app
+Allow: /assets/
+Allow: /images/
+Allow: /logo.png
+Allow: /logo1.png
+Allow: /SkillSense.png
+Allow: /favicon.svg
+
+# High-Intent SEO Landing Pages
+Allow: /after-10th-career-guidance
+Allow: /after-12th-science-career-options
+Allow: /career-test-for-commerce-students
+
+# Disallow private API endpoints
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://skillsense.aisense.co.in/sitemap.xml

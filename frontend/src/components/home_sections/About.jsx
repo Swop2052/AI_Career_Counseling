@@ -202,6 +202,25 @@ export default function About() {
             </motion.div>
           ))}
         </div>
+
+        {/* E-E-A-T Trust & Credibility Section (Section 6) */}
+        <div className="mt-14 sm:mt-18 bg-[#FAF9F6] border border-[#09A3A3]/25 rounded-3xl p-6 sm:p-8 text-center max-w-4xl mx-auto shadow-sm">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-[#078686] text-xs font-bold uppercase tracking-wider mb-4">
+            E-E-A-T Certified & Incubation
+          </div>
+          <h3 className="font-display font-bold text-xl sm:text-2xl text-[#04211F] mb-3">
+            Backed by AiSense LLP & SINE IIT Bombay Network
+          </h3>
+          <p className="text-xs sm:text-sm text-[#0B3D3D]/75 max-w-2xl mx-auto leading-relaxed mb-6">
+            SkillSense is built by <strong>AiSense LLP</strong>, incubated within the <strong>SINE IIT Bombay ecosystem</strong>. 
+            Our 48-item questionnaire accurately evaluates your Realistic, Investigative, Artistic, Social, Enterprising, and Conventional traits using Dr. John Holland's validated psychometric standard.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-5 sm:gap-8 text-xs font-semibold text-[#04211F]">
+            <span className="flex items-center gap-1.5 text-[#078686]">✓ SINE IIT Bombay Network</span>
+            <span className="flex items-center gap-1.5 text-[#078686]">✓ 48-Item Holland RIASEC Standard</span>
+            <span className="flex items-center gap-1.5 text-[#078686]">✓ Privacy First & ISO Compliant</span>
+          </div>
+        </div>
       </div>
     </section>
   );

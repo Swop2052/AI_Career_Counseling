@@ -267,13 +267,21 @@ export default function Hero({ onStartTest }) {
 
         <motion.h1
           variants={slideFromLeftVariants}
-          className={`font-display font-bold text-[#04211F] text-4xl sm:text-4xl min-[1018px]:text-4xl xl:text-5xl 2xl:text-[3.35rem] mb-5 ${language === 'en' ? 'leading-[1.16] tracking-tight' : 'leading-[1.4] tracking-normal'}`}
+          className={`font-display font-bold text-[#04211F] text-4xl sm:text-4xl min-[1018px]:text-4xl xl:text-5xl 2xl:text-[3.35rem] mb-3 ${language === 'en' ? 'leading-[1.16] tracking-tight' : 'leading-[1.4] tracking-normal'}`}
         >
           <span className={`block ${language === 'en' ? '' : 'mb-3 sm:mb-4'}`}>
             {t('titlePart1')}
           </span>
           <TypewriterText text={t('titleHighlight')} />
         </motion.h1>
+
+        {/* H2 for SEO Keyword Alignment (Section 4 & 11) */}
+        <motion.h2
+          variants={slideFromLeftVariants}
+          className="text-sm sm:text-base lg:text-lg font-bold text-[#078686] mb-5 tracking-tight font-['Sora']"
+        >
+          {t('heroSubHeading') || "AI-Powered Career Guidance & Aptitude Test for Students in India"}
+        </motion.h2>
 
         {/* Description */}
         <motion.p

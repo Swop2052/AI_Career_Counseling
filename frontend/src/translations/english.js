@@ -3,7 +3,8 @@ export const english = {
   badge: "Personality · AI Insights · Career Roadmaps",
   titlePart1: "Find the path that fits",
   titleHighlight: "the real you.",
-  description: "A smart career guide that understands your interests, strengths, and dreams. then builds a clear, step-by-step roadmap just for you. No pressure, no wrong answers.",
+  heroSubHeading: "AI-Powered Career Guidance & Aptitude Test for Students in India",
+  description: "A smart AI career counselling guide that evaluates your aptitude, interests, and strengths—then builds a clear, step-by-step roadmap just for you. No pressure, no wrong answers.",
   startTest: "Start Free Assessment",
   careerAdvice: "Get Career Advice",
   reviews: "4.9/5 (500+ reviews)",
@@ -11,7 +12,7 @@ export const english = {
   // About Section
   aboutBadge: "About SkillSense",
   aboutHeading: "Understand what makes you tick",
-  aboutDesc: "SkillSense looks at your personality, strengths, and interests to find the careers that naturally fit who you are.",
+  aboutDesc: "A trusted career guidance platform helping students discover their strengths, explore opportunities, and build a personalized roadmap based on validated psychometric insights.",
   logicTitle: "Logic",
   logicDesc: "How you approach complex situations and break down problems.",
   creativityTitle: "Creativity",
