@@ -52,6 +52,17 @@ function TagGroup({ icon: Icon, title, items, tone }) {
 }
 
 export default function ProfilePage({ user, onboardingData, isPurchased, onBack, onSave, onGoToPricing, onUnlockReport, onViewReport }) {
+  // Defensive guard: if user is logged out, immediately return to home
+  useEffect(() => {
+    if (!user) {
+      if (onBack) onBack();
+      else {
+        window.location.hash = '';
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+  }, [user, onBack]);
+
   const fileInputRef = useRef(null);
   const initialAvatar = normalizeAvatarKey(user?.avatar || user?.profilePhoto || onboardingData?.avatar || onboardingData?.profilePhoto) || DEFAULT_AVATAR_KEY;
   const [avatarKey, setAvatarKey] = useState(initialAvatar);
@@ -64,6 +75,7 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
   const [workshopCode, setWorkshopCode] = useState('');
 
   const fetchSummary = () => {
+    if (!user) return;
     setLoadingSummary(true);
     setSummaryError(null);
     assessmentApi.getAccountSummary()
@@ -286,6 +298,10 @@ export default function ProfilePage({ user, onboardingData, isPurchased, onBack,
       setIsSaving(false);
     }
   };
+
+  if (!user) {
+    return null;
+  }
 
   const identityFields = [
     { icon: User, label: 'Full Name', value: formData.fullName || '-' },

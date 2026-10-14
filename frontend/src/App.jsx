@@ -189,12 +189,25 @@ export default function App() {
         } else {
           setCurrentUser(null);
           localStorage.removeItem('skillsense_user');
+          const currentHash = window.location.hash;
+          if (currentHash === '#profile' || currentHash === '#developer' || currentHash === '#admin') {
+            setCurrentPage('home');
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
         }
       })
-      .catch(() => { });
+      .catch(() => {
+        setCurrentUser(null);
+        localStorage.removeItem('skillsense_user');
+        const currentHash = window.location.hash;
+        if (currentHash === '#profile' || currentHash === '#developer' || currentHash === '#admin') {
+          setCurrentPage('home');
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      });
   }, []);
 
-  // Sync route and reset scroll on navigation with role guards
+  // Sync route and reset scroll on navigation with role and auth guards
   useEffect(() => {
     const syncPageWithHash = () => {
       const hash = window.location.hash;
@@ -222,10 +235,20 @@ export default function App() {
         setCurrentPage('pricing');
         return;
       } else if (hash === '#login') {
-        setCurrentPage('login');
+        if (activeUser) {
+          setCurrentPage('profile');
+          window.history.replaceState(null, '', '#profile');
+        } else {
+          setCurrentPage('login');
+        }
         return;
       } else if (hash === '#signup') {
-        setCurrentPage('signup');
+        if (activeUser) {
+          setCurrentPage('profile');
+          window.history.replaceState(null, '', '#profile');
+        } else {
+          setCurrentPage('signup');
+        }
         return;
       } else if (hash === '#terms') {
         setCurrentPage('terms');
@@ -234,10 +257,16 @@ export default function App() {
         setCurrentPage('privacy');
         return;
       } else if (hash === '#profile') {
-        setCurrentPage('profile');
+        if (activeUser) {
+          setCurrentPage('profile');
+        } else {
+          // Strictly protect profile: unauthenticated users are redirected to landing page
+          setCurrentPage('home');
+          window.history.replaceState(null, '', '/');
+        }
         return;
       } else if (hash === '#developer') {
-        if (canAccessDeveloperConsole(activeUser)) {
+        if (activeUser && canAccessDeveloperConsole(activeUser)) {
           setCurrentPage('developer');
         } else {
           setCurrentPage('home');
@@ -245,9 +274,9 @@ export default function App() {
         }
         return;
       } else if (hash === '#admin') {
-        if (isSuperAdmin(activeUser)) {
+        if (activeUser && isSuperAdmin(activeUser)) {
           setCurrentPage('admin');
-        } else if (isDeveloper(activeUser)) {
+        } else if (activeUser && isDeveloper(activeUser)) {
           setCurrentPage('developer');
           window.history.replaceState(null, '', '#developer');
         } else {
@@ -285,22 +314,49 @@ export default function App() {
 
     syncPageWithHash();
     window.addEventListener('hashchange', syncPageWithHash);
-    return () => window.removeEventListener('hashchange', syncPageWithHash);
+    window.addEventListener('popstate', syncPageWithHash);
+    const handlePageShow = (event) => {
+      // Re-validate and sync if page is restored from browser Back/Forward Cache
+      if (event.persisted) {
+        authApi.getMe()
+          .then(res => {
+            if (!res?.authenticated) {
+              setCurrentUser(null);
+              localStorage.removeItem('skillsense_user');
+            }
+            syncPageWithHash();
+          })
+          .catch(() => syncPageWithHash());
+      } else {
+        syncPageWithHash();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+
+    return () => {
+      window.removeEventListener('hashchange', syncPageWithHash);
+      window.removeEventListener('popstate', syncPageWithHash);
+      window.removeEventListener('pageshow', handlePageShow);
+    };
   }, [currentUser]);
 
-  // Route security guard: adjust cur rent page when user state hydrates or updates
+  // Route security guard: adjust current page when user state hydrates or updates
   useEffect(() => {
-    if (currentPage === 'admin') {
-      if (currentUser && !isSuperAdmin(currentUser)) {
-        if (isDeveloper(currentUser)) {
-          navigateTo('developer', '#developer');
+    if (currentPage === 'profile') {
+      if (!currentUser) {
+        navigateTo('home', '', true);
+      }
+    } else if (currentPage === 'admin') {
+      if (!currentUser || !isSuperAdmin(currentUser)) {
+        if (currentUser && isDeveloper(currentUser)) {
+          navigateTo('developer', '#developer', true);
         } else {
-          navigateTo('home', '');
+          navigateTo('home', '', true);
         }
       }
     } else if (currentPage === 'developer') {
-      if (currentUser && !canAccessDeveloperConsole(currentUser)) {
-        navigateTo('home', '');
+      if (!currentUser || !canAccessDeveloperConsole(currentUser)) {
+        navigateTo('home', '', true);
       }
     }
   }, [currentUser, currentPage]);
@@ -333,23 +389,33 @@ export default function App() {
     }
   }, [currentPage, currentUser?.id, reportData?.attempt_id]);
 
-  const navigateTo = (page, hash = '') => {
+  const navigateTo = (page, hash = '', replace = false) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
 
     // If navigating to home, ensure pathname is reset to '/' so user is not stuck on landing sub-page
     if (page === 'home') {
-      window.history.pushState(null, '', '/' + (hash ? hash : ''));
+      if (replace) {
+        window.history.replaceState(null, '', '/' + (hash ? hash : ''));
+      } else {
+        window.history.pushState(null, '', '/' + (hash ? hash : ''));
+      }
       return;
     }
 
     if (hash) {
-      if (window.location.hash !== hash) {
+      if (replace) {
+        window.history.replaceState(null, '', hash);
+      } else if (window.location.hash !== hash) {
         window.location.hash = hash;
       }
     } else {
-      if (window.location.hash) {
-        window.history.pushState(null, '', window.location.pathname + window.location.search);
+      if (window.location.hash || replace) {
+        if (replace) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        } else {
+          window.history.pushState(null, '', window.location.pathname + window.location.search);
+        }
       }
     }
   };
@@ -785,16 +851,20 @@ export default function App() {
   const handleLogout = () => {
     authApi.logout().catch(() => { });
     clearAssessmentFlow();
-    localStorage.removeItem('skillsense_user');
-    localStorage.removeItem('skillsense_onboarding');
-    localStorage.removeItem('skillsense_report');
+    try {
+      localStorage.removeItem('skillsense_user');
+      localStorage.removeItem('skillsense_onboarding');
+      localStorage.removeItem('skillsense_report');
+      sessionStorage.clear();
+    } catch { }
     setCurrentUser(null);
     setIsPurchased(false);
     setTempStudentName('');
     setOnboardingData(null);
     setReportData(null);
     setGlobalModal(null);
-    navigateTo('home', '');
+    // Replace history entry to landing page so browser Back button cannot return to authenticated views
+    navigateTo('home', '', true);
   };
 
   const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? {
@@ -1015,12 +1085,12 @@ export default function App() {
           />
         )}
 
-        {currentPage === 'profile' && (
+        {currentPage === 'profile' && currentUser && (
           <ProfilePage
             user={currentUser}
             onboardingData={onboardingData}
             isPurchased={isPurchased}
-            onBack={() => navigateTo('home', '')}
+            onBack={() => navigateTo('home', '', true)}
             onGoToPricing={() => navigateTo('pricing', '#pricing')}
             onUnlockReport={() => navigateTo('report', '#report')}
             onViewReport={(selectedAttempt) => {

@@ -190,20 +190,37 @@ def login():
 def logout():
     """Clear Flask session cookie and server session dictionary."""
     session.clear()
-    return jsonify({'status': 'success', 'message': 'Logged out successfully.'}), 200
+    resp = jsonify({'status': 'success', 'message': 'Logged out successfully.'})
+    # Explicitly invalidate and clear the session cookie across paths
+    resp.delete_cookie(
+        os.getenv('SESSION_COOKIE_NAME', 'session'),
+        path='/',
+        domain=os.getenv('SESSION_COOKIE_DOMAIN', None),
+        httponly=True,
+        samesite=os.getenv('SESSION_COOKIE_SAMESITE', 'Lax'),
+        secure=os.getenv('FLASK_ENV') == 'production'
+    )
+    resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp, 200
 
 @auth_bp.route('/me', methods=['GET'])
 def get_current_user():
     """Return the authenticated user profile and live wallet balance."""
     user_id = session.get('user_id')
     if not user_id:
-        return jsonify({'authenticated': False, 'user': None}), 200
+        resp = jsonify({'authenticated': False, 'user': None})
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
+        return resp, 200
         
     try:
         user = auth_service.get_user_by_id(user_id)
         if not user or not user.get('is_active', 1):
             session.clear()
-            return jsonify({'authenticated': False, 'user': None}), 200
+            resp = jsonify({'authenticated': False, 'user': None})
+            resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
+            return resp, 200
             
         sanitized = sanitize_user(user)
         sanitized['balance'] = wallet_service.get_balance(user_id)
@@ -212,10 +229,14 @@ def get_current_user():
         session['role'] = user.get('role', 'USER')
         session['can_manage_developers'] = sanitized['can_manage_developers']
         
-        return jsonify({'authenticated': True, 'user': sanitized}), 200
+        resp = jsonify({'authenticated': True, 'user': sanitized})
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
+        return resp, 200
     except Exception as e:
         print(f"[ERROR] /me failed: {e}")
-        return jsonify({'authenticated': False, 'user': None}), 500
+        resp = jsonify({'authenticated': False, 'user': None})
+        resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
+        return resp, 500
 
 @auth_bp.route('/profile', methods=['PUT', 'POST'])
 @require_auth
