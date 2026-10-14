@@ -37,7 +37,11 @@ from services.assessment_service import assessment_service
 # ============================================================
 # SETUP FLASK
 # ============================================================
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 app = Flask(__name__)
+# Securely trust 1 upstream proxy (Nginx) for remote_addr and https proto
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.secret_key = config.secret_key
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=config.session_lifetime_hours)
 app.config['SESSION_COOKIE_SECURE'] = config.flask_env == 'production'
@@ -973,7 +977,7 @@ def find_mentioned_careers(message: str, career_db: list) -> list:
 def chat():
     """Handle chat messages with Nova."""
     # Production Security: Rate limiting check (max 30 requests/min per IP)
-    ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+    ip_addr = request.remote_addr or request.headers.get('X-Real-IP') or '127.0.0.1' 
     if not check_rate_limit(ip_addr):
         return jsonify({
             'response': "You are sending messages too quickly. Please wait a moment before trying again."
@@ -1181,6 +1185,9 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    response.headers['X-Permitted-Cross-Domain-Policies'] = 'none'
+    if config.flask_env == 'production':
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     if request.path.startswith('/api/'):
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
         response.headers['Pragma'] = 'no-cache'
