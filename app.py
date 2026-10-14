@@ -1291,5 +1291,9 @@ if __name__ == '__main__':
     print("=" * 70 + "\n")
     sys.stdout.flush()
 
-    from waitress import serve
-    serve(app, host='0.0.0.0', port=5000, threads=6)
+    try:
+        from waitress import serve
+        serve(app, host='0.0.0.0', port=5000, threads=6)
+    except ImportError:
+        print('[INFO] Waitress not found, falling back to Flask development server.')
+        app.run(host='0.0.0.0', port=5000, debug=config.debug)
