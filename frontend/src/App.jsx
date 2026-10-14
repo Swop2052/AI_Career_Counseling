@@ -1,4 +1,4 @@
-﻿import { Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { authApi } from './api/authApi';
 import { assessmentApi } from './api/assessmentApi';
 import DeveloperDashboard from './components/developer/DeveloperDashboard';
@@ -181,37 +181,90 @@ export default function App() {
       .catch(err => console.error("Failed to load app config", err));
 
     // Hydrate authenticated user session from backend
-    authApi.getMe()
-      .then(res => {
-        if (res && res.authenticated && res.user) {
-          setCurrentUser(res.user);
-          localStorage.setItem('skillsense_user', JSON.stringify(res.user));
-        } else {
+    const isLoggedOutOnMount = (() => {
+      try {
+        return sessionStorage.getItem('skillsense_logged_out') === 'true';
+      } catch {
+        return false;
+      }
+    })();
+
+    if (isLoggedOutOnMount) {
+      setCurrentUser(null);
+      localStorage.removeItem('skillsense_user');
+      const currentHash = window.location.hash;
+      if (['#profile', '#developer', '#admin'].includes(currentHash)) {
+        setCurrentPage('home');
+        window.location.hash = '';
+        window.history.replaceState(null, '', '/');
+      }
+    } else {
+      authApi.getMe()
+        .then(res => {
+          if (res && res.authenticated && res.user) {
+            setCurrentUser(res.user);
+            localStorage.setItem('skillsense_user', JSON.stringify(res.user));
+          } else {
+            setCurrentUser(null);
+            localStorage.removeItem('skillsense_user');
+            const currentHash = window.location.hash;
+            if (currentHash === '#profile' || currentHash === '#developer' || currentHash === '#admin') {
+              setCurrentPage('home');
+              window.location.hash = '';
+              window.history.replaceState(null, '', '/');
+            }
+          }
+        })
+        .catch(() => {
           setCurrentUser(null);
           localStorage.removeItem('skillsense_user');
           const currentHash = window.location.hash;
           if (currentHash === '#profile' || currentHash === '#developer' || currentHash === '#admin') {
             setCurrentPage('home');
-            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            window.location.hash = '';
+            window.history.replaceState(null, '', '/');
           }
-        }
-      })
-      .catch(() => {
+        });
+    }
+  }, []);
+
+  // Multi-tab synchronization: detect logout or session invalidation from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'skillsense_user' && !e.newValue) {
+        try {
+          sessionStorage.setItem('skillsense_logged_out', 'true');
+          sessionStorage.clear();
+        } catch { }
         setCurrentUser(null);
-        localStorage.removeItem('skillsense_user');
+        setIsPurchased(false);
+        setReportData(null);
+        setOnboardingData(null);
         const currentHash = window.location.hash;
-        if (currentHash === '#profile' || currentHash === '#developer' || currentHash === '#admin') {
+        if (['#profile', '#developer', '#admin'].includes(currentHash)) {
           setCurrentPage('home');
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          window.location.hash = '';
+          window.history.replaceState(null, '', '/');
         }
-      });
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Sync route and reset scroll on navigation with role and auth guards
   useEffect(() => {
     const syncPageWithHash = () => {
       const hash = window.location.hash;
+      const isLoggedOut = (() => {
+        try {
+          return sessionStorage.getItem('skillsense_logged_out') === 'true';
+        } catch {
+          return false;
+        }
+      })();
       const cachedUser = (() => {
+        if (isLoggedOut) return null;
         try {
           const s = localStorage.getItem('skillsense_user');
           return s ? JSON.parse(s) : null;
@@ -219,7 +272,7 @@ export default function App() {
           return null;
         }
       })();
-      const activeUser = currentUser || cachedUser;
+      const activeUser = isLoggedOut ? null : (currentUser || cachedUser);
 
       // 1. If an active hash modal or action is present, prioritize it
       if (hash === '#onboarding') {
@@ -262,6 +315,7 @@ export default function App() {
         } else {
           // Strictly protect profile: unauthenticated users are redirected to landing page
           setCurrentPage('home');
+          window.location.hash = '';
           window.history.replaceState(null, '', '/');
         }
         return;
@@ -270,6 +324,7 @@ export default function App() {
           setCurrentPage('developer');
         } else {
           setCurrentPage('home');
+          window.location.hash = '';
           window.history.replaceState(null, '', '/');
         }
         return;
@@ -281,6 +336,7 @@ export default function App() {
           window.history.replaceState(null, '', '#developer');
         } else {
           setCurrentPage('home');
+          window.location.hash = '';
           window.history.replaceState(null, '', '/');
         }
         return;
@@ -317,16 +373,51 @@ export default function App() {
     window.addEventListener('popstate', syncPageWithHash);
     const handlePageShow = (event) => {
       // Re-validate and sync if page is restored from browser Back/Forward Cache
-      if (event.persisted) {
+      const isLoggedOut = (() => {
+        try {
+          return sessionStorage.getItem('skillsense_logged_out') === 'true' || !localStorage.getItem('skillsense_user');
+        } catch {
+          return true;
+        }
+      })();
+
+      if (isLoggedOut || event.persisted) {
+        if (isLoggedOut) {
+          setCurrentUser(null);
+          setIsPurchased(false);
+          setReportData(null);
+          const currentHash = window.location.hash;
+          if (['#profile', '#developer', '#admin'].includes(currentHash)) {
+            setCurrentPage('home');
+            window.location.hash = '';
+            window.history.replaceState(null, '', '/');
+          }
+        }
         authApi.getMe()
           .then(res => {
             if (!res?.authenticated) {
               setCurrentUser(null);
               localStorage.removeItem('skillsense_user');
+              const currentHash = window.location.hash;
+              if (['#profile', '#developer', '#admin'].includes(currentHash)) {
+                setCurrentPage('home');
+                window.location.hash = '';
+                window.history.replaceState(null, '', '/');
+              }
             }
             syncPageWithHash();
           })
-          .catch(() => syncPageWithHash());
+          .catch(() => {
+            setCurrentUser(null);
+            localStorage.removeItem('skillsense_user');
+            const currentHash = window.location.hash;
+            if (['#profile', '#developer', '#admin'].includes(currentHash)) {
+              setCurrentPage('home');
+              window.location.hash = '';
+              window.history.replaceState(null, '', '/');
+            }
+            syncPageWithHash();
+          });
       } else {
         syncPageWithHash();
       }
@@ -556,6 +647,9 @@ export default function App() {
   };
 
   const handleSignupSuccess = async (userData, claimedAttemptId) => {
+    try {
+      sessionStorage.removeItem('skillsense_logged_out');
+    } catch { }
     const user = userData || { name: tempStudentName || onboardingData?.fullName || 'User', email: 'user@skillsense.ai', initials: 'U' };
     setCurrentUser(user);
     localStorage.setItem('skillsense_user', JSON.stringify(user));
@@ -577,7 +671,7 @@ export default function App() {
 
       // If no valid recent pending assessment flow from this session:
       if (!activeAttempt) {
-        navigateTo('profile', '#profile');
+        navigateTo('profile', '#profile', true);
         return;
       }
 
@@ -646,6 +740,9 @@ export default function App() {
   };
 
   const handleLoginSuccess = async (userData, claimedAttemptId) => {
+    try {
+      sessionStorage.removeItem('skillsense_logged_out');
+    } catch { }
     const user = userData || { name: 'User', email: 'user@skillsense.ai', initials: 'U' };
     setCurrentUser(user);
     localStorage.setItem('skillsense_user', JSON.stringify(user));
@@ -667,11 +764,11 @@ export default function App() {
 
       const goToNormalDestination = () => {
         if (liveUser.role === 'SUPER_ADMIN') {
-          navigateTo('admin', '#admin');
+          navigateTo('admin', '#admin', true);
         } else if (liveUser.role === 'DEVELOPER') {
-          navigateTo('developer', '#developer');
+          navigateTo('developer', '#developer', true);
         } else {
-          navigateTo('profile', '#profile');
+          navigateTo('profile', '#profile', true);
         }
       };
 
@@ -848,23 +945,45 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
-    authApi.logout().catch(() => { });
-    clearAssessmentFlow();
+  const handleLogout = async () => {
+    // 1. Immediately and synchronously wipe all client-side auth data and set logged out flag
     try {
+      sessionStorage.setItem('skillsense_logged_out', 'true');
       localStorage.removeItem('skillsense_user');
       localStorage.removeItem('skillsense_onboarding');
       localStorage.removeItem('skillsense_report');
-      sessionStorage.clear();
+      localStorage.removeItem('skillsense_return_to_unlock');
+      localStorage.removeItem('skillsense_pending_attempt_id');
+      localStorage.removeItem('skillsense_saved_attempt_id');
+      sessionStorage.removeItem('skillsense_user');
+      sessionStorage.removeItem('skillsense_active_assessment_flow');
+      // Invalidate cookies on client side
+      document.cookie = 'session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
     } catch { }
+
+    clearAssessmentFlow();
     setCurrentUser(null);
     setIsPurchased(false);
     setTempStudentName('');
     setOnboardingData(null);
     setReportData(null);
     setGlobalModal(null);
-    // Replace history entry to landing page so browser Back button cannot return to authenticated views
-    navigateTo('home', '', true);
+    setCurrentPage('home');
+
+    // 2. Await server session invalidation (bounded by 1.5s timeout so user is never stuck)
+    try {
+      await Promise.race([
+        authApi.logout(),
+        new Promise((resolve) => setTimeout(resolve, 1500))
+      ]);
+    } catch (e) {
+      console.warn('Logout API error:', e);
+    }
+
+    // 3. Clear window hash and perform a clean hard replace to landing page root
+    // This purges all component memory, history traps, and BFCache entries
+    window.location.hash = '';
+    window.location.replace('/');
   };
 
   const activeReportUser = currentUser || (tempStudentName || onboardingData?.fullName ? {

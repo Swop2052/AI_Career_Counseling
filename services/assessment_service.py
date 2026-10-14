@@ -254,30 +254,41 @@ class AssessmentService:
         try:
             # Idempotency & Debounce Guard:
             cursor = conn.cursor()
+            owner_clauses = []
+            owner_params = []
+            if user_id and str(user_id).strip():
+                owner_clauses.append("user_id = %s")
+                owner_params.append(str(user_id).strip())
+            if guest_session_id and str(guest_session_id).strip():
+                owner_clauses.append("guest_session_id = %s")
+                owner_params.append(str(guest_session_id).strip())
+
+            owner_sql = " OR ".join(owner_clauses)
             existing = None
-            if submission_token:
+
+            if submission_token and owner_sql:
                 window_start = (datetime.now() - timedelta(minutes=5)).isoformat()
-                cursor.execute("""
+                cursor.execute(f"""
                     SELECT id, is_unlocked, teaser_data, full_result_data, created_at, unlocked_at
                     FROM assessment_attempts
-                    WHERE (user_id = %s OR guest_session_id = %s)
+                    WHERE ({owner_sql})
                       AND completed_at >= %s
                       AND teaser_data::text LIKE %s
                     ORDER BY completed_at DESC LIMIT 1
-                """, (user_id or '', guest_session_id or '', window_start, f'%"submission_token": "{submission_token}"%'))
+                """, (*owner_params, window_start, f'%"submission_token": "{submission_token}"%'))
                 existing = cursor.fetchone()
 
             # Secondary debounce guard: check if user/guest submitted identical RIASEC code within last 5 seconds
-            if not existing and (user_id or guest_session_id) and riasec_code:
+            if not existing and owner_sql and riasec_code:
                 debounce_window = (datetime.now() - timedelta(seconds=5)).isoformat()
-                cursor.execute("""
+                cursor.execute(f"""
                     SELECT id, is_unlocked, teaser_data, full_result_data, created_at, unlocked_at
                     FROM assessment_attempts
-                    WHERE (user_id = %s OR guest_session_id = %s)
+                    WHERE ({owner_sql})
                       AND completed_at >= %s
                       AND riasec_code = %s
                     ORDER BY completed_at DESC LIMIT 1
-                """, (user_id or '', guest_session_id or '', debounce_window, riasec_code))
+                """, (*owner_params, debounce_window, riasec_code))
                 existing = cursor.fetchone()
 
             if existing:
@@ -517,11 +528,11 @@ class AssessmentService:
 
             full_data = json.loads(attempt['full_result_data']) if isinstance(attempt['full_result_data'], str) else (attempt['full_result_data'] or {})
 
-            # Reconstitute report if missing or sparse (< 3 careers)
+            # Reconstitute report if missing or empty
             top_careers = full_data.get('top_careers') or []
-            if not full_data or len(top_careers) < 3:
+            if not full_data or len(top_careers) == 0:
                 reconstituted = AssessmentService._reconstruct_full_report(dict(attempt))
-                if reconstituted and len(reconstituted.get('top_careers') or []) >= 3:
+                if reconstituted and len(reconstituted.get('top_careers') or []) > 0:
                     full_data = reconstituted
                     with conn:
                         conn.execute("UPDATE assessment_attempts SET full_result_data = %s WHERE id = %s", (json.dumps(full_data), attempt['id']))

@@ -1,3 +1,11 @@
+import werkzeug
+if not hasattr(werkzeug, '__version__'):
+    try:
+        import importlib.metadata
+        werkzeug.__version__ = importlib.metadata.version('werkzeug')
+    except Exception:
+        werkzeug.__version__ = '3.0.0'
+
 # app.py - Complete Production Flask Application
 import sys
 import io
@@ -389,6 +397,19 @@ def serve_frontend_or_api(path):
     """Serves frontend static assets/SPA directly from dist or redirects to Vite dev server."""
     if path.startswith('api/') or path == 'health':
         return jsonify({'error': 'Not Found', 'path': f'/{path}'}), 404
+
+    # Security: Block sensitive file probes, dotfiles, db files, code files, and probe paths
+    clean_path = path.lower().strip('/')
+    blocked_prefixes = ('.env', '.git', 'data/', 'admin', 'phpmyadmin', 'debug', 'test')
+    blocked_suffixes = ('.env', '.db', '.py', '.sqlite', '.sqlite3', '.bak', '.conf')
+    if (
+        clean_path.startswith(blocked_prefixes)
+        or any(clean_path.endswith(s) for s in blocked_suffixes)
+        or '/.' in path
+        or path.startswith('.')
+        or '..' in path
+    ):
+        return jsonify({'error': 'Resource not found.', 'path': f'/{path}'}), 404
 
     accept = request.headers.get('Accept', '')
     dist_dir = os.path.join(app.root_path, 'frontend', 'dist')

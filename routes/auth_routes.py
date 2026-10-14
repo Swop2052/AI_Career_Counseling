@@ -191,15 +191,17 @@ def logout():
     """Clear Flask session cookie and server session dictionary."""
     session.clear()
     resp = jsonify({'status': 'success', 'message': 'Logged out successfully.'})
-    # Explicitly invalidate and clear the session cookie across paths
-    resp.delete_cookie(
-        os.getenv('SESSION_COOKIE_NAME', 'session'),
-        path='/',
-        domain=os.getenv('SESSION_COOKIE_DOMAIN', None),
-        httponly=True,
-        samesite=os.getenv('SESSION_COOKIE_SAMESITE', 'Lax'),
-        secure=os.getenv('FLASK_ENV') == 'production'
-    )
+    # Explicitly invalidate and clear the session cookie across paths and standard names
+    cookie_names = [os.getenv('SESSION_COOKIE_NAME', 'session'), 'session', 'session_id', 'remember_token']
+    for c_name in set(cookie_names):
+        resp.delete_cookie(
+            c_name,
+            path='/',
+            domain=os.getenv('SESSION_COOKIE_DOMAIN', None),
+            httponly=True,
+            samesite=os.getenv('SESSION_COOKIE_SAMESITE', 'Lax'),
+            secure=os.getenv('FLASK_ENV') == 'production'
+        )
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0, private'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'

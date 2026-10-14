@@ -93,6 +93,9 @@ export default function SignupPage({ onSignup, onSuccess, onSwitchToLogin, onHom
             console.warn('Failed to update active assessment flow:', e);
           }
         }
+        try {
+          sessionStorage.removeItem('skillsense_logged_out');
+        } catch { }
         if (onSuccess) onSuccess(user, claimedId);
         else if (onSignup) onSignup(user, claimedId);
       })
