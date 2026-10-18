@@ -25,5 +25,5 @@ COPY . .
 # Expose the Flask port
 EXPOSE 5000
 
-# Run the database indexing migration, then launch Flask with Waitress WSGI server
-CMD ["sh", "-c", "python -m database.migrations && python app.py"]
+# Run initialization migrations, then launch Flask with Gunicorn WSGI server
+CMD ["sh", "-c", "python init_chromadb.py && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 wsgi:app"]

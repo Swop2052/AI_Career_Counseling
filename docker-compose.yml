@@ -1,44 +1,27 @@
 version: '3.8'
 
 services:
-  web:
+  skillsense_backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: skillsense_backend
     restart: always
     ports:
-      - "5000:5000"
+      - "127.0.0.1:5000:5000"
     env_file:
       - .env
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-skillsense}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-    depends_on:
-      - db
+    networks:
+      - shared_backend
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
 
-  db:
-    image: postgres:15-alpine
-    container_name: skillsense_postgres
-    restart: always
-    environment:
-      POSTGRES_DB: ${DB_NAME:-skillsense}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
+networks:
+  shared_backend:
+    external: true
