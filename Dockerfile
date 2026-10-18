@@ -25,5 +25,5 @@ COPY . .
 # Expose the Flask port
 EXPOSE 5000
 
-# Run initialization migrations, then launch Flask with Gunicorn WSGI server
-CMD ["sh", "-c", "python init_chromadb.py && gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 120 wsgi:app"]
+# Launch Flask with Gunicorn WSGI server
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "wsgi:app"]
